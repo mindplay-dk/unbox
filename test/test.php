@@ -14,14 +14,38 @@ class MemoryCache implements CacheProvider {
     public $enabled = true;
 }
 
+class UserRepository
+{
+    /**
+     * @var CacheProvider
+     */
+    private $cache;
+
+    public function __construct(CacheProvider $cache)
+    {
+        $this->cache = $cache;
+    }
+}
+
 class App extends Registry
 {
+    const CACHE = 'cache';
+    const USER_REPOSITORY = 'user_repository';
+
     /**
      * @return CacheProvider
      */
     public function getCache()
     {
-        return $this->container->get('cache');
+        return $this->container->get(self::CACHE);
+    }
+
+    /**
+     * @return UserRepository
+     */
+    public function getUserRepository()
+    {
+        return $this->container->get(self::USER_REPOSITORY);
     }
 
     /**
@@ -30,7 +54,8 @@ class App extends Registry
     protected function getTypes()
     {
         return array(
-            'cache' => CacheProvider::class,
+            self::CACHE           => CacheProvider::class,
+            self::USER_REPOSITORY => UserRepository::class,
         );
     }
 }
@@ -39,11 +64,17 @@ class AppProvider implements ServiceProvider
 {
     public function __invoke(Container $container)
     {
-        $container->register('cache', function (App $c) {
+        $container->register(App::CACHE, function (App $c) {
             return new MemoryCache();
+        });
+
+        $container->register(App::USER_REPOSITORY, function (App $c) {
+            return new UserRepository($c->getCache());
         });
     }
 }
+
+// TESTS:
 
 test(
     'Container: can create components',
@@ -341,6 +372,7 @@ test(
 
         $c->validate();
 
+        ok($c->getUserRepository() instanceof UserRepository, 'can configure UserRepository with cache dependency');
         ok($c->getCache() instanceof CacheProvider, 'can configure Container via ServiceProvider interface');
         ok($c->getCache()->enabled === false, 'can configure Container via callable');
     }

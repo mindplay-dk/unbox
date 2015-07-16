@@ -4,6 +4,9 @@ namespace container_registry_thingy;
 
 use RuntimeException;
 
+/**
+ * This class implements a type-checked dependency injection container.
+ */
 class Container
 {
     /**
@@ -179,6 +182,12 @@ class Container
      */
     public function validate()
     {
+        // Note to self - why no type-checking is necessary at this point:
+        // values directly injected via set() are type-checked immediately,
+        // whereas values indirectly defined via register() cannot be type-
+        // checked, since this would require them to be initialized; these
+        // get type-checked as soon as possible, e.g. upon initialization.
+
         foreach ($this->types as $name => $type) {
             if (!$this->has($name)) {
                 throw new RuntimeException("undefined component: {$name} (expected type: {$type})");
