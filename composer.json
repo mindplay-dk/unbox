@@ -2,13 +2,16 @@
     "name": "mindplay/unbox",
     "description": "Yet another dependency injection service registry container thingy",
     "type": "library",
+    "license": "LGPL-3.0+",
     "authors": [
         {
             "name": "Rasmus Schultz",
             "email": "rasmus@mindplay.dk"
         }
     ],
-    "require": {},
+    "require": {
+        "php": ">=5.5"
+    },
     "require-dev": {
         "mindplay/testies": "0.*",
         "phpunit/php-code-coverage": "~2.1"
