@@ -1,5 +1,5 @@
-mindplay/container_registry_thing
-=================================
+mindplay/unbox
+==============
 
 This library provides two components: a dependency injection container,
 and an abstract base class for your service registry components.

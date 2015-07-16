@@ -1,5 +1,5 @@
 {
-    "name": "mindplay/container-registry-thingy",
+    "name": "mindplay/unbox",
     "description": "Yet another dependency injection service registry container thingy",
     "type": "library",
     "authors": [
@@ -15,7 +15,7 @@
     },
     "autoload": {
         "psr-4": {
-            "container_registry_thingy\\": "src/"
+            "mindplay\\unbox\\": "src/"
         }
     }
 }

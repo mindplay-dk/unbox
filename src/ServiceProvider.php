@@ -1,6 +1,6 @@
 <?php
 
-namespace container_registry_thingy;
+namespace mindplay\unbox;
 
 /**
  * This interface should be implemented by service providers.

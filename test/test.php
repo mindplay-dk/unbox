@@ -2,9 +2,9 @@
 
 require __DIR__ . '/header.php';
 
-use container_registry_thingy\Container;
-use container_registry_thingy\Registry;
-use container_registry_thingy\ServiceProvider;
+use mindplay\unbox\Container;
+use mindplay\unbox\Registry;
+use mindplay\unbox\ServiceProvider;
 
 // FIXTURES:
 
