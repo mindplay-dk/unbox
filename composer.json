@@ -1,0 +1,21 @@
+{
+    "name": "mindplay/container-registry-thingy",
+    "description": "Yet another dependency injection service registry container thingy",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Rasmus Schultz",
+            "email": "rasmus@mindplay.dk"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "mindplay/testies": "0.*",
+        "phpunit/php-code-coverage": "~2.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "container_registry_thingy\\": "src/"
+        }
+    }
+}
