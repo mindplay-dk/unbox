@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "bcbb87879a857b3665f55bc7b372b330",
+    "hash": "a6740c4b445fd6b99c5e253eaadcd1d7",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -32,6 +32,42 @@
             ],
             "description": "Promoting the interoperability of container objects (DIC, SL, etc.)",
             "time": "2014-12-30 15:22:37"
+        },
+        {
+            "name": "mindplay/benchpress",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mindplay-dk/benchpress.git",
+                "reference": "fb712d97407daea04cca379c8b965c8409957828"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mindplay-dk/benchpress/zipball/fb712d97407daea04cca379c8b965c8409957828",
+                "reference": "fb712d97407daea04cca379c8b965c8409957828",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "mindplay\\benchpress\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0+"
+            ],
+            "authors": [
+                {
+                    "name": "Rasmus Schultz",
+                    "email": "rasmus@mindplay.dk"
+                }
+            ],
+            "description": "A simple benchmark suite for PHP 5.3 and up",
+            "time": "2015-06-08 16:34:50"
         }
     ],
     "packages-dev": [
@@ -77,6 +113,143 @@
             ],
             "description": "Yeah, testies: a lightweight library for quick, simple unit-testing",
             "time": "2015-06-22 09:35:17"
+        },
+        {
+            "name": "php-di/invoker",
+            "version": "1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PHP-DI/Invoker.git",
+                "reference": "7ea703c62dbb29d64763fa85258826034ce3c97d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PHP-DI/Invoker/zipball/7ea703c62dbb29d64763fa85258826034ce3c97d",
+                "reference": "7ea703c62dbb29d64763fa85258826034ce3c97d",
+                "shasum": ""
+            },
+            "require": {
+                "container-interop/container-interop": "~1.1"
+            },
+            "require-dev": {
+                "athletic/athletic": "~0.1.8",
+                "phpunit/phpunit": "~4.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Invoker\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Generic and extensible callable invoker",
+            "homepage": "https://github.com/PHP-DI/Invoker",
+            "keywords": [
+                "callable",
+                "dependency",
+                "dependency-injection",
+                "injection",
+                "invoke",
+                "invoker"
+            ],
+            "time": "2015-04-24 10:18:34"
+        },
+        {
+            "name": "php-di/php-di",
+            "version": "5.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PHP-DI/PHP-DI.git",
+                "reference": "c59af31dcf2ee6246e28464e775599321df40955"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PHP-DI/PHP-DI/zipball/c59af31dcf2ee6246e28464e775599321df40955",
+                "reference": "c59af31dcf2ee6246e28464e775599321df40955",
+                "shasum": ""
+            },
+            "require": {
+                "container-interop/container-interop": "~1.0",
+                "php": ">=5.4.0",
+                "php-di/invoker": "~1.0",
+                "php-di/phpdoc-reader": "~2.0"
+            },
+            "replace": {
+                "mnapoli/php-di": "*"
+            },
+            "require-dev": {
+                "doctrine/annotations": "~1.2",
+                "doctrine/cache": "~1.0",
+                "mnapoli/phpunit-easymock": "~0.1.4",
+                "ocramius/proxy-manager": "~1.0",
+                "phpunit/phpunit": "~4.5"
+            },
+            "suggest": {
+                "doctrine/annotations": "Install it if you want to use annotations (version ~1.2)",
+                "doctrine/cache": "Install it if you want to use the cache (version ~1.0)",
+                "ocramius/proxy-manager": "Install it if you want to use lazy injection (version ~1.0)"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "DI\\": "src/DI/"
+                },
+                "files": [
+                    "src/DI/functions.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "The dependency injection container for humans",
+            "homepage": "http://php-di.org/",
+            "keywords": [
+                "container",
+                "dependency injection",
+                "di"
+            ],
+            "time": "2015-08-12 13:46:41"
+        },
+        {
+            "name": "php-di/phpdoc-reader",
+            "version": "2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PHP-DI/PhpDocReader.git",
+                "reference": "21dce5e29f640d655e7b4583ecfb7d166127a5da"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PHP-DI/PhpDocReader/zipball/21dce5e29f640d655e7b4583ecfb7d166127a5da",
+                "reference": "21dce5e29f640d655e7b4583ecfb7d166127a5da",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PhpDocReader\\": "src/PhpDocReader"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PhpDocReader parses @var and @param values in PHP docblocks (supports namespaced class names with the same resolution rules as PHP)",
+            "keywords": [
+                "phpdoc",
+                "reflection"
+            ],
+            "time": "2015-06-01 14:23:20"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -365,7 +538,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "mindplay/benchpress": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

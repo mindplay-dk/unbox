@@ -28,7 +28,7 @@ class UserRepository
     }
 }
 
-class TestProviderInterface implements ProviderInterface
+class TestProvider implements ProviderInterface
 {
     public function register(Container $container)
     {

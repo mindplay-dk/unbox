@@ -1,5 +1,6 @@
 <?php
 
+use Interop\Container\ContainerInterface;
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
 use mindplay\unbox\NotFoundException;
@@ -156,18 +157,33 @@ test(
     }
 );
 
+/**
+ * @param ContainerInterface $container
+ */
+function test_case(ContainerInterface $container)
+{
+    $repo = $container->get(UserRepository::class);
+
+    ok($repo instanceof UserRepository);
+    ok($repo->cache instanceof CacheProvider);
+    eq($repo->cache->path, '/tmp/cache');
+}
+
 test(
     'can resolve dependencies using parameter names',
     function () {
-        $container = new Container();
+        $container = require __DIR__ . '/unbox.php';
 
-        $container->add(new TestProviderInterface());
+        test_case($container);
+    }
+);
 
-        $repo = $container->get(UserRepository::class);
+test(
+    'php-di test-case is identical to unbox test-case',
+    function () {
+        $container = require __DIR__ . '/php-di.php';
 
-        ok($repo instanceof UserRepository);
-        ok($repo->cache instanceof CacheProvider);
-        eq($repo->cache->path, '/tmp/cache');
+        test_case($container);
     }
 );
 
