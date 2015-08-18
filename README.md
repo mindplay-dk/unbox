@@ -42,12 +42,14 @@ Time to resolve the dependencies in the container, on first access:
 
 Time for multiple subsequent lookups:
 
-    pimple: 3 repeated resolutions ......... 0.003 msec ........ 9.64% ......... 1.00x
-    unbox: 3 repeated resolutions .......... 0.005 msec ......  14.84% ......... 1.54x
-    pimple: 5 repeated resolutions ......... 0.007 msec ......  23.81% ......... 2.47x
-    php-di: 3 repeated resolutions ......... 0.010 msec ......  31.99% ......... 3.32x
-    php-di: 5 repeated resolutions ......... 0.010 msec ......  33.60% ......... 3.48x
-    unbox: 5 repeated resolutions .......... 0.011 msec ......  36.32% ......... 3.77x
-    pimple: 10 repeated resolutions ........ 0.015 msec ......  47.34% ......... 4.91x
-    unbox: 10 repeated resolutions ......... 0.018 msec ......  58.62% ......... 6.08x
-    php-di: 10 repeated resolutions ........ 0.031 msec ...... 100.00% ........ 10.37x
+    pimple: 3 repeated resolutions ........ 0.034 msec ....... 11.42% ......... 1.00x
+    unbox: 3 repeated resolutions ......... 0.085 msec ....... 28.62% ......... 2.51x
+    php-di: 3 repeated resolutions ........ 0.298 msec ...... 100.00% ......... 8.76x
+
+    pimple: 5 repeated resolutions ........ 0.038 msec ....... 12.40% ......... 1.00x
+    unbox: 5 repeated resolutions ......... 0.089 msec ....... 29.24% ......... 2.36x
+    php-di: 5 repeated resolutions ........ 0.305 msec ...... 100.00% ......... 8.06x
+
+    pimple: 10 repeated resolutions ....... 0.046 msec ....... 14.34% ......... 1.00x
+    unbox: 10 repeated resolutions ........ 0.102 msec ....... 31.78% ......... 2.22x
+    php-di: 10 repeated resolutions ....... 0.322 msec ...... 100.00% ......... 6.97x

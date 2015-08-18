@@ -21,24 +21,6 @@ $pimple_configuration = function () {
     $container = require __DIR__ . '/pimple.php';
 };
 
-$unbox_resolution = function () {
-    $container = require __DIR__ . '/unbox.php';
-
-    $cache = $container->get(UserRepository::class);
-};
-
-$phpdi_resolution = function () {
-    $container = require __DIR__ . '/php-di.php';
-
-    $cache = $container->get(UserRepository::class);
-};
-
-$pimple_resolution = function () {
-    $container = require __DIR__ . '/pimple.php';
-
-    $cache = $container[UserRepository::class];
-};
-
 $bench->add(
     'unbox: configuration',
     $unbox_configuration
@@ -56,9 +38,9 @@ $bench->add(
 
 $bench->run();
 
-$bench = new Benchmark();
+foreach (array(1,3,5,10) as $num) {
+    $bench = new Benchmark();
 
-foreach (array(3,5,10) as $num) {
     $bench->add(
         "unbox: {$num} repeated resolutions",
         function () use ($num) {
@@ -68,7 +50,7 @@ foreach (array(3,5,10) as $num) {
                 $cache = $container->get(UserRepository::class);
             }
         },
-        $unbox_resolution
+        $unbox_configuration
     );
 
     $bench->add(
@@ -80,7 +62,7 @@ foreach (array(3,5,10) as $num) {
                 $cache = $container->get(UserRepository::class);
             }
         },
-        $phpdi_resolution
+        $phpdi_configuration
     );
 
     $bench->add(
@@ -92,8 +74,8 @@ foreach (array(3,5,10) as $num) {
                 $cache = $container[UserRepository::class];
             }
         },
-        $pimple_resolution
+        $pimple_configuration
     );
-}
 
-$bench->run();
+    $bench->run();
+}
