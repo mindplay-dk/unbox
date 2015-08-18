@@ -1,6 +1,6 @@
 # mindplay/unbox
 
-Wikkid awesome simple dependency injection container.
+Wicked awesome simple dependency injection container.
 
 [![Build Status](https://travis-ci.org/mindplay-dk/unbox.svg)](https://travis-ci.org/mindplay-dk/unbox)
 
