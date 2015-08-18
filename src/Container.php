@@ -2,8 +2,8 @@
 
 namespace mindplay\unbox;
 
-use Interop\Container\ContainerInterface;
 use Closure;
+use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionFunction;
@@ -51,8 +51,10 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function __construct()
     {
-        $this->values[get_class($this)] = $this;
-        $this->values[__CLASS__] = $this;
+        $this->values[get_class($this)] =
+        $this->values[__CLASS__] =
+        $this->values[FactoryInterface::class] =
+            $this;
     }
 
     /**
