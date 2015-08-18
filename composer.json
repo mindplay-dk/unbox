@@ -17,7 +17,8 @@
     "require-dev": {
         "mindplay/testies": "0.*",
         "phpunit/php-code-coverage": "~2.1",
-        "php-di/php-di": "^5.0.3"
+        "php-di/php-di": "^5.0.3",
+        "pimple/pimple": "3.0.1"
     },
     "autoload": {
         "psr-4": {

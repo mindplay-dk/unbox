@@ -187,6 +187,30 @@ test(
     }
 );
 
+class PimpleTestAdapter implements ContainerInterface {
+    public function __construct(\Pimple\Container $container)
+    {
+        $this->container = $container;
+    }
+
+    public function get($id)
+    {
+        return $this->container->offsetGet($id);
+    }
+
+    public function has($id)
+    {}
+}
+
+test(
+    'pimple test-case is identical to unbox test-case',
+    function () {
+        $container = require __DIR__ . '/pimple.php';
+
+        test_case(new PimpleTestAdapter($container));
+    }
+);
+
 test(
     'can resolve dependencies using dependency maps',
     function () {

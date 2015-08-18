@@ -17,6 +17,28 @@ $phpdi_configuration = function () {
     $container = require __DIR__ . '/php-di.php';
 };
 
+$pimple_configuration = function () {
+    $container = require __DIR__ . '/pimple.php';
+};
+
+$unbox_resolution = function () {
+    $container = require __DIR__ . '/unbox.php';
+
+    $cache = $container->get(UserRepository::class);
+};
+
+$phpdi_resolution = function () {
+    $container = require __DIR__ . '/php-di.php';
+
+    $cache = $container->get(UserRepository::class);
+};
+
+$pimple_resolution = function () {
+    $container = require __DIR__ . '/pimple.php';
+
+    $cache = $container[UserRepository::class];
+};
+
 $bench->add(
     'unbox: configuration',
     $unbox_configuration
@@ -27,28 +49,51 @@ $bench->add(
     $phpdi_configuration
 );
 
+$bench->add(
+    'pimple: configuration',
+    $pimple_configuration
+);
+
 $bench->run();
 
 $bench = new Benchmark();
 
-$bench->add(
-    'unbox: resolution',
-    function () {
-        $container = require __DIR__ . '/unbox.php';
+foreach (array(3,5,10) as $num) {
+    $bench->add(
+        "unbox: {$num} repeated resolutions",
+        function () use ($num) {
+            $container = require __DIR__ . '/unbox.php';
 
-        $cache = $container->get(UserRepository::class);
-    },
-    $unbox_configuration
-);
+            for ($i = 0; $i < $num; $i++) {
+                $cache = $container->get(UserRepository::class);
+            }
+        },
+        $unbox_resolution
+    );
 
-$bench->add(
-    'php-di: resolution',
-    function () {
-        $container = require __DIR__ . '/php-di.php';
+    $bench->add(
+        "php-di: {$num} repeated resolutions",
+        function () use ($num) {
+            $container = require __DIR__ . '/php-di.php';
 
-        $cache = $container->get(UserRepository::class);
-    },
-    $phpdi_configuration
-);
+            for ($i = 0; $i < $num; $i++) {
+                $cache = $container->get(UserRepository::class);
+            }
+        },
+        $phpdi_resolution
+    );
+
+    $bench->add(
+        "pimple: {$num} repeated resolutions",
+        function () use ($num) {
+            $container = require __DIR__ . '/pimple.php';
+
+            for ($i = 0; $i < $num; $i++) {
+                $cache = $container[UserRepository::class];
+            }
+        },
+        $pimple_resolution
+    );
+}
 
 $bench->run();
