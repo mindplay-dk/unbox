@@ -11,7 +11,7 @@ use ReflectionMethod;
 use ReflectionParameter;
 
 /**
- * This class implements a type-checked dependency injection container.
+ * This class implements a simple dependency injection container.
  */
 class Container implements ContainerInterface, FactoryInterface
 {
