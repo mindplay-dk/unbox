@@ -7,7 +7,7 @@ namespace mindplay\unbox;
  *
  * @see Container::register()
  */
-interface Provider
+interface ProviderInterface
 {
     /**
      * Registers services and components with a given Container

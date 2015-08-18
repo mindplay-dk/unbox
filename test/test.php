@@ -161,15 +161,7 @@ test(
     function () {
         $container = new Container();
 
-        $container->set('cache_path', '/tmp/cache');
-
-        $container->register(CacheProvider::class, function ($cache_path) {
-            return new FileCache($cache_path);
-        });
-
-        $container->register(UserRepository::class, function (CacheProvider $cache) {
-            return new UserRepository($cache);
-        });
+        $container->add(new TestProviderInterface());
 
         $repo = $container->get(UserRepository::class);
 

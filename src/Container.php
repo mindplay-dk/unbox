@@ -261,9 +261,9 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * @param Provider $provider
+     * @param ProviderInterface $provider
      */
-    public function add(Provider $provider)
+    public function add(ProviderInterface $provider)
     {
         $provider->register($this);
     }
