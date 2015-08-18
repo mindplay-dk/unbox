@@ -2,13 +2,25 @@
 
 namespace mindplay\unbox;
 
-use RuntimeException;
+use Interop\Container\ContainerInterface;
+use Closure;
+use InvalidArgumentException;
+use ReflectionClass;
+use ReflectionFunction;
+use ReflectionMethod;
+use ReflectionParameter;
 
 /**
  * This class implements a type-checked dependency injection container.
  */
-class Container
+class Container implements ContainerInterface
 {
+    /**
+     * @type string pattern for parsing an argument type from a ReflectionParameter string
+     * @see getArgumentType()
+     */
+    const ARG_PATTERN = '/.*\[\s*(?:\<required\>|\<optional\>)\s*([^\s]+)/';
+
     /**
      * @var mixed[] map where component name => value
      */
@@ -18,6 +30,11 @@ class Container
      * @var callable[] map where component name => factory function
      */
     protected $factory = array();
+
+    /**
+     * @var array map where component name => mixed list/map of parameter names
+     */
+    protected $factory_map = array();
 
     /**
      * @var bool[] map where component name => true (if the component has been initialized)
@@ -30,68 +47,44 @@ class Container
     protected $config = array();
 
     /**
-     * @var string[] map where component name => class name
+     * Self-register this container for dependency injection
      */
-    protected $types;
-
-    /**
-     * @var object owner reference
-     */
-    protected $owner;
-
-    /**
-     * @param object $owner owner reference (e.g. service registry object; provided to factory and config functions)
-     * @param string[] $types map where component name => fully-qualified class name (or pseudo-type name)
-     */
-    public function __construct($owner = null, array $types = array())
+    public function __construct()
     {
-        $this->owner = $owner ?: $this;
-        $this->types = $types;
+        $this->values[get_class($this)] = $this;
+        $this->values[__CLASS__] = $this;
     }
-
-    /**
-     * @var callable[] map where type-name => type-checking callback (for common pseudo-types)
-     *
-     * @see http://www.phpdoc.org/docs/latest/for-users/types.html
-     */
-    public static $checkers = array(
-        'string'   => 'is_string',
-        'integer'  => 'is_int',
-        'int'      => 'is_int',
-        'boolean'  => 'is_bool',
-        'bool'     => 'is_bool',
-        'float'    => 'is_float',
-        'double'   => 'is_float',
-        'object'   => 'is_object',
-        'array'    => 'is_array',
-        'resource' => 'is_resource',
-        'null'     => 'is_null',
-        'callable' => 'is_callable',
-    );
 
     /**
      * @param string $name component name
      *
      * @return mixed
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
      */
     public function get($name)
     {
         if (!array_key_exists($name, $this->values)) {
             if (!isset($this->factory[$name])) {
-                throw new RuntimeException("undefined component: {$name}");
+                throw new NotFoundException($name);
             }
 
-            $this->values[$name] = call_user_func($this->factory[$name], $this->owner);
+            $factory = $this->factory[$name];
+
+            $reflection = new ReflectionFunction($factory);
+
+            $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
+
+            $this->values[$name] = call_user_func_array($factory, $params);
 
             if (isset($this->config[$name])) {
-                foreach ($this->config[$name] as $func) {
-                    call_user_func_array($func, array(&$this->values[$name], $this->owner));
+                foreach ($this->config[$name] as $config) {
+                    $this->applyConfiguration($name, $config);
                 }
             }
 
             $this->initialized[$name] = true; // prevent further changes to this component
-
-            $this->check($name);
         }
 
         return $this->values[$name];
@@ -99,34 +92,39 @@ class Container
 
     /**
      * @param string $name component name
-     * @param mixed $value
+     * @param mixed  $value
      *
      * @return void
+     *
+     * @throws ContainerException
      */
     public function set($name, $value)
     {
         if (isset($this->initialized[$name])) {
-            throw new RuntimeException("attempted overwrite of initialized component: {$name}");
+            throw new ContainerException("attempted overwrite of initialized component: {$name}");
         }
 
         $this->values[$name] = $value;
-
-        $this->check($name);
     }
 
     /**
-     * @param string   $name component name
-     * @param callable $func `function ($owner) : mixed`
+     * @param string          $name component name
+     * @param callable        $func `function ($owner) : mixed`
+     * @param string|string[] $map  mixed list/map of parameter names
      *
      * @return void
+     *
+     * @throws ContainerException
      */
-    public function register($name, callable $func)
+    public function register($name, callable $func, $map = array())
     {
         if (@$this->initialized[$name]) {
-            throw new RuntimeException("oh noes!");
+            throw new ContainerException("attempted re-registration of active component: {$name}");
         }
 
         $this->factory[$name] = $func;
+
+        $this->factory_map[$name] = $map;
 
         unset($this->values[$name]);
     }
@@ -136,19 +134,21 @@ class Container
      * @param callable $func `function ($component, $owner) : void`
      *
      * @return void
+     *
+     * @throws NotFoundException
      */
     public function configure($name, callable $func)
     {
         if ($this->isActive($name)) {
             // component is already active - run the configuration function right away:
 
-            call_user_func_array($func, array(&$this->values[$name], $this->owner));
+            $this->applyConfiguration($name, $func);
 
             return;
         }
 
         if (!isset($this->factory[$name])) {
-            throw new RuntimeException("undefined component: {$name}");
+            throw new NotFoundException($name);
         }
 
         $this->config[$name][] = $func;
@@ -162,7 +162,7 @@ class Container
     public function has($name)
     {
         return array_key_exists($name, $this->values)
-            || isset($this->factory[$name]);
+        || isset($this->factory[$name]);
     }
 
     /**
@@ -176,62 +176,172 @@ class Container
     }
 
     /**
-     * Validate the Container for completeness
+     * @param callable        $callback any arbitrary closure or callable
+     * @param string[]|string $map      mixed list/map of parameter names
      *
-     * @throws RuntimeException if any component is undefined
+     * @return mixed return value from the given callable
      */
-    public function validate()
+    public function call(callable $callback, $map = array())
     {
-        // Note to self - why no type-checking is necessary at this point:
-        // values directly injected via set() are type-checked immediately,
-        // whereas values indirectly defined via register() cannot be type-
-        // checked, since this would require them to be initialized; these
-        // get type-checked as soon as possible, e.g. upon initialization.
+        if (is_array($callback)) {
+            switch (count($callback)) {
+                case 1:
+                    $reflection = new ReflectionFunction($callback[0]);
+                    return call_user_func_array($callback[0], $this->resolve($reflection->getParameters(), $map));
 
-        foreach ($this->types as $name => $type) {
-            if (!$this->has($name)) {
-                throw new RuntimeException("undefined component: {$name} (expected type: {$type})");
+                case 2:
+                    $reflection = new ReflectionMethod($callback[0], $callback[1]);
+                    return $reflection->invokeArgs($callback[0], $this->resolve($reflection->getParameters(), $map));
+
+                default:
+                    throw new InvalidArgumentException("expected callable");
             }
+        }
+
+        $reflection = new ReflectionFunction($callback);
+
+        return call_user_func_array($callback, $this->resolve($reflection->getParameters(), $map));
+    }
+
+    /**
+     * @param string          $name component name
+     * @param string[]|string $map  mixed list/map of parameter names
+     *
+     * @return mixed
+     */
+    public function create($name, $map = array())
+    {
+        if (isset($this->factory[$name])) {
+            return $this->call($this->factory[$name], $map + $this->factory_map[$name]);
+        } else {
+            if (!class_exists($name)) {
+                throw new InvalidArgumentException("unable to create component: {$name}");
+            }
+
+            $reflection = new ReflectionClass($name);
+
+            if (!$reflection->isInstantiable()) {
+                throw new InvalidArgumentException("unable to create instance of abstract class: {$name}");
+            }
+
+            $constructor = $reflection->getConstructor();
+
+            $params = $constructor
+                ? $this->resolve($constructor->getParameters(), $map)
+                : array();
+
+            return $reflection->newInstanceArgs($params);
         }
     }
 
     /**
-     * Minimally checks that the given component exists; if the given component
-     * has been initialized, additionally, a type-check is performed.
-     *
      * @param string $name component name
      *
-     * @throws RuntimeException if the component is undefined
-     * @throws RuntimeException if type-checking the component fails
+     * @return callable component reference for use in parameter maps
      */
-    protected function check($name)
+    public function ref($name)
     {
-        if (!isset($this->types[$name])) {
-            return; // no type-check defined for this component
+        return function () use ($name) {
+            return $this->get($name);
+        };
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return callable fixed value for use in parameter maps
+     */
+    public function value($value)
+    {
+        return function () use ($value) {
+            return $value;
+        };
+    }
+
+    /**
+     * @param Provider $provider
+     */
+    public function add(Provider $provider)
+    {
+        $provider->register($this);
+    }
+
+    /**
+     * @param ReflectionParameter[] $params
+     * @param string[]|string       $map mixed list/map of parameter names
+     *
+     * @return array parameters
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
+    protected function resolve(array $params, $map)
+    {
+        $args = array();
+
+        $map = (array)$map;
+
+        foreach ($params as $index => $param) {
+            $param_name = $param->getName();
+
+            if (array_key_exists($param_name, $map)) {
+                $component = $map[$param_name];
+            } elseif (array_key_exists($index, $map)) {
+                $component = $map[$index];
+            } else {
+                preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
+
+                $component = $matches[1];
+
+                if (!$this->has($component)) {
+                    $component = $param_name;
+                }
+            }
+
+            if ($component instanceof Closure) {
+                $args[] = $this->call($component);
+
+                continue;
+            }
+
+            if ($this->has($component)) {
+                $args[] = $this->get($component);
+
+                continue;
+            }
+
+            if ($param->isOptional()) {
+                $args[] = $param->getDefaultValue();
+
+                continue;
+            }
+
+            throw new ContainerException("unable to resolve \"{$component}\" for parameter: \${$param_name}");
         }
 
-        $type = $this->types[$name];
+        return $args;
+    }
 
-        $value = $this->get($name);
+    /**
+     * @param string  $name   component name
+     * @param Closure $config configuration function
+     *
+     * @return void
+     */
+    protected function applyConfiguration($name, $config)
+    {
+        $config_reflection = new ReflectionFunction($config);
 
-        if ($value === null) {
-            return; // explicitly configured null-value is allowed
+        $config_params = $this->resolve($config_reflection->getParameters(), array());
+
+        $config_refs = array();
+
+        foreach (array_keys($config_params) as $key) {
+            $config_refs[$key] = &$config_params[$key];
         }
 
-        if ($type === 'mixed') {
-            return; // any type is allowed
-        }
+        call_user_func_array($config, $config_refs);
 
-        if (array_key_exists($type, self::$checkers) && call_user_func(self::$checkers[$type], $value)) {
-            return; // pseudo type-check passed
-        } elseif (is_object($value) && $value instanceof $type) {
-            return; // class/interface type-check passed
-        }
-
-        $actual = is_object($value)
-            ? get_class($value)
-            : gettype($value);
-
-        throw new RuntimeException("unexpected component: {$name}\nexpected type: {$type}\nprovided type: {$actual}");
+        $this->values[$name] = $config_refs[0];
     }
 }

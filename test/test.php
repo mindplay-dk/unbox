@@ -1,78 +1,10 @@
 <?php
 
-require __DIR__ . '/header.php';
-
 use mindplay\unbox\Container;
-use mindplay\unbox\Registry;
-use mindplay\unbox\ServiceProvider;
+use mindplay\unbox\ContainerException;
+use mindplay\unbox\NotFoundException;
 
-// FIXTURES:
-
-interface CacheProvider {}
-
-class MemoryCache implements CacheProvider {
-    public $enabled = true;
-}
-
-class UserRepository
-{
-    /**
-     * @var CacheProvider
-     */
-    private $cache;
-
-    public function __construct(CacheProvider $cache)
-    {
-        $this->cache = $cache;
-    }
-}
-
-class App extends Registry
-{
-    const CACHE = 'cache';
-    const USER_REPOSITORY = 'user_repository';
-
-    /**
-     * @return CacheProvider
-     */
-    public function getCache()
-    {
-        return $this->container->get(self::CACHE);
-    }
-
-    /**
-     * @return UserRepository
-     */
-    public function getUserRepository()
-    {
-        return $this->container->get(self::USER_REPOSITORY);
-    }
-
-    /**
-     * @return string[] map where component name => class name
-     */
-    protected function getTypes()
-    {
-        return array(
-            self::CACHE           => CacheProvider::class,
-            self::USER_REPOSITORY => UserRepository::class,
-        );
-    }
-}
-
-class AppProvider implements ServiceProvider
-{
-    public function __invoke(Container $container)
-    {
-        $container->register(App::CACHE, function (App $c) {
-            return new MemoryCache();
-        });
-
-        $container->register(App::USER_REPOSITORY, function (App $c) {
-            return new UserRepository($c->getCache());
-        });
-    }
-}
+require __DIR__ . '/header.php';
 
 // TESTS:
 
@@ -105,7 +37,7 @@ test(
         ok($c->isActive('b'), 'second component activated');
 
         expect(
-            'RuntimeException',
+            NotFoundException::class,
             'should throw on attempted to get undefined component',
             function () use ($c) {
                 $c->get('nope');
@@ -113,7 +45,7 @@ test(
         );
 
         expect(
-            'RuntimeException',
+            ContainerException::class,
             'should throw on attempt to register initialized component',
             function () use ($c) {
                 $c->register('a', function () {});
@@ -121,7 +53,7 @@ test(
         );
 
         expect(
-            'RuntimeException',
+            ContainerException::class,
             'should throw on attempt to set initialized component',
             function () use ($c) {
                 $c->register('a', function () {});
@@ -151,7 +83,7 @@ test(
         eq($c->get('d'), 'DD', 'can overwrite set component');
 
         expect(
-            'RuntimeException',
+            ContainerException::class,
             'attempted override of registered component after initialization',
             function () use ($c) {
                 $c->register('a', function () { return 'AA'; });
@@ -162,7 +94,7 @@ test(
         eq($c->get('b'), 'BBB', 'can overwrite registered component after initialization');
 
         expect(
-            'RuntimeException',
+            ContainerException::class,
             'attempted override of set component after initialization',
             function () use ($c) {
                 $c->set('c', function () { return 'CC'; });
@@ -192,7 +124,7 @@ test(
         eq($c->get('b'), 4);
 
         expect(
-            'RuntimeException',
+            NotFoundException::class,
             'should throw on attempt to configure undefined component',
             function () use ($c) {
                 $c->configure('nope', function () {});
@@ -202,179 +134,122 @@ test(
 );
 
 test(
-    'Container: type checking behavior',
+    'can resolve dependencies by name',
     function () {
-        // type-check acceptance via register:
+        $container = new Container();
 
-        $c = new Container(
-            null,
-            array(
-                'a' => 'string',
-                'b' => 'int',
-                'c' => stdClass::class,
-            )
-        );
+        $container->set('cache.path', '/tmp/cache');
 
-        $c->register('a', function () { return 'A'; });
-        $c->register('b', function () { return 123; });
-        $c->register('c', function () { return (object) array(); });
-
-        eq($c->get('a'), 'A', 'passes string type-check');
-        eq($c->get('b'), 123, 'passes int type-check');
-        ok($c->get('c') instanceof stdClass, 'passes class type-check');
-
-        // type-check acceptance via set:
-
-        $c = new Container(
-            null,
-            array(
-                'a' => 'string',
-                'b' => 'int',
-                'c' => stdClass::class,
-            )
-        );
-
-        $c->set('a', 'A');
-        $c->set('b', 123);
-        $c->set('c', (object) array());
-
-        eq($c->get('a'), 'A', 'passes string type-check');
-        eq($c->get('b'), 123, 'passes int type-check');
-        ok($c->get('c') instanceof stdClass, 'passes class type-check');
-
-        // type-check violations via register:
-
-        $c = new Container(
-            null,
-            array(
-                'a' => 'string',
-                'b' => 'int',
-                'c' => stdClass::class,
-            )
-        );
-
-        $c->register('a', function () { return 999; });
-        $c->register('b', function () { return 'nope'; });
-        $c->register('c', function () { return 555; });
-
-        expect(
-            RuntimeException::class,
-            'should throw on string type-check violation',
-            function () use ($c) {
-                $c->get('a');
-            }
-        );
-
-        expect(
-            RuntimeException::class,
-            'should throw on int type-check violation',
-            function () use ($c) {
-                $c->get('b');
-            }
-        );
-
-        expect(
-            RuntimeException::class,
-            'should throw on class type-check violation',
-            function () use ($c) {
-                $c->get('c');
-            }
-        );
-
-        // type-check violations via set:
-
-        $c = new Container(
-            null,
-            array(
-                'a' => 'string',
-                'b' => 'int',
-                'c' => stdClass::class,
-            )
-        );
-
-        expect(
-            RuntimeException::class,
-            'should throw on string type-check violation',
-            function () use ($c) {
-                $c->set('a', 999);
-            }
-        );
-
-        expect(
-            RuntimeException::class,
-            'should throw on int type-check violation',
-            function () use ($c) {
-                $c->set('b', 'nope');
-            }
-        );
-
-        expect(
-            RuntimeException::class,
-            'should throw on class type-check violation',
-            function () use ($c) {
-                $c->set('c', 555);
-            }
-        );
-
-        // type-check acceptance via "mixed" and NULL value:
-
-        $c = new Container(
-            null,
-            array(
-                'a' => 'mixed',
-                'b' => stdClass::class,
-            )
-        );
-
-        $c->register('a', function () { return 'A'; });
-        $c->set('b', null);
-
-        eq($c->get('a'), 'A', 'passes mixed type-check');
-        eq($c->get('b'), null, 'passes class type-check via explicit NULL');
-    }
-);
-
-test(
-    'Container: validate for completeness',
-    function () {
-        $c = new Container(null, array('a' => 'string', 'b' => 'string'));
-
-        $c->set('a', 'A');
-
-        expect(
-            RuntimeException::class,
-            'should throw for undefined component',
-            function () use ($c) {
-                $c->validate();
-            }
-        );
-
-        $c->register('b', function () { return 'B'; });
-
-        $c->validate();
-
-        ok(true, 'should validate complete Container');
-    }
-);
-
-test(
-    'Registry: can register ServiceProvider',
-    function () {
-        $c = new App();
-
-        $c->register(new AppProvider());
-
-        $c->register(function (Container $c) {
-            $c->configure('cache', function (MemoryCache $cache) {
-                $cache->enabled = false;
-            });
+        $container->register(CacheProvider::class, function (Container $c) {
+            return new FileCache($c->get('cache.path'));
         });
 
-        $c->validate();
+        $container->register(UserRepository::class, function (Container $c) {
+            return new UserRepository($c->get(CacheProvider::class));
+        });
 
-        ok($c->getUserRepository() instanceof UserRepository, 'can configure UserRepository with cache dependency');
-        ok($c->getCache() instanceof CacheProvider, 'can configure Container via ServiceProvider interface');
-        ok($c->getCache()->enabled === false, 'can configure Container via callable');
+        $repo = $container->get(UserRepository::class);
+
+        ok($repo instanceof UserRepository);
+        ok($repo->cache instanceof CacheProvider);
+        eq($repo->cache->path, '/tmp/cache');
+    }
+);
+
+test(
+    'can resolve dependencies using parameter names',
+    function () {
+        $container = new Container();
+
+        $container->set('cache_path', '/tmp/cache');
+
+        $container->register(CacheProvider::class, function ($cache_path) {
+            return new FileCache($cache_path);
+        });
+
+        $container->register(UserRepository::class, function (CacheProvider $cache) {
+            return new UserRepository($cache);
+        });
+
+        $repo = $container->get(UserRepository::class);
+
+        ok($repo instanceof UserRepository);
+        ok($repo->cache instanceof CacheProvider);
+        eq($repo->cache->path, '/tmp/cache');
+    }
+);
+
+test(
+    'can resolve dependencies using dependency maps',
+    function () {
+        $container = new Container();
+
+        $container->set('cache.path', '/tmp/cache');
+
+        $container->register(
+            'cache',
+            function ($path) {
+                return new FileCache($path);
+            },
+            ['cache.path']
+        );
+
+        $container->register(
+            UserRepository::class,
+            function (CacheProvider $cp) {
+                return new UserRepository($cp);
+            },
+            ['cp' => 'cache']
+        );
+
+        $repo = $container->get(UserRepository::class);
+
+        ok($repo instanceof UserRepository);
+        ok($repo->cache instanceof CacheProvider);
+        eq($repo->cache->path, '/tmp/cache');
+    }
+);
+
+test(
+    'can act as a factory',
+    function () {
+        $container = new Container();
+
+        $container->register(
+            CacheProvider::class,
+            function () {
+                return new FileCache('/tmp/cache');
+            }
+        );
+
+        $repo = $container->create(UserRepository::class);
+
+        ok($repo instanceof UserRepository);
+
+        $another = $container->create(UserRepository::class);
+
+        ok($repo !== $another);
+    }
+);
+
+test(
+    'can override factory maps',
+    function () {
+        $container = new Container();
+
+        $container->set('cache_path', '/tmp/cache');
+
+        $container->register('cache', function ($cache_path) {
+            return new FileCache($cache_path);
+        });
+
+        $cache = $container->create('cache');
+
+        eq($cache->path, '/tmp/cache');
+
+        $cache = $container->create('cache', [$container->value('/my/path')]);
+
+        eq($cache->path, '/my/path');
     }
 );
 

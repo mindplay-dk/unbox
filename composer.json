@@ -1,6 +1,6 @@
 {
     "name": "mindplay/unbox",
-    "description": "Yet another dependency injection service registry container thingy",
+    "description": "Wicked awesome simple dependency injection container",
     "type": "library",
     "license": "LGPL-3.0+",
     "authors": [
@@ -10,7 +10,8 @@
         }
     ],
     "require": {
-        "php": ">=5.5"
+        "php": ">=5.5",
+        "container-interop/container-interop": "~1.0"
     },
     "require-dev": {
         "mindplay/testies": "0.*",
