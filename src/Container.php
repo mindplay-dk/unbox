@@ -13,7 +13,7 @@ use ReflectionParameter;
 /**
  * This class implements a type-checked dependency injection container.
  */
-class Container implements ContainerInterface
+class Container implements ContainerInterface, FactoryInterface
 {
     /**
      * @type string pattern for parsing an argument type from a ReflectionParameter string
