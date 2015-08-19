@@ -113,7 +113,7 @@ class Container implements ContainerInterface, FactoryInterface
     /**
      * @param string                 $name component name
      * @param callable|string[]|null $func `function ($owner) : mixed`
-     * @param string|string[]        $map  mixed list/map of parameter names
+     * @param string|string[]        $map  mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
      *
@@ -194,7 +194,7 @@ class Container implements ContainerInterface, FactoryInterface
 
     /**
      * @param callable        $callback any arbitrary closure or callable
-     * @param string[]|string $map      mixed list/map of parameter names
+     * @param string[]|string $map      mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed return value from the given callable
      */
@@ -227,7 +227,7 @@ class Container implements ContainerInterface, FactoryInterface
      * not explicitly provided in the (optional) second parameter.
      *
      * @param string          $class_name fully-qualified class-name
-     * @param string[]|string $map        mixed list/map of parameter names
+     * @param string[]|string $map        mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed
      */
@@ -271,8 +271,8 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * @param ReflectionParameter[] $params
-     * @param string[]|string       $map mixed list/map of parameter names
+     * @param ReflectionParameter[] $params parameter reflections
+     * @param string[]|string       $map    mixed list/map of parameter values (and/or boxed values)
      *
      * @return array parameters
      *
