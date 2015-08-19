@@ -132,6 +132,10 @@ class Container implements ContainerInterface, FactoryInterface
             $func = function () use ($func, $map) {
                 return $this->create($func, $map);
             };
+        } elseif (is_array($func)) {
+            $func = function () use ($name, $func) {
+                return $this->create($name, $func);
+            };
         }
 
         $this->factory[$name] = $func;
