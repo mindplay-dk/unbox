@@ -3,9 +3,17 @@
 use mindplay\unbox\Container;
 use mindplay\unbox\ProviderInterface;
 
+function test_func($foo) {
+    return $foo;
+}
+
 interface CacheProvider {}
 
-class Foo {}
+class Foo {
+    public function bar($foo) {
+        return $foo;
+    }
+}
 
 class FileCache implements CacheProvider
 {

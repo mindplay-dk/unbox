@@ -144,6 +144,23 @@ test(
 );
 
 test(
+    'can call all the things',
+    function () {
+        $container = new Container();
+
+        $container->set('foo', 'bar');
+
+        eq($container->call('test_func'), 'bar', 'can call function');
+
+        $foo = new Foo();
+
+        eq($container->call([$foo, 'bar']), 'bar', 'can call method');
+
+        // TODO more tests kplsthx
+    }
+);
+
+test(
     'can resolve dependencies by name',
     function () {
         $container = new Container();
