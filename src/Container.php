@@ -193,12 +193,12 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * @param callable        $callback any arbitrary closure or callable
+     * @param callable|object $callback any arbitrary closure or callable, or object implementing __invoke()
      * @param string[]|string $map      mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed return value from the given callable
      */
-    public function call(callable $callback, $map = array())
+    public function call($callback, $map = array())
     {
         if (is_array($callback)) {
             switch (count($callback)) {
@@ -213,9 +213,15 @@ class Container implements ContainerInterface, FactoryInterface
                 default:
                     throw new InvalidArgumentException("expected callable");
             }
-        }
+        } elseif (is_object($callback)) {
+            if (!method_exists($callback, '__invoke')) {
+                throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");
+            }
 
-        $reflection = new ReflectionFunction($callback);
+            $reflection = new ReflectionMethod($callback, '__invoke');
+        } else {
+            $reflection = new ReflectionFunction($callback);
+        }
 
         return call_user_func_array($callback, $this->resolve($reflection->getParameters(), $map));
     }
