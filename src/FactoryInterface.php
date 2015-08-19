@@ -15,4 +15,18 @@ interface FactoryInterface
      * @return mixed
      */
     public function create($name, $map = array());
+
+    /**
+     * @param string $name component name
+     *
+     * @return callable component reference for use in parameter maps
+     */
+    public function ref($name);
+
+    /**
+     * @param mixed $value
+     *
+     * @return callable fixed value for use in parameter maps
+     */
+    public function value($value);
 }

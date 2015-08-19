@@ -7,12 +7,15 @@ interface CacheProvider {}
 
 class FileCache implements CacheProvider
 {
+    /**
+     * @var string
+     */
+    public $path;
+
     public function __construct($path)
     {
         $this->path = $path;
     }
-
-    public $path;
 }
 
 class UserRepository

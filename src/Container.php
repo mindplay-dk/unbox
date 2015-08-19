@@ -221,34 +221,35 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * @param string          $name component name
-     * @param string[]|string $map  mixed list/map of parameter names
+     * Create an instance of a given class.
+     *
+     * The container will internally resolve and inject any constructor arguments
+     * not explicitly provided in the (optional) second parameter.
+     *
+     * @param string          $class_name fully-qualified class-name
+     * @param string[]|string $map        mixed list/map of parameter names
      *
      * @return mixed
      */
-    public function create($name, $map = array())
+    public function create($class_name, $map = array())
     {
-        if (isset($this->factory[$name])) {
-            return $this->call($this->factory[$name], $map + $this->factory_map[$name]);
-        } else {
-            if (!class_exists($name)) {
-                throw new InvalidArgumentException("unable to create component: {$name}");
-            }
-
-            $reflection = new ReflectionClass($name);
-
-            if (!$reflection->isInstantiable()) {
-                throw new InvalidArgumentException("unable to create instance of abstract class: {$name}");
-            }
-
-            $constructor = $reflection->getConstructor();
-
-            $params = $constructor
-                ? $this->resolve($constructor->getParameters(), $map)
-                : array();
-
-            return $reflection->newInstanceArgs($params);
+        if (!class_exists($class_name)) {
+            throw new InvalidArgumentException("unable to create component: {$class_name}");
         }
+
+        $reflection = new ReflectionClass($class_name);
+
+        if (!$reflection->isInstantiable()) {
+            throw new InvalidArgumentException("unable to create instance of abstract class: {$class_name}");
+        }
+
+        $constructor = $reflection->getConstructor();
+
+        $params = $constructor
+            ? $this->resolve($constructor->getParameters(), $map)
+            : array();
+
+        return $reflection->newInstanceArgs($params);
     }
 
     /**
@@ -333,7 +334,12 @@ class Container implements ContainerInterface, FactoryInterface
                 continue;
             }
 
-            throw new ContainerException("unable to resolve \"{$component}\" for parameter: \${$param_name}");
+            $reflection = $param->getDeclaringFunction();
+
+            throw new ContainerException(
+                "unable to resolve \"{$component}\" for parameter: \${$param_name}" .
+                ' in: ' . $reflection->getFileName() . '#' . $reflection->getStartLine()
+            );
         }
 
         return $args;
