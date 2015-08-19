@@ -212,11 +212,13 @@ class Container implements ContainerInterface, FactoryInterface
                 $this->resolve($reflection->getParameters(), $map)
             );
         } elseif (is_object($callback)) {
-            if (!method_exists($callback, '__invoke')) {
+            if ($callback instanceof Closure) {
+                $reflection = new ReflectionFunction($callback);
+            } elseif (method_exists($callback, '__invoke')) {
+                $reflection = new ReflectionMethod($callback, '__invoke');
+            } else {
                 throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");
             }
-
-            $reflection = new ReflectionMethod($callback, '__invoke');
         } else {
             $reflection = new ReflectionFunction($callback);
         }

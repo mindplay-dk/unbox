@@ -160,6 +160,10 @@ test(
 
         eq($container->call($foo), 'bar', 'can call __invoke()');
 
+        eq($container->call(function ($foo) { return $foo; }), 'bar', 'can call Closure');
+
+        eq($container->call(function ($nope = 'nope') { return $nope ? 'yep' : 'whoa'; }), 'yep', 'can supply default argument');
+
         // TODO more tests kplsthx
     }
 );
