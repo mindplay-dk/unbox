@@ -19,12 +19,12 @@ different qualities - from the smallest and simplest to the largest and most amb
   * [pimple](http://pimple.sensiolabs.org/) is as simple as a DI container can get, with absolutely
     no bell and whistles, and barely any learning curve.
 
-  * **unbox** with just one class (less than 400 lines of code) and a few interfaces - more concepts
+  * **unbox** with just two classes (less than 400 lines of code) and a few interfaces - more concepts
     than pimple (and therefore a bit more learning curve) and convenient closure injections, which
     are somewhat more costly in terms of performance.
 
   * [php-di](http://php-di.org/) is a pristine dependency injection framework with all the bells and
-    whistles.
+    whistles - rich with features, but also has more concepts and learning curve, and more overhead.
 
 The included [simple benchmark](test/benchmark.php) generates the following benchmark results.
 
