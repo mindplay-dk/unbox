@@ -59,6 +59,8 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Resolve the registered component with the given name.
+     *
      * @param string $name component name
      *
      * @return mixed
@@ -94,6 +96,9 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Directly inject a component into the container - use this to register components that
+     * have already been created for some reason; for example, the Composer ClassLoader.
+     *
      * @param string $name component name
      * @param mixed  $value
      *
@@ -111,9 +116,43 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * @param string                 $name component name
-     * @param callable|string[]|null $func `function ($owner) : mixed`
-     * @param string|string[]        $map  mixed list/map of parameter values (and/or boxed values)
+     * Register a component for dependency injection.
+     *
+     * There are numerous valid ways to configure components.
+     *
+     *   * `register(Foo::class)` registers a component by it's class-name, and will try to
+     *     automatically resolve all of it's constructor arguments.
+     *
+     *   * `register(Foo::class, ['bar'])` registers a component by it's class-name, and will
+     *     use `'bar'` as the first constructor argument, and try to resolve the rest.
+     *
+     *   * `register(Foo::class, [$container->ref(Bar::class)])` creates a boxed reference to
+     *     a registered component `Bar` and provides that as the first argument.
+     *
+     *   * `register(Foo::class, ['bat' => 'zap'])` registers a component by it's class-name
+     *     and will use `'zap'` for the constructor argument named `$bat`, and try to resolve
+     *     any other arguments.
+     *
+     *   * `register(Bar::class, Foo::class)` registers a component `Foo` under another name
+     *     `Bar`, which might be an interface or an abstract class.
+     *
+     *   * `register(Bar::class, Foo::class, ['bar'])` same as above, but uses `'bar'` as the
+     *     first argument.
+     *
+     *   * `register(Bar::class, Foo::class, ['bat' => 'zap'])` same as above, but, well, guess.
+     *
+     *   * `register(Bar::class, function (Foo $foo) { return new Bar(...); })` registers a
+     *     component with a custom factory function.
+     *
+     * Pretty much any combination of the above options will most likely work.
+     *
+     * The provided parameter values may include any `BoxedValueInterface`, such as the boxed
+     * component referenced created by {@see Container::ref()} - these will be unboxed as late
+     * as possible.
+     *
+     * @param string                        $name component name
+     * @param callable|string|string[]|null $func `function ($owner) : mixed`
+     * @param string|string[]               $map  mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
      *
@@ -302,7 +341,7 @@ class Container implements ContainerInterface, FactoryInterface
                 preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
 
                 $type = $matches[1];
-                
+
                 if ($type && $this->has($type)) {
                     $value = $this->get($type);
                 } elseif ($this->has($param_name)) {
