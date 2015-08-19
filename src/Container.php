@@ -110,18 +110,28 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * @param string          $name component name
-     * @param callable        $func `function ($owner) : mixed`
-     * @param string|string[] $map  mixed list/map of parameter names
+     * @param string                 $name component name
+     * @param callable|string[]|null $func `function ($owner) : mixed`
+     * @param string|string[]        $map  mixed list/map of parameter names
      *
      * @return void
      *
      * @throws ContainerException
      */
-    public function register($name, callable $func, $map = array())
+    public function register($name, callable $func = null, $map = array())
     {
         if (@$this->initialized[$name]) {
             throw new ContainerException("attempted re-registration of active component: {$name}");
+        }
+
+        if (is_null($func)) {
+            $func = function () use ($name) {
+                return $this->create($name);
+            };
+        } elseif (is_string($func)) {
+            $func = function () use ($func, $map) {
+                return $this->create($func, $map);
+            };
         }
 
         $this->factory[$name] = $func;
