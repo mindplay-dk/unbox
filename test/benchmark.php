@@ -10,15 +10,15 @@ require __DIR__ . '/header.php';
 $bench = new Benchmark();
 
 $unbox_configuration = function () {
-    $container = require __DIR__ . '/unbox.php';
+    $container = require __DIR__ . '/bootstrap-unbox.php';
 };
 
 $phpdi_configuration = function () {
-    $container = require __DIR__ . '/php-di.php';
+    $container = require __DIR__ . '/bootstrap-php-di.php';
 };
 
 $pimple_configuration = function () {
-    $container = require __DIR__ . '/pimple.php';
+    $container = require __DIR__ . '/bootstrap-pimple.php';
 };
 
 $bench->add(
@@ -44,7 +44,7 @@ foreach (array(1,3,5,10) as $num) {
     $bench->add(
         "unbox: {$num} repeated resolutions",
         function () use ($num) {
-            $container = require __DIR__ . '/unbox.php';
+            $container = require __DIR__ . '/bootstrap-unbox.php';
 
             for ($i = 0; $i < $num; $i++) {
                 $cache = $container->get(UserRepository::class);
@@ -56,7 +56,7 @@ foreach (array(1,3,5,10) as $num) {
     $bench->add(
         "php-di: {$num} repeated resolutions",
         function () use ($num) {
-            $container = require __DIR__ . '/php-di.php';
+            $container = require __DIR__ . '/bootstrap-php-di.php';
 
             for ($i = 0; $i < $num; $i++) {
                 $cache = $container->get(UserRepository::class);
@@ -68,7 +68,7 @@ foreach (array(1,3,5,10) as $num) {
     $bench->add(
         "pimple: {$num} repeated resolutions",
         function () use ($num) {
-            $container = require __DIR__ . '/pimple.php';
+            $container = require __DIR__ . '/bootstrap-pimple.php';
 
             for ($i = 0; $i < $num; $i++) {
                 $cache = $container[UserRepository::class];

@@ -172,7 +172,7 @@ function test_case(ContainerInterface $container)
 test(
     'can resolve dependencies using parameter names',
     function () {
-        $container = require __DIR__ . '/unbox.php';
+        $container = require __DIR__ . '/bootstrap-unbox.php';
 
         test_case($container);
     }
@@ -181,7 +181,7 @@ test(
 test(
     'php-di test-case is identical to unbox test-case',
     function () {
-        $container = require __DIR__ . '/php-di.php';
+        $container = require __DIR__ . '/bootstrap-php-di.php';
 
         test_case($container);
     }
@@ -205,7 +205,7 @@ class PimpleTestAdapter implements ContainerInterface {
 test(
     'pimple test-case is identical to unbox test-case',
     function () {
-        $container = require __DIR__ . '/pimple.php';
+        $container = require __DIR__ . '/bootstrap-pimple.php';
 
         test_case(new PimpleTestAdapter($container));
     }
