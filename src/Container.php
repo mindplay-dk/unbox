@@ -255,25 +255,11 @@ class Container implements ContainerInterface, FactoryInterface
     /**
      * @param string $name component name
      *
-     * @return callable component reference for use in parameter maps
+     * @return BoxedValueInterface boxed component reference
      */
     public function ref($name)
     {
-        return function () use ($name) {
-            return $this->get($name);
-        };
-    }
-
-    /**
-     * @param mixed $value
-     *
-     * @return callable fixed value for use in parameter maps
-     */
-    public function value($value)
-    {
-        return function () use ($value) {
-            return $value;
-        };
+        return new BoxedReference($this, $name);
     }
 
     /**
@@ -303,43 +289,35 @@ class Container implements ContainerInterface, FactoryInterface
             $param_name = $param->getName();
 
             if (array_key_exists($param_name, $map)) {
-                $component = $map[$param_name];
+                $value = $map[$param_name];
             } elseif (array_key_exists($index, $map)) {
-                $component = $map[$index];
+                $value = $map[$index];
             } else {
                 preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
 
-                $component = $matches[1];
+                $type = $matches[1];
 
-                if (!$this->has($component)) {
-                    $component = $param_name;
+                if ($this->has($type)) {
+                    $value = $this->get($type);
+                } elseif ($this->has($param_name)) {
+                    $value = $this->get($param_name);
+                } elseif ($param->isOptional()) {
+                    $value = $param->getDefaultValue();
+                } else {
+                    $reflection = $param->getDeclaringFunction();
+
+                    throw new ContainerException(
+                        "unable to resolve \"{$type}\" for parameter: \${$param_name}" .
+                        ' in: ' . $reflection->getFileName() . '#' . $reflection->getStartLine()
+                    );
                 }
             }
 
-            if ($component instanceof Closure) {
-                $args[] = $this->call($component);
-
-                continue;
+            if ($value instanceof BoxedValueInterface) {
+                $value = $value->unbox();
             }
 
-            if ($this->has($component)) {
-                $args[] = $this->get($component);
-
-                continue;
-            }
-
-            if ($param->isOptional()) {
-                $args[] = $param->getDefaultValue();
-
-                continue;
-            }
-
-            $reflection = $param->getDeclaringFunction();
-
-            throw new ContainerException(
-                "unable to resolve \"{$component}\" for parameter: \${$param_name}" .
-                ' in: ' . $reflection->getFileName() . '#' . $reflection->getStartLine()
-            );
+            $args[] = $value;
         }
 
         return $args;

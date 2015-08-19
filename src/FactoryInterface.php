@@ -19,14 +19,7 @@ interface FactoryInterface
     /**
      * @param string $name component name
      *
-     * @return callable component reference for use in parameter maps
+     * @return BoxedValueInterface boxed component reference
      */
     public function ref($name);
-
-    /**
-     * @param mixed $value
-     *
-     * @return callable fixed value for use in parameter maps
-     */
-    public function value($value);
 }

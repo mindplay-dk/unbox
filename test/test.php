@@ -223,7 +223,7 @@ test(
             function ($path) {
                 return new FileCache($path);
             },
-            ['cache.path']
+            [$container->ref('cache.path')]
         );
 
         $container->register(
@@ -231,7 +231,7 @@ test(
             function (CacheProvider $cp) {
                 return new UserRepository($cp);
             },
-            ['cp' => 'cache']
+            ['cp' => $container->ref('cache')]
         );
 
         $repo = $container->get(UserRepository::class);
@@ -271,14 +271,14 @@ test(
 
         $container->set('cache.path', '/tmp/cache');
 
-        $container->register(CacheProvider::class, FileCache::class, ['cache.path']);
+        $container->register(CacheProvider::class, FileCache::class, [$container->ref('cache.path')]);
 
         /** @var UserRepository $repo */
         $repo = $container->create(UserRepository::class);
 
         eq($repo->cache->path, '/tmp/cache');
 
-        $repo = $container->create(UserRepository::class, [$container->value(new FileCache('/my/path'))]);
+        $repo = $container->create(UserRepository::class, [new FileCache('/my/path')]);
 
         eq($repo->cache->path, '/my/path');
     }
