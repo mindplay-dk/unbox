@@ -53,6 +53,7 @@ class Container implements ContainerInterface, FactoryInterface
     {
         $this->values[get_class($this)] =
         $this->values[__CLASS__] =
+        $this->values[ContainerInterface::class] =
         $this->values[FactoryInterface::class] =
             $this;
     }
