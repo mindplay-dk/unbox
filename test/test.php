@@ -273,7 +273,6 @@ test(
 
         $container->register(CacheProvider::class, FileCache::class, [$container->ref('cache.path')]);
 
-        /** @var UserRepository $repo */
         $repo = $container->create(UserRepository::class);
 
         eq($repo->cache->path, '/tmp/cache');
