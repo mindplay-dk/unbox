@@ -118,7 +118,7 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @throws ContainerException
      */
-    public function register($name, callable $func = null, $map = array())
+    public function register($name, $func = null, $map = array())
     {
         if (@$this->initialized[$name]) {
             throw new ContainerException("attempted re-registration of active component: {$name}");
