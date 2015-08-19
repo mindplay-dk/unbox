@@ -201,18 +201,16 @@ class Container implements ContainerInterface, FactoryInterface
     public function call($callback, $map = array())
     {
         if (is_array($callback)) {
-            switch (count($callback)) {
-                case 1:
-                    $reflection = new ReflectionFunction($callback[0]);
-                    return call_user_func_array($callback[0], $this->resolve($reflection->getParameters(), $map));
-
-                case 2:
-                    $reflection = new ReflectionMethod($callback[0], $callback[1]);
-                    return $reflection->invokeArgs($callback[0], $this->resolve($reflection->getParameters(), $map));
-
-                default:
-                    throw new InvalidArgumentException("expected callable");
+            if (!is_callable($callback)) {
+                throw new InvalidArgumentException("expected callable");
             }
+
+            $reflection = new ReflectionMethod($callback[0], $callback[1]);
+
+            return $reflection->invokeArgs(
+                is_object($callback[0]) ? $callback[0] : null,
+                $this->resolve($reflection->getParameters(), $map)
+            );
         } elseif (is_object($callback)) {
             if (!method_exists($callback, '__invoke')) {
                 throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");

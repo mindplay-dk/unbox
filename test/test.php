@@ -152,9 +152,13 @@ test(
 
         eq($container->call('test_func'), 'bar', 'can call function');
 
+        eq($container->call([Foo::class, 'bat']), 'bar', 'can call static method');
+
         $foo = new Foo();
 
-        eq($container->call([$foo, 'bar']), 'bar', 'can call method');
+        eq($container->call([$foo, 'bar']), 'bar', 'can call instance method');
+
+        eq($container->call($foo), 'bar', 'can call __invoke()');
 
         // TODO more tests kplsthx
     }

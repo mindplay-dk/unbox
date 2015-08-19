@@ -13,6 +13,14 @@ class Foo {
     public function bar($foo) {
         return $foo;
     }
+
+    public static function bat($foo) {
+        return $foo;
+    }
+
+    public function __invoke($foo) {
+        return $foo;
+    }
 }
 
 class FileCache implements CacheProvider
