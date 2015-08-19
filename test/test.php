@@ -37,6 +37,15 @@ test(
         eq($c->get('b'), 'B', 'returns the second component');
         ok($c->isActive('b'), 'second component activated');
 
+        $c->register('x', Foo::class);
+        ok($c->get('x') instanceof Foo, 'registers a default factory function when $func is a name');
+
+        $c->register(Foo::class);
+        ok($c->get(Foo::class) instanceof Foo, 'registers a default factory function when $func is NULL');
+
+        $c->register(FileCache::class, ['/tmp/foo']);
+        ok($c->get(FileCache::class) instanceof FileCache, 'registers a default factory function when $func is a map');
+
         expect(
             NotFoundException::class,
             'should throw on attempted to get undefined component',

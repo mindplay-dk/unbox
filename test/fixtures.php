@@ -5,6 +5,8 @@ use mindplay\unbox\ProviderInterface;
 
 interface CacheProvider {}
 
+class Foo {}
+
 class FileCache implements CacheProvider
 {
     /**
