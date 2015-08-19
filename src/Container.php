@@ -302,8 +302,8 @@ class Container implements ContainerInterface, FactoryInterface
                 preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
 
                 $type = $matches[1];
-
-                if ($this->has($type)) {
+                
+                if ($type && $this->has($type)) {
                     $value = $this->get($type);
                 } elseif ($this->has($param_name)) {
                     $value = $this->get($param_name);
