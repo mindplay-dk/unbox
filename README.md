@@ -26,7 +26,8 @@ different qualities - from the smallest and simplest to the largest and most amb
   * [php-di](http://php-di.org/) is a pristine dependency injection framework with all the bells and
     whistles - rich with features, but also has more concepts and learning curve, and more overhead.
 
-The included [simple benchmark](test/benchmark.php) generates the following benchmark results.
+The included [simple benchmark](test/benchmark.php) generates the following benchmark results on
+a Windows 8 system running PHP 5.6.6.
 
 Time to configure the container:
 
