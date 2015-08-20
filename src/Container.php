@@ -418,7 +418,7 @@ class Container implements ContainerInterface, FactoryInterface
         $map = (array)$map;
 
         foreach ($params as $index => $param) {
-            $param_name = $param->getName();
+            $param_name = $param->name;
 
             if (array_key_exists($param_name, $map)) {
                 $value = $map[$param_name]; // // resolve as user-provided named argument
