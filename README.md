@@ -26,7 +26,11 @@ creating any object for which the constructor arguments can be resolved.
 The container implementation is compatible
 with [container-interop](https://github.com/container-interop/container-interop).
 
-#### Terminology
+### Overview
+
+TODO: add preamble and code sample
+
+## Terminology
 
 The folling terminology is used in the documentation below:
 
@@ -43,7 +47,7 @@ The folling terminology is used in the documentation below:
   * **Dependency**: in our context, we mean any registered component that is required by another
     component, by a constructor (when using the container as a factory) or by any callable.
 
-### Dependency Resolution
+## Dependency Resolution
 
 Any argument, whether to a closure being manually invoked, or to a constructor being automatically
 invoked as part of resolving a longer chain of dependencies, is resolved according to a consistent
@@ -73,9 +77,9 @@ dependency is resolved by parameter name, the type-hint is ignored, but will of 
 by PHP when the function/method/constructor is invoked. Note that using type-hints either way is
 good practice (when possible) as this provides self-documenting configurations with IDE support.
 
-## Usage
+## Guide
 
-In the following examples, we'll assume that a `Container` instance is in scope, e.g.:
+In the following sections, we'll assume that a `Container` instance is in scope, e.g.:
 
 ```PHP
 use mindplay\unbox\Container;
