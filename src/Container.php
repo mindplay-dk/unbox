@@ -186,6 +186,17 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * @param string $name     new component name
+     * @param string $ref_name existing component name
+     */
+    public function alias($name, $ref_name)
+    {
+        $this->register($name, function () use ($ref_name) {
+            return $this->get($ref_name);
+        });
+    }
+
+    /**
      * @param string   $name component name
      * @param callable $func `function ($component, $owner) : void`
      *

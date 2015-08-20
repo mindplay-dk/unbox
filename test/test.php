@@ -189,6 +189,19 @@ test(
     }
 );
 
+test(
+    'can alias names',
+    function () {
+        $container = new Container();
+
+        $container->register(FileCache::class, ['/tmp/foo']);
+
+        $container->alias(CacheProvider::class, FileCache::class);
+
+        eq($container->get(FileCache::class), $container->get(CacheProvider::class), 'alias return same singleton');
+    }
+);
+
 /**
  * @param ContainerInterface $container
  */
