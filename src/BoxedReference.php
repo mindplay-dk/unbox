@@ -15,6 +15,11 @@ class BoxedReference implements BoxedValueInterface
     private $container;
 
     /**
+     * @var string
+     */
+    private $name;
+
+    /**
      * @param ContainerInterface $container container reference
      * @param string             $name      component name
      */
