@@ -147,9 +147,13 @@ class Container implements ContainerInterface, FactoryInterface
      *   * `register(Bar::class, Foo::class, ['bat' => 'zap'])` same as above, but, well, guess.
      *
      *   * `register(Bar::class, function (Foo $foo) { return new Bar(...); })` registers a
-     *     component with a custom factory function.
+     *     component with a custom creation function.
      *
-     * Pretty much any combination of the above options will most likely work.
+     *   * `register(Bar::class, function ($name) { ... }, [$container->ref('db.name')]);`
+     *     registers a component creation function with a reference to a component "db.name"
+     *     as the first argument.
+     *
+     * In effect, you can think of `$func` as being an optional argument.
      *
      * The provided parameter values may include any `BoxedValueInterface`, such as the boxed
      * component referenced created by {@see Container::ref()} - these will be unboxed as late
@@ -178,8 +182,10 @@ class Container implements ContainerInterface, FactoryInterface
                 return $this->create($func, $map);
             };
         } elseif (is_array($func)) {
-            $func = function () use ($name, $func) {
-                return $this->create($name, $func);
+            $map = $func;
+
+            $func = function () use ($name, $map) {
+                return $this->create($name, $map);
             };
         }
 
