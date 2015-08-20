@@ -15,7 +15,7 @@
         "mindplay/benchpress": "dev-master"
     },
     "require-dev": {
-        "mindplay/testies": "0.*",
+        "mindplay/testies": "^0.2",
         "phpunit/php-code-coverage": "~2.1",
         "php-di/php-di": "^5.0.3",
         "pimple/pimple": "3.0.1"

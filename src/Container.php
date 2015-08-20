@@ -47,6 +47,11 @@ class Container implements ContainerInterface, FactoryInterface
     protected $config = array();
 
     /**
+     * @var array map where component name => mixed list/map of parameter names
+     */
+    protected $config_map = array();
+
+    /**
      * Self-register this container for dependency injection
      */
     public function __construct()
@@ -84,8 +89,8 @@ class Container implements ContainerInterface, FactoryInterface
             $this->values[$name] = call_user_func_array($factory, $params);
 
             if (isset($this->config[$name])) {
-                foreach ($this->config[$name] as $config) {
-                    $this->applyConfiguration($name, $config);
+                foreach ($this->config[$name] as $index => $config) {
+                    $this->applyConfiguration($name, $config, $this->config_map[$name][$index]);
                 }
             }
 
@@ -118,7 +123,7 @@ class Container implements ContainerInterface, FactoryInterface
     /**
      * Register a component for dependency injection.
      *
-     * There are numerous valid ways to configure components.
+     * There are numerous valid ways to register components.
      *
      *   * `register(Foo::class)` registers a component by it's class-name, and will try to
      *     automatically resolve all of it's constructor arguments.
@@ -152,7 +157,7 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @param string                        $name component name
      * @param callable|string|string[]|null $func `function ($owner) : mixed`
-     * @param string|string[]               $map  mixed list/map of parameter values (and/or boxed values)
+     * @param mixed|mixed[]                 $map  mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
      *
@@ -186,6 +191,8 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Register a component as an alias of another registered component.
+     *
      * @param string $name     new component name
      * @param string $ref_name existing component name
      */
@@ -197,19 +204,43 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * @param string   $name component name
-     * @param callable $func `function ($component, $owner) : void`
+     * Register a configuration function, which will be applied as late as possible, e.g.
+     * on first use of the component. For example:
+     *
+     *     $container->configure(MiddlewareStack::class, function (MiddlewareStack $stack) {
+     *         $stack->push(new MoreAwesomeMiddleware());
+     *     });
+     *
+     * The given configuration function should include the configured component as the
+     * first parameter to the closure, but may include any number of parameters, which
+     * will be resolved and injected.
+     *
+     * You may optionally provide a list/map of parameter values, similar to the one
+     * accepted by {@see Container::register()} - the typical reason to use this, is if
+     * you need to inject another component by name, e.g. using {@see Container::ref()}.
+     *
+     * You can also use `configure()` to decorate objects, or manipulate (or replace) values:
+     *
+     *     $container->configure('num_kittens', function ($num_kittens) {
+     *         return $num_kittens + 6; // add another litter
+     *     });
+     *
+     * In other words, if your closure returns something, the component will be replaced.
+     *
+     * @param string        $name component name
+     * @param callable      $func `function (Type $component, ...) : void`
+     * @param mixed|mixed[] $map  mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
      *
      * @throws NotFoundException
      */
-    public function configure($name, callable $func)
+    public function configure($name, callable $func, $map = array())
     {
         if ($this->isActive($name)) {
-            // component is already active - run the configuration function right away:
+            // component is already active - apply the configuration function immediately:
 
-            $this->applyConfiguration($name, $func);
+            $this->applyConfiguration($name, $func, $map);
 
             return;
         }
@@ -219,9 +250,13 @@ class Container implements ContainerInterface, FactoryInterface
         }
 
         $this->config[$name][] = $func;
+
+        $this->config_map[$name][] = $map;
     }
 
     /**
+     * Check for the existence of a component with a given name.
+     *
      * @param string $name component name
      *
      * @return bool true, if a component with the given name has been defined
@@ -233,6 +268,8 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Check if a component has been unboxed and is currently active.
+     *
      * @param string $name component name
      *
      * @return bool
@@ -243,8 +280,18 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Call any given callable, using dependency injection to satisfy it's arguments, and/or
+     * manually specifying some of those arguments - then return the value from the call.
+     *
+     * This will work for any callable:
+     *
+     *     $container->call('foo');               // function foo()
+     *     $container->call($foo, 'baz');         // instance method $foo->baz()
+     *     $container->call([Foo::class, 'bar']); // static method Foo::bar()
+     *     $container->call($foo);                // closure (or class implementing __invoke)
+     *
      * @param callable|object $callback any arbitrary closure or callable, or object implementing __invoke()
-     * @param string[]|string $map      mixed list/map of parameter values (and/or boxed values)
+     * @param mixed|mixed[]   $map      mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed return value from the given callable
      */
@@ -282,8 +329,8 @@ class Container implements ContainerInterface, FactoryInterface
      * The container will internally resolve and inject any constructor arguments
      * not explicitly provided in the (optional) second parameter.
      *
-     * @param string          $class_name fully-qualified class-name
-     * @param string[]|string $map        mixed list/map of parameter values (and/or boxed values)
+     * @param string        $class_name fully-qualified class-name
+     * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed
      */
@@ -309,6 +356,25 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Creates a boxed reference to a component in the container.
+     *
+     * You can use this in conjunction with `register()` to provide a component reference
+     * without expanding that reference until first use - for example:
+     *
+     *     $container->register(UserRepo::class, [$container->ref('cache')]);
+     *
+     * This will reference the "cache" component and provide it as the first argument to the
+     * constructor of `UserRepo` - compared with using `$container->get('cache')`, this has
+     * the advantage of not actually activating the "cache" component until `UserRepo` is
+     * used for the first time.
+     *
+     * Another reason (besides performance) to use references, is to defer the reference:
+     *
+     *     $container->register(FileCache::class, ['root_path' => $container->ref('cache.path')]);
+     *
+     * In this example, the component "cache.path" will be fetched from the container on
+     * first use of `FileCache`, giving you a chance to configure "cache.path" later.
+     *
      * @param string $name component name
      *
      * @return BoxedValueInterface boxed component reference
@@ -319,7 +385,13 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Add a packaged configuration (a "provider") to this container.
+     *
+     * @see ProviderInterface
+     *
      * @param ProviderInterface $provider
+     *
+     * @return void
      */
     public function add(ProviderInterface $provider)
     {
@@ -327,8 +399,12 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Internally resolves parameters to functions or constructors.
+     *
+     * This is the heart of the beast.
+     *
      * @param ReflectionParameter[] $params parameter reflections
-     * @param string[]|string       $map    mixed list/map of parameter values (and/or boxed values)
+     * @param mixed|mixed[]         $map    mixed list/map of parameter values (and/or boxed values)
      *
      * @return array parameters
      *
@@ -345,60 +421,63 @@ class Container implements ContainerInterface, FactoryInterface
             $param_name = $param->getName();
 
             if (array_key_exists($param_name, $map)) {
-                $value = $map[$param_name];
+                $value = $map[$param_name]; // // resolve as user-provided named argument
             } elseif (array_key_exists($index, $map)) {
-                $value = $map[$index];
+                $value = $map[$index]; // resolve as user-provided positional argument
             } else {
+                // as on optimization, obtain the argument type without triggering autoload:
+
                 preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
 
                 $type = $matches[1];
 
                 if ($type && $this->has($type)) {
-                    $value = $this->get($type);
+                    $value = $this->get($type); // resolve as component registered by class/interface name
                 } elseif ($this->has($param_name)) {
-                    $value = $this->get($param_name);
+                    $value = $this->get($param_name); // resolve as component with matching parameter name
                 } elseif ($param->isOptional()) {
-                    $value = $param->getDefaultValue();
+                    $value = $param->getDefaultValue(); // unresolved: resolve using default value
                 } else {
+                    // unresolved - throw a container exception:
+
                     $reflection = $param->getDeclaringFunction();
 
                     throw new ContainerException(
                         "unable to resolve \"{$type}\" for parameter: \${$param_name}" .
-                        ' in: ' . $reflection->getFileName() . '#' . $reflection->getStartLine()
+                        ' in file: ' . $reflection->getFileName() . ', line ' . $reflection->getStartLine()
                     );
                 }
             }
 
             if ($value instanceof BoxedValueInterface) {
-                $value = $value->unbox();
+                $value = $value->unbox(); // unbox a boxed value
             }
 
-            $args[] = $value;
+            $args[] = $value; // argument resolved!
         }
 
         return $args;
     }
 
     /**
-     * @param string  $name   component name
-     * @param Closure $config configuration function
+     * Internally apply a configuration function to a component.
+     *
+     * @param string          $name   component name
+     * @param Closure         $config configuration function
+     * @param string|string[] $map    mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
      */
-    protected function applyConfiguration($name, $config)
+    protected function applyConfiguration($name, $config, $map)
     {
-        $config_reflection = new ReflectionFunction($config);
+        $reflection = new ReflectionFunction($config);
 
-        $config_params = $this->resolve($config_reflection->getParameters(), array());
+        $params = $this->resolve($reflection->getParameters(), $map);
 
-        $config_refs = array();
+        $value = call_user_func_array($config, $params);
 
-        foreach (array_keys($config_params) as $key) {
-            $config_refs[$key] = &$config_params[$key];
+        if ($value !== null) {
+            $this->values[$name] = $value;
         }
-
-        call_user_func_array($config, $config_refs);
-
-        $this->values[$name] = $config_refs[0];
     }
 }

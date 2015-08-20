@@ -117,18 +117,20 @@ test(
 );
 
 test(
-    'Container: can configure registered component',
+    'Container: can configure registered components',
     function () {
         $c = new Container();
 
-        $c->register('a', function () { return 1; });
-        $c->set('b', 2);
+        $c->register('a', function () { return 1; }); // $a = 1
+        $c->set('b', 2); // $b = 2
 
-        $c->configure('a', function (&$a) { $a += 1; });
-        $c->configure('b', function (&$b) { $b += 1; });
+        $c->configure('a', function ($a) { return $a + 1; }); // $a = 2
+        $c->configure('a', function ($a) { return $a + 1; }); // $a = 3
 
-        $c->configure('a', function (&$a) { $a += 1; });
-        $c->configure('b', function (&$b) { $b += 1; });
+        $c->configure('b', function ($b) { return $b + 1; }); // $b = 3
+        $c->configure('b', function ($b) { return $b + 1; }); // $b = 4
+
+        $c->configure('b', function ($b) { $b += 1; }); // no change
 
         eq($c->get('a'), 3);
         eq($c->get('b'), 4);
@@ -140,6 +142,26 @@ test(
                 $c->configure('nope', function () {});
             }
         );
+
+        $c = new Container();
+
+        $c->register(Foo::class);
+
+        $c->register('zap', Bar::class);
+
+        $ok = false;
+
+        $c->configure(
+            Foo::class,
+            function (Foo $foo, Bar $bar) use (&$ok) {
+                $ok = true;
+            },
+            ['bar' => $c->ref('zap')]
+        );
+
+        $c->get(Foo::class);
+
+        ok($ok, 'can use parameter list/map in calls to configure()');
     }
 );
 

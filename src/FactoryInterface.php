@@ -9,17 +9,15 @@ namespace mindplay\unbox;
 interface FactoryInterface
 {
     /**
-     * @param string          $name component name
-     * @param string[]|string $map  mixed list/map of parameter names
+     * Create an instance of a given class.
+     *
+     * The factory will internally resolve and inject any constructor arguments
+     * not explicitly provided in the (optional) second parameter.
+     *
+     * @param string        $class_name fully-qualified class-name
+     * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed
      */
-    public function create($name, $map = array());
-
-    /**
-     * @param string $name component name
-     *
-     * @return BoxedValueInterface boxed component reference
-     */
-    public function ref($name);
+    public function create($class_name, $map = array());
 }

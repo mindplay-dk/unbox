@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "b7eebc29959465aae927e153b420ad25",
+    "hash": "69e62817fa658b33aec6335253931e70",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -73,16 +73,16 @@
     "packages-dev": [
         {
             "name": "mindplay/testies",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mindplay-dk/testies.git",
-                "reference": "4315563a87700c091de541519f3e4a141b2836f3"
+                "reference": "7f7ee264e47ab6fd9f67dfc63c3fd347f9c52a69"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mindplay-dk/testies/zipball/4315563a87700c091de541519f3e4a141b2836f3",
-                "reference": "4315563a87700c091de541519f3e4a141b2836f3",
+                "url": "https://api.github.com/repos/mindplay-dk/testies/zipball/7f7ee264e47ab6fd9f67dfc63c3fd347f9c52a69",
+                "reference": "7f7ee264e47ab6fd9f67dfc63c3fd347f9c52a69",
                 "shasum": ""
             },
             "require-dev": {
@@ -112,7 +112,7 @@
                 }
             ],
             "description": "Yeah, testies: a lightweight library for quick, simple unit-testing",
-            "time": "2015-06-22 09:35:17"
+            "time": "2015-08-20 10:47:19"
         },
         {
             "name": "php-di/invoker",

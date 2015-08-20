@@ -23,6 +23,8 @@ class Foo {
     }
 }
 
+class Bar {}
+
 class FileCache implements CacheProvider
 {
     /**

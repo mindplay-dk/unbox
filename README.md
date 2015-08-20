@@ -8,7 +8,42 @@ Wicked awesome simple dependency injection container.
 
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master)
 
-Documentation coming reeeeal soon like...
+## Installation
+
+With Composer: `require mindplay/unbox`
+
+## Usage
+
+<coming soon...>
+
+## Opinionated
+
+Features:
+
+  * **Productivity-oriented** - favoring heavy use of **closures** for full IDE support:
+    refactoring-friendly definitions with auto-complete support, inspections and so on.
+
+  * **Performance-oriented** only to the extent that it doesn't encumber the API.
+
+  * **PHP 5.5+** for `::class` support, and because you really shouldn't be using anything older.
+
+Non-features:
+
+  * **NO annotations** - because sprinkling bits of your container configuration across
+    your domain model is a really terrible idea.
+
+  * **NO auto-wiring** - because `$container->register(Foo::name)` isn't a burden, and explicitly
+    designates something as being a service; unintentionally treating a non-singleton as a singleton
+    can be a weird experience.
+
+  * **NO caching** and no "builder" or "container factory" class - because configuring a container
+    really shouldn't take
+
+  * **NO property injections** because it blurs your dependencies - use constructor injection, and
+    for optional dependencies, use optional constructor arguments; you don't, after all, need to
+    count the number of arguments anymore, since everything will be injected.
+
+  * No chainable API, because call chains (in PHP) don't play nice with source-control.
 
 ## Benchmark
 
