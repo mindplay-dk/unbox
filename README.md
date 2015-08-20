@@ -1,6 +1,6 @@
 # mindplay/unbox
 
-Wicked awesome simple dependency injection container.
+Wicked awesome, simple, [opinionated](#opinionated) and [fast](#benchmark) dependency injection container.
 
 [![Build Status](https://travis-ci.org/mindplay-dk/unbox.svg)](https://travis-ci.org/mindplay-dk/unbox)
 
@@ -12,11 +12,257 @@ Wicked awesome simple dependency injection container.
 
 With Composer: `require mindplay/unbox`
 
+## Introduction
+
+This library implements a dependency injection container with a very small footprint, a small number
+of concepts and a reasonably short learning curve, good performance, and quick and easy configuration
+relying mainly on the use of closures for IDE support.
+
+The container is capable of resolving constructor arguments, often automatically, with as little
+configuration as just the class-name. It will also resolve arguments to any callable, and to any
+object that implements `__invoke()`. It can also be used as a generic factory class, capable of
+creating any object for which the constructor arguments can be resolved.
+
+The container implementation is compatible
+with [container-interop](https://github.com/container-interop/container-interop).
+
+#### Terminology
+
+The folling terminology is used in the documentation below:
+
+  * **Callable**: refers to the `callable` pseudo-type
+    as [defined in the PHP manual](http://php.net/manual/en/language.types.callable.php).
+
+  * **Component**: any object or value registered in a container, whether registered by class-name,
+    interface-name, or some other arbitrary name.
+
+  * **Singleton**: when we say "singleton", we mean there's only one component with a given name
+    within the same container instance; of course, you can have multiple container instances, so
+    each component is a "singleton" only within the same container.
+
+  * **Dependency**: in our context, we mean any registered component that is required by another
+    component, by a constructor (when using the container as a factory) or by any callable.
+
+### Dependency Resolution
+
+Any argument, whether to a closure being manually invoked, or to a constructor being automatically
+invoked as part of resolving a longer chain of dependencies, is resolved according to a consistent
+set of rules - in order of priority:
+
+  1. If you provide the argument yourself, e.g. when registering a component (or configuration
+     function, or when invoking a callable) this always takes precedence. Arguments can include
+     boxed values, such as (typically) references to other components, and these will be unboxed
+     as late as possible.
+
+  2. Type-hints is the preferred way to resolve singletons, e.g. types of which you have only one
+     instance (or one "preferred" instance) in the same container. Singletons are usually registered
+     under their class-name, or interface-name, or sometimes both.
+
+  3. Parameter names, e.g. components maching the precise argument name (without `$`) - some may
+     think this is risky, as an unresolved type-hint could get resolved by a parameter-name not
+     intended for that function; if you don't wish to rely on this feature, you can simply adopt
+     a convention of using component names like `"db.name"` instead of `"db_name"`, since names
+     with a `"."` can't be used as parameter names.
+
+  4. A default parameter value, if provided, will be used as a last resort - this can be useful
+     in cases such as `function ($db_port = 3306) { ... }`, which allows for optional
+     configuration of simple values with defaults.
+
+For dependencies resolved using type-hints, the parameter name is ignored - and vice-versa: if a
+dependency is resolved by parameter name, the type-hint is ignored, but will of course be checked
+by PHP when the function/method/constructor is invoked. Note that using type-hints either way is
+good practice (when possible) as this provides self-documenting configurations with IDE support.
+
 ## Usage
 
-<coming soon...>
+In the following examples, we'll assume that a `Container` instance is in scope, e.g.:
+
+```PHP
+use mindplay\unbox\Container;
+
+$container = new Container();
+```
+
+### Bootstrapping
+
+The most commonly used method to bootstrap a container is `register()` - this is the method
+that lets you register a component for dependency injection.
+
+This method generally takes one of the following forms:
+
+    register(string $type)
+    register(string $type, array $map)
+    register(string $name, string $type)
+    register(string $name, string $type, array $map)
+    register(string $name, callable $func)
+
+Where:
+
+  * `$name` is a component name
+  * `$type` is a fully-qualified class-name
+  * `$map` is a mixed list/map of parameters (see below)
+  * `$func` is a custom factory function
+
+When `$type` is used without `$name`, the component name is assumed to also be the name
+of the type being registered.
+
+The `$map` argument is mixed list and/or map of parameters. That is, if you include
+parameters without keys (such as `['apple', 'pear']`) these are taken as being positional
+arguments, while parameters with keys (such as `['lives' => 9]`) are matched against
+the parameter name of the callable or constructor being invoked.
+
+When supplying custom arguments via `$map`, it is common to use `$container->ref('name')`
+to obtain a "boxed" reference to a component - when the registered component is created
+(on first use) any "boxed" arguments will be "unboxed" at that time. In other words, this
+enables you to supply other components as arguments "lazily", without activating them
+until they're actually needed.
+
+If the callable `$func` is supplied, this is registered as your custom component creation
+function - dependency injection is done for this closure, so this is usually the best way
+to specify how a component should be created, if you care about IDE support. (You should!)
+
+#### Examples
+
+The following examples are all valid use-cases of the above forms:
+
+  * `register(Foo::class)` registers a component by it's class-name, and will try to
+    automatically resolve all of it's constructor arguments.
+
+  * `register(Foo::class, ['bar'])` registers a component by it's class-name, and will
+    use `'bar'` as the first constructor argument, and try to resolve the rest.
+
+  * `register(Foo::class, [$container->ref(Bar::class)])` creates a boxed reference to
+    a registered component `Bar` and provides that as the first argument.
+
+  * `register(Foo::class, ['bat' => 'zap'])` registers a component by it's class-name
+    and will use `'zap'` for the constructor argument named `$bat`, and try to resolve
+    any other arguments.
+
+  * `register(Bar::class, Foo::class)` registers a component `Foo` under another name
+    `Bar`, which might be an interface or an abstract class.
+
+  * `register(Bar::class, Foo::class, ['bar'])` same as above, but uses `'bar'` as the
+    first argument.
+
+  * `register(Bar::class, Foo::class, ['bat' => 'zap'])` same as above, but, well, guess.
+
+  * `register(Bar::class, function (Foo $foo) { return new Bar(...); })` registers a
+    component with a custom factory function.
+
+  * `register(Bar::class, function ($name) { ... }, [$container->ref('db.name')]);`
+    registers a component creation function with a reference to a component "db.name"
+    as the first argument.
+
+In effect, you can think of `$func` as being an optional argument.
+
+The provided parameter values may include any `BoxedValueInterface`, such as the boxed
+component reference created by {@see Container::ref()} - these will be unboxed as late
+as possible.
+
+#### Aliasing
+
+Sometimes you need to register the same component under two different names - one common
+use-case, is to register the same component both for a concrete and abstract type, e.g.
+for a class and an interface.
+
+For example, it's ordinary to register a cache component twice:
+
+```PHP
+$container->register(CacheProvider::class, function () {
+    return new FileCache();
+});
+
+$container->alias("db.cache", CacheProvider::class); // "db.cache" becomes an alias!
+
+var_dump($container->get("db.cache") === $container->get(CacheProvider::class)); // => bool(true)
+```
+
+Using an alias, in this example, means that `"db.cache"` by default will resolve as
+`CacheProvider`, but gives us the ability to [override](#overrides) the definition of
+`"db.cache"` with a different implementation, without affecting other components which
+might also be using `CacheProvider` as a default.
+
+#### Direct Insertion
+
+In some cases, you already have an instance of a component, such as the `ClassLoader`
+provided by Composer - in this case, you can insert it directly into the container, to
+make it available for dependency injection:
+
+```PHP
+$loader = require __DIR__ . '/vendor/autoload.php';
+
+$container->set(ClassLoader::class, $loader);
+```
+
+Another common use-case for `set()` is to configure simple values like host-names or
+port-numbers.
+
+#### Overrides
+
+To override an existing component, simply call `register()` with an already-registered
+component name - this will completely replace an existing component definition.
+
+Note that overriding a component does *not* affect any registered configuration functions -
+it is therefore important that, if you do override a component, the new component must be
+compatible with the replaced component. Configuration in general is covered below.
+
+#### Configuration
+
+To perform additional configuration of a registered component, use the `configure()` method.
+
+This method takes one of the following forms:
+
+    configure(callable $func)
+    configure(callable $func, array $map)
+    configure(string $name, callable $func)
+    configure(string $name, callable $func, array $map)
+
+Where:
+
+  * `$name` is the name of a component being configured
+  * `$func` is a function that configures the component in some way
+  * `$map` is a mixed list/map of parameters (as explained [above](#bootstrapping))
+
+The callable `$func` will be called with dependency injection - the first argument of
+this function is the component being configured; you should type-hint it (if possible, for
+IDE support) although you're not strictly required to. Any additional arguments will be
+resolved as well.
+
+The optional array `$map` is a mixed list/map of parameters, as covered [above](#bootstrapping).
+
+If no `$name` is supplied, the first argument from the given `$func` is used to infer the
+component name: if the first argument is type-hinted, the class/interface name is used -
+or, if no type-hint is supplied, the parameter name is used.
+
+TODO: add PDO example
+
+##### Modification
+
+TODO: add examples of modifying scalar values
+
+TODO: add example of modifying an array
+
+##### Decoration
+
+TODO: explain and demonstrate how to decorate an object
+
+### Consumption
+
+TODO: explain and demonstrate get() and call()
+
+#### Factory Facet
+
+TODO: explain and demonstrate create()
+
+#### Introspection
+
+TODO: explain and demonstrate has() and isActive()
 
 ## Opinionated
+
+Less is more. We support only what's actually necessary to create beautiful architecture - we do
+not provide a wealth of "convenience" features to support patterns we wouldn't use, or patterns
+that aren't very common and can easily be implemented with the features we do provide.
 
 Features:
 
@@ -24,6 +270,9 @@ Features:
     refactoring-friendly definitions with auto-complete support, inspections and so on.
 
   * **Performance-oriented** only to the extent that it doesn't encumber the API.
+
+  * **Versatile** - supporting many different options for registration and configuration
+    using the same, low number of public methods, including value modifications, decorators, etc.
 
   * **PHP 5.5+** for `::class` support, and because you really shouldn't be using anything older.
 
@@ -48,6 +297,11 @@ Non-features:
     `configure()` *with* IDE support, argument checking, refactoring support, ...
 
   * No chainable API, because call chains (in PHP) don't play nice with source-control.
+
+  * All registered components are singletons - we do not support factory registrations; if you
+    need to register a factory, the proper way to do that, is to either implement an actual
+    factory class (which is usually better in the long run), or register the factory closure
+    itself as a named component.
 
 ## Benchmark
 
