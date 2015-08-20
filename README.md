@@ -37,11 +37,15 @@ Non-features:
     can be a weird experience.
 
   * **NO caching** and no "builder" or "container factory" class - because configuring a container
-    really shouldn't take
+    really shouldn't be so much overhead as to justify the need for caching.
 
   * **NO property injections** because it blurs your dependencies - use constructor injection, and
     for optional dependencies, use optional constructor arguments; you don't, after all, need to
     count the number of arguments anymore, since everything will be injected.
+
+  * **NO setter injection** because *see above*, and, if you really do have a good reason to inject
+    something via setters (or public properties) you can do that from inside a closure in a call to
+    `configure()` *with* IDE support, argument checking, refactoring support, ...
 
   * No chainable API, because call chains (in PHP) don't play nice with source-control.
 
