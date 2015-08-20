@@ -463,7 +463,7 @@ class Container implements ContainerInterface, FactoryInterface
      * Internally apply a configuration function to a component.
      *
      * @param string          $name   component name
-     * @param Closure         $config configuration function
+     * @param callable        $config configuration function
      * @param string|string[] $map    mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
