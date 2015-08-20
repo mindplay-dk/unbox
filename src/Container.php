@@ -207,13 +207,31 @@ class Container implements ContainerInterface, FactoryInterface
      * Register a configuration function, which will be applied as late as possible, e.g.
      * on first use of the component. For example:
      *
-     *     $container->configure(MiddlewareStack::class, function (MiddlewareStack $stack) {
+     *     $container->configure('stack', function (MiddlewareStack $stack) {
      *         $stack->push(new MoreAwesomeMiddleware());
      *     });
      *
      * The given configuration function should include the configured component as the
      * first parameter to the closure, but may include any number of parameters, which
      * will be resolved and injected.
+     *
+     * The first argument (component name) is optional - that is, the name can be inferred
+     * from the first parameter of the closure; the following will work:
+     *
+     *     $container->configure(function (PageLayout $layout) {
+     *         $layout->title = "Welcome";
+     *     });
+     *
+     * In some cases, such as using component names like "cache.path" (which because of the
+     * dot in the name cannot be resolved by parameter name), you can use a boxed reference
+     * in the optional `$map` argument, e.g.:
+     *
+     *     $container->configure(
+     *         function (FileCache $cache, $path) {
+     *             $cache->setPath($path);
+     *         },
+     *         ['path' => $container->ref('cache.path')]
+     *     );
      *
      * You may optionally provide a list/map of parameter values, similar to the one
      * accepted by {@see Container::register()} - the typical reason to use this, is if
@@ -227,16 +245,39 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * In other words, if your closure returns something, the component will be replaced.
      *
-     * @param string        $name component name
-     * @param callable      $func `function (Type $component, ...) : void`
-     * @param mixed|mixed[] $map  mixed list/map of parameter values (and/or boxed values)
+     * @param string|callable        $name_or_func component name
+     *                                             (or callable, if name is left out)
+     * @param callable|mixed|mixed[] $func_or_map  `function (Type $component, ...) : void`
+     *                                             (or parameter values, if name is left out)
+     * @param mixed|mixed[]          $map          mixed list/map of parameter values and/or boxed values
+     *                                             (or unused, if name is left out)
      *
      * @return void
      *
      * @throws NotFoundException
      */
-    public function configure($name, callable $func, $map = array())
+    public function configure($name_or_func, $func_or_map = null, $map = null)
     {
+        if ($name_or_func instanceof Closure) {
+            // no component name supplied, infer it from the closure:
+
+            $func = $name_or_func;
+            $map = $func_or_map;
+
+            $param = new ReflectionParameter($func, 0);
+
+            preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
+
+            $name = $matches[1];
+
+            if (!$this->has($name) && $this->has($param->name)) {
+                $name = $param->name;
+            }
+        } else {
+            $name = $name_or_func;
+            $func = $func_or_map;
+        }
+
         if ($this->isActive($name)) {
             // component is already active - apply the configuration function immediately:
 

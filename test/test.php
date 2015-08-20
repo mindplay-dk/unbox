@@ -128,12 +128,12 @@ test(
         $c->configure('a', function ($a) { return $a + 1; }); // $a = 3
 
         $c->configure('b', function ($b) { return $b + 1; }); // $b = 3
-        $c->configure('b', function ($b) { return $b + 1; }); // $b = 4
+        $c->configure(function ($b) { return $b + 1; }); // $b = 4 (component name "b" inferred from param name)
 
         $c->configure('b', function ($b) { $b += 1; }); // no change
 
-        eq($c->get('a'), 3);
-        eq($c->get('b'), 4);
+        eq($c->get('a'), 3, 'can apply multiple configuration functions');
+        eq($c->get('b'), 4, 'can infer component name from param name');
 
         expect(
             NotFoundException::class,
@@ -159,9 +159,16 @@ test(
             ['bar' => $c->ref('zap')]
         );
 
+        $got_foo = false;
+
+        $c->configure(function (Foo $few) use (&$got_foo) {
+            $got_foo = true;
+        });
+
         $c->get(Foo::class);
 
         ok($ok, 'can use parameter list/map in calls to configure()');
+        ok($got_foo, 'can infer component name from argument type-hint');
     }
 );
 
