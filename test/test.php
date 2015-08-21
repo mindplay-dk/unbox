@@ -173,6 +173,50 @@ test(
 );
 
 test(
+    'named components take precedence over type-hints',
+    function () {
+        $container = new Container();
+
+        $container->register(FileCache::class, ["/tmp/foo"]);
+
+        $container->register("cache", FileCache::class, ["/tmp/bar"]);
+
+        $by_type = null;
+
+        $container->call(function (FileCache $cache) use (&$by_type) {
+            $by_type = $cache;
+        });
+
+        $by_name = null;
+
+        $container->call(function ($cache) use (&$by_name) {
+            $by_name = $cache;
+        });
+
+        $conf_by_type = null;
+
+        $container->configure(function (FileCache $cache) use (&$conf_by_type) {
+            $conf_by_type = $cache;
+        });
+
+        $conf_by_name = null;
+
+        $container->configure(function ($cache) use (&$conf_by_name) {
+            $conf_by_name = $cache;
+        });
+
+        eq($container->get(FileCache::class)->path, "/tmp/foo");
+        eq($container->get("cache")->path, "/tmp/bar");
+
+        eq($by_type->path, "/tmp/foo");
+        eq($by_name->path, "/tmp/bar");
+
+        eq($conf_by_type->path, "/tmp/foo");
+        eq($conf_by_name->path, "/tmp/bar");
+    }
+);
+
+test(
     'can call all the things',
     function () {
         $container = new Container();
