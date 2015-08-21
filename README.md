@@ -19,20 +19,154 @@ of concepts and a reasonably short learning curve, good performance, and quick a
 relying mainly on the use of closures for IDE support.
 
 The container is capable of resolving constructor arguments, often automatically, with as little
-configuration as just the class-name. It will also resolve arguments to any callable, and to any
-object that implements `__invoke()`. It can also be used as a generic factory class, capable of
-creating any object for which the constructor arguments can be resolved.
+configuration as just the class-name. It will also resolve arguments to any callable, including
+objects that implement `__invoke()`. It can also be used as a generic factory class, capable of
+creating any object for which the constructor arguments can be resolved - the common use-case
+for this is in your own factory classes, e.g. a controller factory or action dispatcher.
 
 The container implementation is compatible
 with [container-interop](https://github.com/container-interop/container-interop).
 
-### Overview
+### Quick Overview
 
-TODO: add preamble and code sample
+Below, you can find a complete guide and full documentation - but to give you an idea of what
+this library does, let's open with a quick code sample.
+
+For this basic example, we'll assume you have the following related types:
+
+```PHP
+interface CacheProvider {
+    // ...
+}
+
+class FileCache implements CacheProvider
+{
+    public function __construct($path)
+    {
+        // ...
+    }
+}
+
+class UserRepository
+{
+    public function __construct(CacheProvider $cache)
+    {
+        // ...
+    }
+}
+```
+
+Now, let's wire that up with a `Container` in a "bootstrap" file somewhere:
+
+```PHP
+use mindplay\unbox\Container;
+
+$container = new Container();
+
+// register a component named "cache":
+$container->register("cache", function ($cache_path) {
+    return new FileCache($cache_path);
+});
+
+// register "CacheProvider" as a component referencing "cache":
+$container->alias(CacheProvider::class, "cache");
+
+// register "UserRepository" as a component:
+$container->register(UserRepository::class);
+```
+
+Then configure the missing cache path in a "config" file somewhere:
+
+```PHP
+$container->set("cache_path", "/tmp/cache");
+```
+
+That's enough to get going - you can now take your `UserRepository` out of the `Container`,
+either by asking for it directly:
+
+```PHP
+$users = $container->get(UserRepository $users);
+```
+
+Or, by using a type-hinted closure for IDE support:
+
+```PHP
+$container->call(function (UserRepository $users) {
+    $users->...
+});
+```
+
+To round off this quick example, let's say you have a controller:
+
+```PHP
+class UserController
+{
+    public function __construct(UserRepository $users)
+    {
+        // ...
+    }
+
+    public function show($user_id, ViewEngine $view, FormHelper $form, ...)
+    {
+        // ...
+    }
+}
+```
+
+Using the container as a factory, you can create an instance of any controller class:
+
+```PHP
+$controller = $container->create(UserController::class);
+```
+
+Finally, you can dispatch the `show()` action, with dependency injection:
+
+```PHP
+$container->call([$controller, "show"], $_GET);
+```
+
+That's the quick, high-level overview.
+
+#### API
+
+If you're already comfortable with dependency injection, and just want to know what the API looks
+like, below is a quick overview.
+
+    get(string $name) : mixed                              # unbox a component
+    set(string $name, mixed $value)                        # directly insert an existing component
+    has(string $name) : bool                               # check if a component is defined/exists
+    isActive(string $name) : bool                          # check if a component has been unboxed
+
+    add(ProviderInterface $provider)                       # register a configuration provider
+
+    register(string $type)                                 # register a component (for auto-creation)
+    register(string $type, array $map)                     # ... with custom constructor arguments
+    register(string $name, string $type)                   # ... with a specific name for auto-creation
+    register(string $name, string $type, array $map)       # ... and custom constructor arguments
+    register(string $name, callable $func)                 # ... with a custom creation function
+    register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
+
+    alias(string $name, string $ref_name)                  # make $ref_name available as $name
+
+    configure(callable $func)                              # manipulate a component upon creation
+    configure(callable $func, array $map)                  # ... with custom arguments to the closure
+    configure(string $name, callable $func)                # ... for a component with a specific name
+    configure(string $name, callable $func, array $map)    # ... with custom arguments
+
+    call(callable $func) : mixed                           # call any callable an inject arguments
+    call(callable $func, array $map) : mixed               # ... and override or add missing params
+
+    create(string $class_name) : mixed                     # invoke a constructor and auto-inject
+    create(string $class_name, array $map) : mixed         # ... and override or add missing params
+
+    ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
+
+If you're new to dependency injection, or if any of this baffles you, don't panic - everything is
+covered in the guide below.
 
 ## Terminology
 
-The folling terminology is used in the documentation below:
+The following terminology is used in the documentation below:
 
   * **Callable**: refers to the `callable` pseudo-type
     as [defined in the PHP manual](http://php.net/manual/en/language.types.callable.php).
@@ -99,6 +233,7 @@ This method generally takes one of the following forms:
     register(string $name, string $type)
     register(string $name, string $type, array $map)
     register(string $name, callable $func)
+    register(string $name, callable $func, array $map)
 
 Where:
 

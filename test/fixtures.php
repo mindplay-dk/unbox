@@ -7,8 +7,6 @@ function test_func($foo) {
     return $foo;
 }
 
-interface CacheProvider {}
-
 class Foo {
     public function bar($foo) {
         return $foo;
@@ -24,6 +22,8 @@ class Foo {
 }
 
 class Bar {}
+
+interface CacheProvider {}
 
 class FileCache implements CacheProvider
 {

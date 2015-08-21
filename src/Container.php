@@ -337,6 +337,9 @@ class Container implements ContainerInterface, FactoryInterface
      *     $container->call([Foo::class, 'bar']); // static method Foo::bar()
      *     $container->call($foo);                // closure (or class implementing __invoke)
      *
+     * In any of those examples, you can also supply custom arguments, either named or
+     * positional, or mixed, as per the `$map` argument in `register()`, `configure()`, etc.
+     *
      * @param callable|object $callback any arbitrary closure or callable, or object implementing __invoke()
      * @param mixed|mixed[]   $map      mixed list/map of parameter values (and/or boxed values)
      *
