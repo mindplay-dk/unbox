@@ -228,12 +228,12 @@ that lets you register a component for dependency injection.
 
 This method generally takes one of the following forms:
 
-    register(string $type)
-    register(string $type, array $map)
-    register(string $name, string $type)
-    register(string $name, string $type, array $map)
-    register(string $name, callable $func)
-    register(string $name, callable $func, array $map)
+    register(string $type)                                 # register a component (for auto-creation)
+    register(string $type, array $map)                     # ... with custom constructor arguments
+    register(string $name, string $type)                   # ... with a specific name for auto-creation
+    register(string $name, string $type, array $map)       # ... and custom constructor arguments
+    register(string $name, callable $func)                 # ... with a custom creation function
+    register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
 
 Where:
 
@@ -373,7 +373,51 @@ If no `$name` is supplied, the first argument from the given `$func` is used to 
 component name: if the first argument is type-hinted, the class/interface name is used -
 or, if no type-hint is supplied, the parameter name is used.
 
-TODO: add PDO example
+As an example, let's say you've configured a `PDO` component:
+
+```PHP
+$container->register(PDO::class, function ($db_host, $db_name, $db_user, $db_password) {
+    $connection = "mysql:host={$db_host};dbname={$db_name}";
+
+    return new PDO($connection, $db_user, $db_password);
+});
+```
+
+In a configuration file, simple values like `$db_host` can be inserted directly, e.g. with
+`$container->set("db_host", "localhost")` - but suppose you need to do something *after*
+the connection is created? Here's where `configure()` comes into play:
+
+```PHP
+$container->configure(function (PDO $db) {
+    $db->exec("SET NAMES utf8");
+});
+```
+
+Note that, in this example, `configure()` will infer the component name `"PDO"` from the
+type-hint - in a scenario with multiple named `PDO` instances, you would use the optional
+first argument to explicitly specify the component, e.g.:
+
+```PHP
+$container->configure("logger.pdo", function (PDO $db) {
+    $db->exec("SET NAMES utf8");
+});
+```
+
+##### Property or Setter Injection
+
+This library doesn't support neither property nor setter injection, but both can be accomplished
+by just doing those things in a call to `configure()` - for example:
+
+```PHP
+$container->configure(function (Connection $db, LoggerInterface $logger) {
+    $db->setLogger($logger);
+});
+```
+
+In this example, upon first use of `Connection`, a dependency `LoggerInterface` will be
+unboxed and injected via setter-injection. (We believe this approach is much safer than
+offering a function that accepts the method-name as an argument - closures are more powerful,
+much safer, and provide full IDE support, inspections, automated refactoring, etc.)
 
 ##### Modification
 
