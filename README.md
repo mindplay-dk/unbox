@@ -34,7 +34,7 @@ this library does, let's open with a quick code sample.
 
 For this basic example, we'll assume you have the following related types:
 
-```PHP
+```php
 interface CacheProvider {
     // ...
 }
@@ -50,7 +50,7 @@ class UserRepository {
 
 Now, let's wire that up with a `Container` in a "bootstrap" file somewhere:
 
-```PHP
+```php
 use mindplay\unbox\Container;
 
 $container = new Container();
@@ -69,20 +69,20 @@ $container->register(UserRepository::class);
 
 Then configure the missing cache path in a "config" file somewhere:
 
-```PHP
+```php
 $container->set("cache_path", "/tmp/cache");
 ```
 
 That's enough to get going - you can now take your `UserRepository` out of the `Container`,
 either by asking for it directly:
 
-```PHP
+```php
 $users = $container->get(UserRepository $users);
 ```
 
 Or, by using a type-hinted closure for IDE support:
 
-```PHP
+```php
 $container->call(function (UserRepository $users) {
     $users->...
 });
@@ -90,7 +90,7 @@ $container->call(function (UserRepository $users) {
 
 To round off this quick example, let's say you have a controller:
 
-```PHP
+```php
 class UserController
 {
     public function __construct(UserRepository $users)
@@ -107,13 +107,13 @@ class UserController
 
 Using the container as a factory, you can create an instance of any controller class:
 
-```PHP
+```php
 $controller = $container->create(UserController::class);
 ```
 
 Finally, you can dispatch the `show()` action, with dependency injection:
 
-```PHP
+```php
 $container->call([$controller, "show"], $_GET);
 ```
 
@@ -124,34 +124,36 @@ That's the quick, high-level overview.
 If you're already comfortable with dependency injection, and just want to know what the API looks
 like, below is a quick overview.
 
-    get(string $name) : mixed                              # unbox a component
-    set(string $name, mixed $value)                        # directly insert an existing component
-    has(string $name) : bool                               # check if a component is defined/exists
-    isActive(string $name) : bool                          # check if a component has been unboxed
+```php
+get(string $name) : mixed                              # unbox a component
+set(string $name, mixed $value)                        # directly insert an existing component
+has(string $name) : bool                               # check if a component is defined/exists
+isActive(string $name) : bool                          # check if a component has been unboxed
 
-    add(ProviderInterface $provider)                       # register a configuration provider
+add(ProviderInterface $provider)                       # register a configuration provider
 
-    register(string $type)                                 # register a component (for auto-creation)
-    register(string $type, array $map)                     # ... with custom constructor arguments
-    register(string $name, string $type)                   # ... with a specific name for auto-creation
-    register(string $name, string $type, array $map)       # ... and custom constructor arguments
-    register(string $name, callable $func)                 # ... with a custom creation function
-    register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
+register(string $type)                                 # register a component (for auto-creation)
+register(string $type, array $map)                     # ... with custom constructor arguments
+register(string $name, string $type)                   # ... with a specific name for auto-creation
+register(string $name, string $type, array $map)       # ... and custom constructor arguments
+register(string $name, callable $func)                 # ... with a custom creation function
+register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
 
-    alias(string $name, string $ref_name)                  # make $ref_name available as $name
+alias(string $name, string $ref_name)                  # make $ref_name available as $name
 
-    configure(callable $func)                              # manipulate a component upon creation
-    configure(callable $func, array $map)                  # ... with custom arguments to the closure
-    configure(string $name, callable $func)                # ... for a component with a specific name
-    configure(string $name, callable $func, array $map)    # ... with custom arguments
+configure(callable $func)                              # manipulate a component upon creation
+configure(callable $func, array $map)                  # ... with custom arguments to the closure
+configure(string $name, callable $func)                # ... for a component with a specific name
+configure(string $name, callable $func, array $map)    # ... with custom arguments
 
-    call(callable $func) : mixed                           # call any callable an inject arguments
-    call(callable $func, array $map) : mixed               # ... and override or add missing params
+call(callable $func) : mixed                           # call any callable an inject arguments
+call(callable $func, array $map) : mixed               # ... and override or add missing params
 
-    create(string $class_name) : mixed                     # invoke a constructor and auto-inject
-    create(string $class_name, array $map) : mixed         # ... and override or add missing params
+create(string $class_name) : mixed                     # invoke a constructor and auto-inject
+create(string $class_name, array $map) : mixed         # ... and override or add missing params
 
-    ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
+ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
+```
 
 If you're new to dependency injection, or if any of this baffles you, don't panic - everything is
 covered in the guide below.
@@ -207,7 +209,7 @@ good practice (when possible) as this provides self-documenting configurations w
 
 In the following sections, we'll assume that a `Container` instance is in scope, e.g.:
 
-```PHP
+```php
 use mindplay\unbox\Container;
 
 $container = new Container();
@@ -220,12 +222,14 @@ that lets you register a component for dependency injection.
 
 This method generally takes one of the following forms:
 
-    register(string $type)                                 # register a component (for auto-creation)
-    register(string $type, array $map)                     # ... with custom constructor arguments
-    register(string $name, string $type)                   # ... with a specific name for auto-creation
-    register(string $name, string $type, array $map)       # ... and custom constructor arguments
-    register(string $name, callable $func)                 # ... with a custom creation function
-    register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
+```php
+register(string $type)                                 # register a component (for auto-creation)
+register(string $type, array $map)                     # ... with custom constructor arguments
+register(string $name, string $type)                   # ... with a specific name for auto-creation
+register(string $name, string $type, array $map)       # ... and custom constructor arguments
+register(string $name, callable $func)                 # ... with a custom creation function
+register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
+```
 
 Where:
 
@@ -298,7 +302,7 @@ for a class and an interface.
 
 For example, it's ordinary to register a cache component twice:
 
-```PHP
+```php
 $container->register(CacheProvider::class, function () {
     return new FileCache();
 });
@@ -319,7 +323,7 @@ In some cases, you already have an instance of a component, such as the `ClassLo
 provided by Composer - in this case, you can insert it directly into the container, to
 make it available for dependency injection:
 
-```PHP
+```php
 $loader = require __DIR__ . '/vendor/autoload.php';
 
 $container->set(ClassLoader::class, $loader);
@@ -343,10 +347,12 @@ To perform additional configuration of a registered component, use the `configur
 
 This method takes one of the following forms:
 
-    configure(callable $func)
-    configure(callable $func, array $map)
-    configure(string $name, callable $func)
-    configure(string $name, callable $func, array $map)
+```php
+configure(callable $func)
+configure(callable $func, array $map)
+configure(string $name, callable $func)
+configure(string $name, callable $func, array $map)
+```
 
 Where:
 
@@ -367,7 +373,7 @@ or, if no type-hint is supplied, the parameter name is used.
 
 As an example, let's say you've configured a `PDO` component:
 
-```PHP
+```php
 $container->register(PDO::class, function ($db_host, $db_name, $db_user, $db_password) {
     $connection = "mysql:host={$db_host};dbname={$db_name}";
 
@@ -379,7 +385,7 @@ In a configuration file, simple values like `$db_host` can be inserted directly,
 `$container->set("db_host", "localhost")` - but suppose you need to do something *after*
 the connection is created? Here's where `configure()` comes into play:
 
-```PHP
+```php
 $container->configure(function (PDO $db) {
     $db->exec("SET NAMES utf8");
 });
@@ -389,7 +395,7 @@ Note that, in this example, `configure()` will infer the component name `"PDO"` 
 type-hint - in a scenario with multiple named `PDO` instances, you would use the optional
 first argument to explicitly specify the component, e.g.:
 
-```PHP
+```php
 $container->configure("logger.pdo", function (PDO $db) {
     $db->exec("SET NAMES utf8");
 });
@@ -400,7 +406,7 @@ $container->configure("logger.pdo", function (PDO $db) {
 This library doesn't support neither property nor setter injection, but both can be accomplished
 by just doing those things in a call to `configure()` - for example:
 
-```PHP
+```php
 $container->configure(function (Connection $db, LoggerInterface $logger) {
     $db->setLogger($logger);
 });
@@ -413,13 +419,51 @@ much safer, and provide full IDE support, inspections, automated refactoring, et
 
 ##### Modification
 
-TODO: add examples of modifying scalar values
+You can use `configure()` to modify values (such as strings, numbers or arrays) in the container.
 
-TODO: add example of modifying an array
+For example, let's say you have a middleware stack defined as an array:
+
+```php
+$container->set("app.middleware", function () {
+    return [new RouterMiddleware, new NotFoundMiddleware];
+);
+```
+
+If you need to append to the stack, you can do this:
+
+```php
+$container->configure("app.middleware", function ($middleware) {
+    $middleware[] = new CacheMiddleware();
+
+    return $middleware;
+});
+```
+
+Note the return statement - this is what causes the value to get updated in the container..
 
 ##### Decoration
 
-TODO: explain and demonstrate how to decorate an object
+The [decorator](https://en.wikipedia.org/wiki/Decorator_pattern) pattern is another pattern
+that can be implemented with `configure()` - for example, lets say you bootstrapped your
+container with a product repository implementation and interface:
+
+```php
+$container->register(ProductRepository::class, function () { ... });
+
+$container->alias(ProductRepositoryInterface::class, ProductRepository::class);
+```
+
+Now lets say you implement a cached product repository decorator - you can bootstrap this
+by creating and returning the decorator instance like this:
+
+```php
+$container->configure(function (ProductRepositoryInterface $repo) {
+    return new CachedProductRepository($repo);
+});
+```
+
+Notet that, when replacing components in this manner, of course you must be certain that the
+replacement has type that can pass a type-check in the recipient constructor or method.
 
 ### Consumption
 
