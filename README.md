@@ -449,6 +449,9 @@ Features:
   * **Versatile** - supporting many different options for registration and configuration
     using the same, low number of public methods, including value modifications, decorators, etc.
 
+  * Zero configuration - we don't include any optional features or configurable behavior: the
+    container always behaves consistently, with the same predictable performance and interoperability.
+
   * **PHP 5.5+** for `::class` support, and because you really shouldn't be using anything older.
 
 Non-features:
