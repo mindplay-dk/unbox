@@ -11,10 +11,10 @@
     ],
     "require": {
         "php": ">=5.5",
-        "container-interop/container-interop": "~1.0",
-        "mindplay/benchpress": "dev-master"
+        "container-interop/container-interop": "~1.0"
     },
     "require-dev": {
+        "mindplay/benchpress": "dev-master",
         "mindplay/testies": "^0.2",
         "phpunit/php-code-coverage": "~2.1",
         "php-di/php-di": "^5.0.3",
