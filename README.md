@@ -551,9 +551,36 @@ class ControllerFactory
 Note thte `FactoryInterface` type-hint in the constructor - in situations where you care
 only about using the container as a factory, you should type-hint against this facet.
 
-#### Introspection
+#### Inspection
 
-TODO: explain and demonstrate has() and isActive()
+You can inspect the state of components in a container using `has()` and `isActive()`.
+
+To check if a component is defined:
+
+```php
+var_dump($container->has("foo")); // => bool(false)
+
+$container->set("foo", "bar");
+
+var_dump($container->has("foo")); // => bool(true)
+```
+
+Whether a component is directly inserted with `set()`, or defined using `register()`, the
+`has()` method will return `true`.
+
+To check if a component has been activated:
+
+```php
+$container->register("foo", function () { return "bar"; });
+
+var_dump($container->isActive("foo")); // => bool(false)
+
+$foo = $container->get("foo"); // component activates on first use
+
+var_dump($container->isActive("foo")); // => bool(true)
+```
+
+If a component is directly inserted with `set()`, it is considered active immediately.
 
 ## Opinionated
 
