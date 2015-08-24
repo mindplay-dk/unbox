@@ -77,7 +77,7 @@ That's enough to get going - you can now take your `UserRepository` out of the `
 either by asking for it directly:
 
 ```php
-$users = $container->get(UserRepository $users);
+$users = $container->get(UserRepository::class);
 ```
 
 Or, by using a type-hinted closure for IDE support:
