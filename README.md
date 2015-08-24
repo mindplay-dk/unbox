@@ -111,11 +111,15 @@ Using the container as a factory, you can create an instance of any controller c
 $controller = $container->create(UserController::class);
 ```
 
-Finally, you can dispatch the `show()` action, with dependency injection:
+Finally, you can dispatch the `show()` action, with dependency injection - as a naive example,
+we're simply going to inject `$_GET` directly as parameters to the method:
 
 ```php
 $container->call([$controller, "show"], $_GET);
 ```
+
+Using `$_GET` as parameters to the call, the `$user_id` argument to `UserController:show()` will
+be resolved as `$_GET['user_id']`.
 
 That's the quick, high-level overview.
 
@@ -467,11 +471,85 @@ replacement has type that can pass a type-check in the recipient constructor or 
 
 ### Consumption
 
-TODO: explain and demonstrate get() and call()
+Consuming the contents of a container is very simple, convenient and powerful - and therefore very
+tempting! You should [inform yourself](http://stackoverflow.com/questions/11316688/inversion-of-control-vs-dependency-injection-with-selected-quotes-is-my-unders/11319026#11319026)
+about the difference, and **avoid** using the container as a [service locator](https://en.wikipedia.org/wiki/Service_locator_pattern).
+
+The most basic form of component access, is a direct lookup:
+
+```php
+$cache = $container->get(CacheInterface::class);
+$db_name = $container->get("db_name");
+```
+
+The more indirect form of component access, is an indirect lookup, by resolving parameters:
+
+```php
+$container->call(function (CacheInterface $cache, $db_name) {
+    // ...
+});
+```
+
+The result in these two examples, is the same - but it's important to note that, in the `call()`
+example, the two arguments are being resolved in two different ways: the `CacheInterface` param
+is resolved by class-name, whereas the `$db_name` param is being resolve by parameter name.
+
+The latter only works because the `$db_name` component is registered under that precise name -
+if it had been registered under a name such as `"db.name"`, the container would be unable to
+resolve this argument automatically; instead, you would have had to write:
+
+```php
+$container->call(function (CacheInterface $cache, $name) {
+    // ...
+}, ["name" => $container->ref("db.name")]);
+```
+
+Note that `call()` will accept [any type of callable](http://php.net/manual/en/language.types.callable.php).
 
 #### Factory Facet
 
-TODO: explain and demonstrate create()
+The `create()` method can be used to construct an instance of any class, on demand.
+
+An important thing to understand, is that e.g. `register()` and `configure()` have *no*
+bearing on this functionality - the purpose of this method, is to create instance of types
+that *aren't* registered as components in the container, but may have *dependencies* that
+can be resolved by the container.
+
+Controllers are a great example - you most likely don't want to register every individual
+controller class as a component in the container; rather, you probably want a controller
+factory, capable of creating any controller.
+
+As an example, here's a simple implementation of a controller factory that resolves the
+typical `"foo/bar"` route string as e.g. `FooController::bar()` - like so:
+
+```php
+class Action
+{
+    public function __construct(Controller $controller, $action, array $params) { ... }
+}
+
+class ControllerFactory
+{
+    /** @var FactoryInterface */
+    private $factory;
+
+    public function __construct(FactoryInterface $factory) { ... }
+
+    public function create($route, array $params)
+    {
+        list($controller_name, $action_name) = explode("/", $route);
+
+        $controller_class = ucfirst($controller_name) . "Controller";
+
+        $controller = $this->factory->create($controller_class);
+
+        return new Action($controller, $action_name, $params);
+    }
+}
+```
+
+Note thte `FactoryInterface` type-hint in the constructor - in situations where you care
+only about using the container as a factory, you should type-hint against this facet.
 
 #### Introspection
 
