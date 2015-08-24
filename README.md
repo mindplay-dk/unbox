@@ -35,16 +35,16 @@ this library does, let's open with a quick code sample.
 For this basic example, we'll assume you have the following related types:
 
 ```php
-interface CacheProvider {
+interface CacheInterface {
     // ...
 }
 
-class FileCache implements CacheProvider {
+class FileCache implements CacheInterface {
     public function __construct($path) { ... }
 }
 
 class UserRepository {
-    public function __construct(CacheProvider $cache) { ... }
+    public function __construct(CacheInterface $cache) { ... }
 }
 ```
 
@@ -60,8 +60,8 @@ $container->register("cache", function ($cache_path) {
     return new FileCache($cache_path);
 });
 
-// register "CacheProvider" as a component referencing "cache":
-$container->alias(CacheProvider::class, "cache");
+// register "CacheInterface" as a component referencing "cache":
+$container->alias(CacheInterface::class, "cache");
 
 // register "UserRepository" as a component:
 $container->register(UserRepository::class);
@@ -303,19 +303,19 @@ for a class and an interface.
 For example, it's ordinary to register a cache component twice:
 
 ```php
-$container->register(CacheProvider::class, function () {
+$container->register(CacheInterface::class, function () {
     return new FileCache();
 });
 
-$container->alias("db.cache", CacheProvider::class); // "db.cache" becomes an alias!
+$container->alias("db.cache", CacheInterface::class); // "db.cache" becomes an alias!
 
-var_dump($container->get("db.cache") === $container->get(CacheProvider::class)); // => bool(true)
+var_dump($container->get("db.cache") === $container->get(CacheInterface::class)); // => bool(true)
 ```
 
 Using an alias, in this example, means that `"db.cache"` by default will resolve as
-`CacheProvider`, but gives us the ability to [override](#overrides) the definition of
+`CacheInterface`, but gives us the ability to [override](#overrides) the definition of
 `"db.cache"` with a different implementation, without affecting other components which
-might also be using `CacheProvider` as a default.
+might also be using `CacheInterface` as a default.
 
 #### Direct Insertion
 
