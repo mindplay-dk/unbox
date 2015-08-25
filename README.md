@@ -466,8 +466,41 @@ $container->configure(function (ProductRepositoryInterface $repo) {
 });
 ```
 
-Notet that, when replacing components in this manner, of course you must be certain that the
+Note that, when replacing components in this manner, of course you must be certain that the
 replacement has type that can pass a type-check in the recipient constructor or method.
+
+##### Packaged Providers
+
+You can package a set of `register()` and `configure()` calls for convenient reuse, by
+implementing `ProviderInterface` - for example:
+
+```php
+class MyProvider implements ProviderInterface
+{
+    public function register(Container $container)
+    {
+        $container->register(...);
+        $container->configure(...);
+        // ...
+    }
+}
+```
+
+You can then easily bootstrap your projects with providers, e.g.:
+
+```php
+$container->add(new MyProvider);
+$container->add(new TestDependenciesProvider);
+$container->add(new DevelopmentDebugProvider);
+// ...
+```
+
+Providers of course can also call `Container::add()` to bootstrap other providers - with
+this in mind, you can make e.g. development or production setup for your app as easy as
+calling e.g. `$container->add(new DevelopmentProvider)` to provide complete bootstrapping
+for a quick development setup. Even if somebody wanted to override some of the registrations
+in e.g. your default development setup, they can of course still do that, e.g. by calling
+`register()` again to override components as needed.
 
 ### Consumption
 
