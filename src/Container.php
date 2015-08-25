@@ -37,9 +37,9 @@ class Container implements ContainerInterface, FactoryInterface
     protected $factory_map = array();
 
     /**
-     * @var bool[] map where component name => true (if the component has been initialized)
+     * @var bool[] map where component name => true (if the component is immutable)
      */
-    protected $initialized = array();
+    protected $immutable = array();
 
     /**
      * @var (callable[])[] map where component name => list of configuration functions
@@ -88,13 +88,9 @@ class Container implements ContainerInterface, FactoryInterface
 
             $this->values[$name] = call_user_func_array($factory, $params);
 
-            if (isset($this->config[$name])) {
-                foreach ($this->config[$name] as $index => $config) {
-                    $this->applyConfiguration($name, $config, $this->config_map[$name][$index]);
-                }
-            }
+            $this->initialize($name);
 
-            $this->initialized[$name] = true; // prevent further changes to this component
+            $this->immutable[$name] = true; // prevent further changes to this component
         }
 
         return $this->values[$name];
@@ -113,11 +109,13 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function set($name, $value)
     {
-        if (isset($this->initialized[$name])) {
+        if (isset($this->immutable[$name])) {
             throw new ContainerException("attempted overwrite of initialized component: {$name}");
         }
 
         $this->values[$name] = $value;
+
+        $this->initialize($name);
     }
 
     /**
@@ -169,7 +167,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function register($name, $func = null, $map = array())
     {
-        if (@$this->initialized[$name]) {
+        if (@$this->immutable[$name]) {
             throw new ContainerException("attempted re-registration of active component: {$name}");
         }
 
@@ -284,21 +282,14 @@ class Container implements ContainerInterface, FactoryInterface
             $func = $func_or_map;
         }
 
-        if ($this->isActive($name)) {
-            // component is already active - apply the configuration function immediately:
-
-            $this->applyConfiguration($name, $func, $map);
-
-            return;
-        }
-
-        if (!isset($this->factory[$name])) {
-            throw new NotFoundException($name);
-        }
-
         $this->config[$name][] = $func;
-
         $this->config_map[$name][] = $map;
+
+        if ($this->isActive($name)) {
+            // component is already active - initialize the component immediately:
+
+            $this->initialize($name);
+        }
     }
 
     /**
@@ -510,24 +501,32 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * Internally apply a configuration function to a component.
+     * Internally initialize an active component.
      *
-     * @param string          $name   component name
-     * @param callable        $config configuration function
-     * @param string|string[] $map    mixed list/map of parameter values (and/or boxed values)
+     * @param string $name component name
      *
      * @return void
+     *
+     * @throws ContainerException on attempt to initialize an already-initialized component
      */
-    protected function applyConfiguration($name, $config, $map)
+    protected function initialize($name)
     {
-        $reflection = new ReflectionFunction($config);
+        if (isset($this->config[$name])) {
+            foreach ($this->config[$name] as $index => $config) {
+                $map = $this->config_map[$name][$index];
 
-        $params = $this->resolve($reflection->getParameters(), $map);
+                $reflection = new ReflectionFunction($config);
 
-        $value = call_user_func_array($config, $params);
+                $params = $this->resolve($reflection->getParameters(), $map);
 
-        if ($value !== null) {
-            $this->values[$name] = $value;
+                $value = call_user_func_array($config, $params);
+
+                if ($value !== null) {
+                    $this->values[$name] = $value;
+                }
+            }
         }
+
+        unset($this->config[$name]);
     }
 }

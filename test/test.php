@@ -78,7 +78,7 @@ test(
         $c = new Container();
 
         $c->register('a', function () { return 'A'; });
-        $c->register('B', function () { return 'B'; });
+        $c->register('b', function () { return 'B'; });
         $c->set('c', 'C');
         $c->set('d', 'D');
 
@@ -135,14 +135,6 @@ test(
         eq($c->get('a'), 3, 'can apply multiple configuration functions');
         eq($c->get('b'), 4, 'can infer component name from param name');
 
-        expect(
-            NotFoundException::class,
-            'should throw on attempt to configure undefined component',
-            function () use ($c) {
-                $c->configure('nope', function () {});
-            }
-        );
-
         $c = new Container();
 
         $c->register(Foo::class);
@@ -169,6 +161,14 @@ test(
 
         ok($ok, 'can use parameter list/map in calls to configure()');
         ok($got_foo, 'can infer component name from argument type-hint');
+
+        $c = new Container();
+
+        $c->configure("foo", function ($foo) { return $foo + 1; });
+
+        $c->set("foo", 1);
+
+        eq($c->get("foo"), 2, 'can apply configuration to directly injected values');
     }
 );
 
