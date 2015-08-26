@@ -7,6 +7,7 @@ use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionFunction;
+use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionParameter;
 
@@ -262,13 +263,17 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function configure($name_or_func, $func_or_map = null, $map = null)
     {
-        if ($name_or_func instanceof Closure) {
-            // no component name supplied, infer it from the closure:
-
+        if (is_callable($name_or_func)) {
             $func = $name_or_func;
             $map = $func_or_map;
 
-            $param = new ReflectionParameter($func, 0);
+            // no component name supplied, infer it from the closure:
+
+            if ($func instanceof Closure) {
+                $param = new ReflectionParameter($func, 0); // shortcut reflection for closures (as an optimization)
+            } else {
+                list($param) = $this->reflect($func)->getParameters();
+            }
 
             preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
 
@@ -338,25 +343,9 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function call($callback, $map = array())
     {
-        if (is_array($callback)) {
-            if (is_callable($callback)) {
-                $reflection = new ReflectionMethod($callback[0], $callback[1]);
-            } else {
-                throw new InvalidArgumentException("expected callable");
-            }
-        } elseif (is_object($callback)) {
-            if ($callback instanceof Closure) {
-                $reflection = new ReflectionFunction($callback);
-            } elseif (method_exists($callback, '__invoke')) {
-                $reflection = new ReflectionMethod($callback, '__invoke');
-            } else {
-                throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");
-            }
-        } else {
-            $reflection = new ReflectionFunction($callback);
-        }
+        $params = $this->reflect($callback)->getParameters();
 
-        return call_user_func_array($callback, $this->resolve($reflection->getParameters(), $map));
+        return call_user_func_array($callback, $this->resolve($params, $map));
     }
 
     /**
@@ -432,6 +421,34 @@ class Container implements ContainerInterface, FactoryInterface
     public function add(ProviderInterface $provider)
     {
         $provider->register($this);
+    }
+
+    /**
+     * Internally reflect on any type of callable
+     *
+     * @param callable $callback
+     *
+     * @return ReflectionFunctionAbstract
+     */
+    protected function reflect(callable $callback)
+    {
+        if (is_array($callback)) {
+            if (is_callable($callback)) {
+                return new ReflectionMethod($callback[0], $callback[1]);
+            }
+
+            throw new InvalidArgumentException("expected callable");
+        } elseif (is_object($callback)) {
+            if ($callback instanceof Closure) {
+                return new ReflectionFunction($callback);
+            } elseif (method_exists($callback, '__invoke')) {
+                return new ReflectionMethod($callback, '__invoke');
+            }
+
+            throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");
+        }
+
+        return new ReflectionFunction($callback);
     }
 
     /**
