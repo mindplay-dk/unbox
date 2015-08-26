@@ -339,16 +339,11 @@ class Container implements ContainerInterface, FactoryInterface
     public function call($callback, $map = array())
     {
         if (is_array($callback)) {
-            if (!is_callable($callback)) {
+            if (is_callable($callback)) {
+                $reflection = new ReflectionMethod($callback[0], $callback[1]);
+            } else {
                 throw new InvalidArgumentException("expected callable");
             }
-
-            $reflection = new ReflectionMethod($callback[0], $callback[1]);
-
-            return $reflection->invokeArgs(
-                is_object($callback[0]) ? $callback[0] : null,
-                $this->resolve($reflection->getParameters(), $map)
-            );
         } elseif (is_object($callback)) {
             if ($callback instanceof Closure) {
                 $reflection = new ReflectionFunction($callback);
