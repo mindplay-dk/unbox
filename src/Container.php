@@ -472,7 +472,9 @@ class Container implements ContainerInterface, FactoryInterface
 
                 $type = $matches[1];
 
-                if ($type && $this->has($type)) {
+                if (isset($map[$type])) {
+                    $value = $map[$type]; // resolve as user-provided type-hinted argument
+                } elseif ($type && $this->has($type)) {
                     $value = $this->get($type); // resolve as component registered by class/interface name
                 } elseif ($this->has($param_name)) {
                     $value = $this->get($param_name); // resolve as component with matching parameter name

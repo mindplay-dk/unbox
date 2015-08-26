@@ -401,6 +401,24 @@ test(
     }
 );
 
+test(
+    'can override components by type-name',
+    function () {
+        $container = new Container();
+
+        $container->register(CacheProvider::class, FileCache::class, ["/tmp/cache"]);
+
+        $returned = $container->call(
+            function (CacheProvider $provider) {
+                return $provider;
+            },
+            [CacheProvider::class => new FileCache("/custom/path")]
+        );
+
+        eq($returned->path, "/custom/path", "can override factory map");
+    }
+);
+
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 
 exit(run()); // exits with errorlevel (for CI tools etc.)
