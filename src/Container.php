@@ -158,34 +158,41 @@ class Container implements ContainerInterface, FactoryInterface
      * component referenced created by {@see Container::ref()} - these will be unboxed as late
      * as possible.
      *
-     * @param string                        $name component name
-     * @param callable|string|string[]|null $func `function ($owner) : mixed`
-     * @param mixed|mixed[]                 $map  mixed list/map of parameter values (and/or boxed values)
+     * @param string                      $name                component name
+     * @param callable|mixed|mixed[]|null $func_or_map_or_type creation function or class-name, or, if the first
+     *                                                         argument is a class-name, a map of constructor arguments
+     * @param mixed|mixed[]               $map                 mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
      *
      * @throws ContainerException
      */
-    public function register($name, $func = null, $map = array())
+    public function register($name, $func_or_map_or_type = null, $map = array())
     {
         if (@$this->immutable[$name]) {
             throw new ContainerException("attempted re-registration of active component: {$name}");
         }
 
-        if (is_null($func)) {
+        if (is_callable($func_or_map_or_type)) {
+            // second argument is a creation function
+            $func = $func_or_map_or_type;
+        } elseif (is_string($func_or_map_or_type)) {
+            // second argument is a class-name
+            $func = function () use ($func_or_map_or_type, $map) {
+                return $this->create($func_or_map_or_type, $map);
+            };
+        } elseif (is_array($func_or_map_or_type)) {
+            // second argument is a map of constructor arguments
+            $func = function () use ($name, $func_or_map_or_type) {
+                return $this->create($name, $func_or_map_or_type);
+            };
+        } elseif (is_null($func_or_map_or_type)) {
+            // first argument is both the component and class-name
             $func = function () use ($name) {
                 return $this->create($name);
             };
-        } elseif (is_string($func)) {
-            $func = function () use ($func, $map) {
-                return $this->create($func, $map);
-            };
-        } elseif (is_array($func)) {
-            $map = $func;
-
-            $func = function () use ($name, $map) {
-                return $this->create($name, $map);
-            };
+        } else {
+            throw new InvalidArgumentException("unexpected argument type for \$func_or_map_or_type: " . gettype($func_or_map_or_type));
         }
 
         $this->factory[$name] = $func;
