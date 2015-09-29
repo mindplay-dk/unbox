@@ -294,8 +294,7 @@ The following examples are all valid use-cases of the above forms:
 In effect, you can think of `$func` as being an optional argument.
 
 The provided parameter values may include any `BoxedValueInterface`, such as the boxed
-component reference created by {@see Container::ref()} - these will be unboxed as late
-as possible.
+component reference created by `Container::ref()` - these will be unboxed as late as possible.
 
 #### Aliasing
 
