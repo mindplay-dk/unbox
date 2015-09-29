@@ -1,6 +1,6 @@
 {
     "name": "mindplay/unbox",
-    "description": "Wicked awesome simple dependency injection container",
+    "description": "Fast, simple, easy-to-use DI container",
     "type": "library",
     "license": "LGPL-3.0+",
     "authors": [

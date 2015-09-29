@@ -1,6 +1,7 @@
 # mindplay/unbox
 
-Wicked awesome, simple, [opinionated](#opinionated) and [fast](#benchmark) dependency injection container.
+Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
+with a gentle learning curve.
 
 [![Build Status](https://travis-ci.org/mindplay-dk/unbox.svg)](https://travis-ci.org/mindplay-dk/unbox)
 
