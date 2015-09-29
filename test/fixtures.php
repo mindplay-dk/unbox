@@ -23,6 +23,16 @@ class Foo {
 
 class Bar {}
 
+abstract class AbstractClass
+{
+    const CACHE_PATH = '/foo';
+
+    public static function staticFunc(FileCache $cache)
+    {
+        $cache->path = self::CACHE_PATH;
+    }
+}
+
 interface CacheProvider {}
 
 class FileCache implements CacheProvider

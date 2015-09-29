@@ -437,15 +437,9 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @return ReflectionFunctionAbstract
      */
-    protected function reflect(callable $callback)
+    protected function reflect($callback)
     {
-        if (is_array($callback)) {
-            if (is_callable($callback)) {
-                return new ReflectionMethod($callback[0], $callback[1]);
-            }
-
-            throw new InvalidArgumentException("expected callable");
-        } elseif (is_object($callback)) {
+        if (is_object($callback)) {
             if ($callback instanceof Closure) {
                 return new ReflectionFunction($callback);
             } elseif (method_exists($callback, '__invoke')) {
@@ -453,9 +447,17 @@ class Container implements ContainerInterface, FactoryInterface
             }
 
             throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");
+        } elseif (is_array($callback)) {
+            if (is_callable($callback)) {
+                return new ReflectionMethod($callback[0], $callback[1]);
+            }
+
+            throw new InvalidArgumentException("expected callable");
+        } elseif (is_callable($callback)) {
+            return new ReflectionFunction($callback);
         }
 
-        return new ReflectionFunction($callback);
+        throw new InvalidArgumentException("unexpected value: " . var_export($callback, true) . " - expected callable");
     }
 
     /**
@@ -536,7 +538,7 @@ class Container implements ContainerInterface, FactoryInterface
             foreach ($this->config[$name] as $index => $config) {
                 $map = $this->config_map[$name][$index];
 
-                $reflection = new ReflectionFunction($config);
+                $reflection = $this->reflect($config);
 
                 $params = $this->resolve($reflection->getParameters(), $map);
 

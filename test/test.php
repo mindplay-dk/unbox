@@ -69,6 +69,14 @@ test(
                 $c->register('a', function () {});
             }
         );
+
+        expect(
+            InvalidArgumentException::class,
+            'should throw on invalid argument',
+            function () use ($c) {
+                $c->register('z', (object) array());
+            }
+        );
     }
 );
 
@@ -169,6 +177,14 @@ test(
         $c->set("foo", 1);
 
         eq($c->get("foo"), 2, 'can apply configuration to directly injected values');
+
+        $c = new Container();
+
+        $c->set(FileCache::class, new FileCache('/tmp'));
+
+        $c->configure([AbstractClass::class, "staticFunc"]);
+
+        eq($c->get(FileCache::class)->path, AbstractClass::CACHE_PATH, "can use static configuration function");
     }
 );
 
@@ -181,24 +197,28 @@ test(
 
         $container->register("cache", FileCache::class, ["/tmp/bar"]);
 
+        /** @var FileCache|null $by_type */
         $by_type = null;
 
         $container->call(function (FileCache $cache) use (&$by_type) {
             $by_type = $cache;
         });
 
+        /** @var FileCache|null $by_name */
         $by_name = null;
 
         $container->call(function ($cache) use (&$by_name) {
             $by_name = $cache;
         });
 
+        /** @var FileCache|null $conf_by_type */
         $conf_by_type = null;
 
         $container->configure(function (FileCache $cache) use (&$conf_by_type) {
             $conf_by_type = $cache;
         });
 
+        /** @var FileCache|null $conf_by_name */
         $conf_by_name = null;
 
         $container->configure(function ($cache) use (&$conf_by_name) {
@@ -259,6 +279,16 @@ test(
         ok($repo instanceof UserRepository);
         ok($repo->cache instanceof CacheProvider);
         eq($repo->cache->path, '/tmp/cache');
+
+        $container = new Container();
+
+        expect(
+            ContainerException::class,
+            "should throw for unresolvable components",
+            function () use ($container) {
+                $container->call(function (FileCache $cache) {});
+            }
+        );
     }
 );
 
@@ -379,6 +409,22 @@ test(
         $another = $container->create(UserRepository::class);
 
         ok($repo !== $another);
+
+        expect(
+            InvalidArgumentException::class,
+            "should throw for invalid class-name",
+            function () use ($container) {
+                $container->create("bleh");
+            }
+        );
+
+        expect(
+            InvalidArgumentException::class,
+            "should throw for abstract class-name",
+            function () use ($container) {
+                $container->create(AbstractClass::class);
+            }
+        );
     }
 );
 
@@ -416,6 +462,39 @@ test(
         );
 
         eq($returned->path, "/custom/path", "can override factory map");
+    }
+);
+
+test(
+    'internal reflection guard clauses',
+    function () {
+        $c = new Container();
+
+        expect(
+            InvalidArgumentException::class,
+            "should throw for invalid callable",
+            function () use ($c) {
+                invoke($c, "reflect", [["bleeeh", "meh"]]);
+            }
+        );
+
+        expect(
+            InvalidArgumentException::class,
+            "should throw for invalid callable",
+            function () use ($c) {
+                invoke($c, "reflect", ["bleeeh"]);
+            }
+        );
+
+        $bar = new Bar();
+
+        expect(
+            InvalidArgumentException::class,
+            "should throw for uncallable object",
+            function () use ($c, $bar) {
+                invoke($c, "reflect", [$bar]);
+            }
+        );
     }
 );
 
