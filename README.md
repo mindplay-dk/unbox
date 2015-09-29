@@ -1,4 +1,4 @@
-# mindplay/unbox
+![Unbox](unbox-logo.png)
 
 Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
 with a gentle learning curve.
