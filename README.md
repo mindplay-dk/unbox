@@ -685,26 +685,26 @@ a Windows 8 system running PHP 5.6.6.
 
 Time to configure the container:
 
-    pimple ........ 0.076 msec ......  59.84% ......... 1.00x
-    unbox ......... 0.081 msec ......  63.71% ......... 1.06x
-    php-di ........ 0.127 msec ...... 100.00% ......... 1.67x
+    pimple ........ 0.100 msec ...... 59.49% ......... 1.00x
+    unbox ......... 0.112 msec ...... 66.85% ......... 1.12x
+    php-di ........ 0.167 msec ..... 100.00% ......... 1.68x
 
 Time to resolve the dependencies in the container, on first access:
 
-    pimple ........ 0.031 msec ....... 10.68% ......... 1.00x
-    unbox ......... 0.080 msec ....... 27.42% ......... 2.57x
-    php-di ........ 0.293 msec ...... 100.00% ......... 9.37x
+    pimple ........ 0.043 msec ...... 11.28% ......... 1.00x
+    unbox ......... 0.104 msec ...... 27.38% ......... 2.43x
+    php-di ........ 0.380 msec ..... 100.00% ......... 8.87x
 
 Time for multiple subsequent lookups:
 
-    pimple: 3 repeated resolutions ........ 0.034 msec ....... 11.42% ......... 1.00x
-    unbox: 3 repeated resolutions ......... 0.085 msec ....... 28.62% ......... 2.51x
-    php-di: 3 repeated resolutions ........ 0.298 msec ...... 100.00% ......... 8.76x
+    pimple: 3 repeated resolutions ........ 0.048 msec ...... 12.31% ......... 1.00x
+    unbox: 3 repeated resolutions ......... 0.109 msec ...... 27.86% ......... 2.26x
+    php-di: 3 repeated resolutions ........ 0.391 msec ..... 100.00% ......... 8.12x
 
-    pimple: 5 repeated resolutions ........ 0.038 msec ....... 12.40% ......... 1.00x
-    unbox: 5 repeated resolutions ......... 0.089 msec ....... 29.24% ......... 2.36x
-    php-di: 5 repeated resolutions ........ 0.305 msec ...... 100.00% ......... 8.06x
+    pimple: 5 repeated resolutions ........ 0.052 msec ...... 13.03% ......... 1.00x
+    unbox: 5 repeated resolutions ......... 0.114 msec ...... 28.48% ......... 2.19x
+    php-di: 5 repeated resolutions ........ 0.402 msec ..... 100.00% ......... 7.67x
 
-    pimple: 10 repeated resolutions ....... 0.046 msec ....... 14.34% ......... 1.00x
-    unbox: 10 repeated resolutions ........ 0.102 msec ....... 31.78% ......... 2.22x
-    php-di: 10 repeated resolutions ....... 0.322 msec ...... 100.00% ......... 6.97x
+    pimple: 10 repeated resolutions ....... 0.063 msec ...... 15.05% ......... 1.00x
+    unbox: 10 repeated resolutions ........ 0.128 msec ...... 30.43% ......... 2.02x
+    php-di: 10 repeated resolutions ....... 0.421 msec ..... 100.00% ......... 6.64x
