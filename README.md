@@ -1,13 +1,13 @@
+<div style="float:right; width:140px;">
+<a href="https://travis-ci.org/mindplay-dk/unbox"><img alt="Build Status" src="https://travis-ci.org/mindplay-dk/unbox.svg"/></a>
+<a href="https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master"><img alt="Code Coverage" src="https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/coverage.png?b=master"/></a>
+<a href="https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master"><img alt="Scrutinizer Code Quality" src="https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/quality-score.png?b=master"/></a>
+</div>
+
 ![Unbox](unbox-logo.png)
 
 Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
 with a gentle learning curve.
-
-[![Build Status](https://travis-ci.org/mindplay-dk/unbox.svg)](https://travis-ci.org/mindplay-dk/unbox)
-
-[![Code Coverage](https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master)
-
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master)
 
 ## Installation
 
