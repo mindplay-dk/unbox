@@ -21,7 +21,9 @@ class Foo {
     }
 }
 
-class Bar {}
+class Bar {
+    public $value = 1;
+}
 
 abstract class AbstractClass
 {

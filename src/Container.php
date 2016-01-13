@@ -268,7 +268,7 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @throws NotFoundException
      */
-    public function configure($name_or_func, $func_or_map = null, $map = null)
+    public function configure($name_or_func, $func_or_map = null, $map = [])
     {
         if (is_callable($name_or_func)) {
             $func = $name_or_func;
@@ -292,6 +292,10 @@ class Container implements ContainerInterface, FactoryInterface
         } else {
             $name = $name_or_func;
             $func = $func_or_map;
+
+            if (!array_key_exists(0, $map)) {
+                $map[0] = $this->ref($name);
+            }
         }
 
         $this->config[$name][] = $func;

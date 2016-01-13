@@ -189,6 +189,21 @@ test(
 );
 
 test(
+    'configure("name", function (T $o))',
+    function () {
+        $container = new Container();
+
+        $container->register('name', Bar::class);
+
+        $container->configure('name', function (Bar $bar) {
+            $bar->value += 1;
+        });
+
+        eq($container->get('name')->value, 2, 'can configure named component');
+    }
+);
+
+test(
     'named components take precedence over type-hints',
     function () {
         $container = new Container();
