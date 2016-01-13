@@ -312,7 +312,7 @@ test(
     function () {
         $container = new Container();
 
-        $container->register(FileCache::class, ['/tmp/foo']);
+        $container->register(FileCache::class, ['path' => '/tmp/foo']);
 
         $container->alias(CacheProvider::class, FileCache::class);
 
