@@ -20,7 +20,7 @@ class Container implements ContainerInterface, FactoryInterface
      * @type string pattern for parsing an argument type from a ReflectionParameter string
      * @see getArgumentType()
      */
-    const ARG_PATTERN = '/.*\[\s*(?:\<required\>|\<optional\>)\s*([^\s]+)/';
+    const ARG_PATTERN = '/(?:\<required\>|\<optional\>)\\s+([\\w\\\\]+)/';
 
     /**
      * @var mixed[] map where component name => value
@@ -282,9 +282,11 @@ class Container implements ContainerInterface, FactoryInterface
                 list($param) = $this->reflect($func)->getParameters();
             }
 
-            preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
+            // obtain the type-hint, but avoid triggering autoload:
 
-            $name = $matches[1];
+            $name = preg_match(self::ARG_PATTERN, $param->__toString(), $matches) === 1
+                ? $matches[1] // infer component name from type-hint
+                : $param->name; // infer component name from parameter name
 
             if (!$this->has($name) && $this->has($param->name)) {
                 $name = $param->name;
@@ -493,11 +495,11 @@ class Container implements ContainerInterface, FactoryInterface
             } else {
                 // as on optimization, obtain the argument type without triggering autoload:
 
-                preg_match(self::ARG_PATTERN, $param->__toString(), $matches);
+                $type = preg_match(self::ARG_PATTERN, $param->__toString(), $matches)
+                    ? $matches[1]
+                    : null; // no type-hint available
 
-                $type = $matches[1];
-
-                if (isset($map[$type])) {
+                if ($type && isset($map[$type])) {
                     $value = $map[$type]; // resolve as user-provided type-hinted argument
                 } elseif ($type && $this->has($type)) {
                     $value = $this->get($type); // resolve as component registered by class/interface name

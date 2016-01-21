@@ -513,6 +513,36 @@ test(
     }
 );
 
+test(
+    'Container::ARG_PATTERN works as intended',
+    function () {
+        $cases = [
+            [function (Foo $foo) {}, 'Foo'],
+            [function (Foo $foo = null) {}, 'Foo'],
+            [function (Foo\Bar $foo) {}, 'Foo\\Bar'],
+            [function ($foo) {}, null],
+            [function ($foo = null) {}, null],
+            [function ($foo = "string") {}, null],
+        ];
+
+        foreach ($cases as $case) {
+            list($function, $expected) = $case;
+
+            $reflection = new ReflectionFunction($function);
+
+            $params = $reflection->getParameters();
+
+            $pattern_str = $params[0]->__toString();
+
+            if (preg_match(Container::ARG_PATTERN, $pattern_str, $matches) === 1) {
+                eq($matches[1], $expected, "{$pattern_str} should match: " . format($expected));
+            } else {
+                eq(null, $expected, "{$pattern_str} should match: " . format($expected));
+            }
+        }
+    }
+);
+
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 
 exit(run()); // exits with errorlevel (for CI tools etc.)
