@@ -678,31 +678,35 @@ different qualities - from the smallest and simplest to the largest and most amb
   * [php-di](http://php-di.org/) is a pristine dependency injection framework with all the bells and
     whistles - rich with features, but also has more concepts and learning curve, and more overhead.
 
-The included [simple benchmark](test/benchmark.php) generates the following benchmark results on
-a Windows 8 system running PHP 5.6.6.
+The included [simple benchmark](test/benchmark-all.php) generates the following benchmark results on
+a Windows 10 system running PHP 5.6.12.
 
 Time to configure the container:
 
-    pimple ........ 0.100 msec ...... 59.49% ......... 1.00x
-    unbox ......... 0.112 msec ...... 66.85% ......... 1.12x
-    php-di ........ 0.167 msec ..... 100.00% ......... 1.68x
+    pimple ........ 0.078 msec ...... 59.80% ......... 1.00x
+    unbox ......... 0.088 msec ...... 67.57% ......... 1.13x
+    php-di ........ 0.131 msec ..... 100.00% ......... 1.67x
 
 Time to resolve the dependencies in the container, on first access:
 
-    pimple ........ 0.043 msec ...... 11.28% ......... 1.00x
-    unbox ......... 0.104 msec ...... 27.38% ......... 2.43x
-    php-di ........ 0.380 msec ..... 100.00% ......... 8.87x
+    pimple ........ 0.035 msec ...... 10.48% ......... 1.00x
+    unbox ......... 0.078 msec ...... 23.22% ......... 2.21x
+    php-di ........ 0.336 msec ..... 100.00% ......... 9.54x
 
 Time for multiple subsequent lookups:
 
-    pimple: 3 repeated resolutions ........ 0.048 msec ...... 12.31% ......... 1.00x
-    unbox: 3 repeated resolutions ......... 0.109 msec ...... 27.86% ......... 2.26x
-    php-di: 3 repeated resolutions ........ 0.391 msec ..... 100.00% ......... 8.12x
+    pimple: 3 repeated resolutions ........ 0.038 msec ........ 10.95% ......... 1.00x
+    unbox: 3 repeated resolutions ......... 0.083 msec ........ 24.15% ......... 2.21x
+    php-di: 3 repeated resolutions ........ 0.345 msec ....... 100.00% ......... 9.13x
 
-    pimple: 5 repeated resolutions ........ 0.052 msec ...... 13.03% ......... 1.00x
-    unbox: 5 repeated resolutions ......... 0.114 msec ...... 28.48% ......... 2.19x
-    php-di: 5 repeated resolutions ........ 0.402 msec ..... 100.00% ......... 7.67x
+    pimple: 5 repeated resolutions ........ 0.045 msec ........ 13.04% ......... 1.00x
+    unbox: 5 repeated resolutions ......... 0.092 msec ........ 26.50% ......... 2.03x
+    php-di: 5 repeated resolutions ........ 0.346 msec ....... 100.00% ......... 7.67x
 
-    pimple: 10 repeated resolutions ....... 0.063 msec ...... 15.05% ......... 1.00x
-    unbox: 10 repeated resolutions ........ 0.128 msec ...... 30.43% ......... 2.02x
-    php-di: 10 repeated resolutions ....... 0.421 msec ..... 100.00% ......... 6.64x
+    pimple: 10 repeated resolutions ........ 0.052 msec ....... 14.55% ......... 1.00x
+    unbox: 10 repeated resolutions ......... 0.103 msec ....... 28.80% ......... 1.98x
+    php-di: 10 repeated resolutions ........ 0.357 msec ...... 100.00% ......... 6.87x
+
+Benchmarking under PHP 7, all three containers are about equal in terms of time to configure.
+
+With Unbox, the time needed to resolve a component is 8-10 times less than under PHP 5.6.12.
