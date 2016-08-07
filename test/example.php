@@ -109,7 +109,7 @@ $container->set("cache_path", "/tmp/cache");
 
 $container->call(function (Dispatcher $dispatcher) {
     $path = "user/show"; // $path = $_SERVER["PATH_INFO"];
-    $params = array("user_id" => 123); // $params = $_GET;
+    $params = ["user_id" => 123]; // $params = $_GET;
 
     $dispatcher->run($path, $params);
 });

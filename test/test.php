@@ -74,7 +74,7 @@ test(
             InvalidArgumentException::class,
             'should throw on invalid argument',
             function () use ($c) {
-                $c->register('z', (object) array());
+                $c->register('z', (object) []);
             }
         );
     }

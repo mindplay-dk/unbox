@@ -15,7 +15,7 @@ $bench->add(
     $unbox_configuration
 );
 
-foreach (array(1,10) as $num) {
+foreach ([1,10] as $num) {
     $bench->add(
         "{$num} repeated resolutions",
         function () use ($num) {

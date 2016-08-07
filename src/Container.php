@@ -25,32 +25,32 @@ class Container implements ContainerInterface, FactoryInterface
     /**
      * @var mixed[] map where component name => value
      */
-    protected $values = array();
+    protected $values = [];
 
     /**
      * @var callable[] map where component name => factory function
      */
-    protected $factory = array();
+    protected $factory = [];
 
     /**
      * @var array map where component name => mixed list/map of parameter names
      */
-    protected $factory_map = array();
+    protected $factory_map = [];
 
     /**
      * @var bool[] map where component name => true (if the component is immutable)
      */
-    protected $immutable = array();
+    protected $immutable = [];
 
     /**
      * @var (callable[])[] map where component name => list of configuration functions
      */
-    protected $config = array();
+    protected $config = [];
 
     /**
      * @var array map where component name => mixed list/map of parameter names
      */
-    protected $config_map = array();
+    protected $config_map = [];
 
     /**
      * Self-register this container for dependency injection
@@ -167,7 +167,7 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @throws ContainerException
      */
-    public function register($name, $func_or_map_or_type = null, $map = array())
+    public function register($name, $func_or_map_or_type = null, $map = [])
     {
         if (@$this->immutable[$name]) {
             throw new ContainerException("attempted re-registration of active component: {$name}");
@@ -354,7 +354,7 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @return mixed return value from the given callable
      */
-    public function call($callback, $map = array())
+    public function call($callback, $map = [])
     {
         $params = $this->reflect($callback)->getParameters();
 
@@ -372,7 +372,7 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @return mixed
      */
-    public function create($class_name, $map = array())
+    public function create($class_name, $map = [])
     {
         if (!class_exists($class_name)) {
             throw new InvalidArgumentException("unable to create component: {$class_name}");
@@ -388,7 +388,7 @@ class Container implements ContainerInterface, FactoryInterface
 
         $params = $constructor
             ? $this->resolve($constructor->getParameters(), $map)
-            : array();
+            : [];
 
         return $reflection->newInstanceArgs($params);
     }
@@ -481,7 +481,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     protected function resolve(array $params, $map)
     {
-        $args = array();
+        $args = [];
 
         $map = (array)$map;
 

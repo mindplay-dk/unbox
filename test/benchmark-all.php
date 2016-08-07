@@ -38,7 +38,7 @@ $bench->add(
 
 $bench->run();
 
-foreach (array(1,3,5,10) as $num) {
+foreach ([1,3,5,10] as $num) {
     $bench = new Benchmark();
 
     $bench->add(
