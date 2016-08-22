@@ -463,6 +463,72 @@ test(
 );
 
 test(
+    'can override constructors',
+    function () {
+        $container = new Container();
+
+        $container->register(CacheProvider::class, FileCache::class, ["/tmp/cache"]);
+
+        $call_count = 0;
+
+        $container->override(TestController::class, function (CacheProvider $cache) use (&$call_count) {
+            $call_count += 1;
+
+            return new TestController($cache, ["hello" => "world"]);
+        });
+
+        ok($container->has(TestController::class) === false, "an override does not generate a registration");
+
+        /**
+         * @var TestController $controller
+         */
+        $controller = $container->create(TestController::class);
+
+        ok($controller instanceof TestController);
+
+        ok($controller !== $container->create(TestController::class), "creates a new instance for each call to create()");
+
+        eq($call_count, 2);
+
+        eq($controller->cache, $container->get(CacheProvider::class), "can inject defined service");
+
+        eq($controller->params, ["hello" => "world"]);
+
+        eq($container->create(TestController::class, ["cache" => new FileCache("/1")])->cache->path, "/1",
+            "can override constructor function argument by name");
+
+        eq($container->create(TestController::class, [CacheProvider::class => new FileCache("/2")])->cache->path, "/2",
+            "can override constructor function argument by type");
+    }
+);
+
+test(
+    'can override constructor arguments',
+    function () {
+        $container = new Container();
+
+        $container->register(CacheProvider::class, FileCache::class, ["/tmp/cache"]);
+
+        $container->override(TestController::class, ["params" => ["hello" => "world"]]);
+
+        ok($container->has(TestController::class) === false, "an override does not generate a registration");
+
+        /**
+         * @var TestController $controller
+         */
+        $controller = $container->create(TestController::class);
+
+        ok($controller instanceof TestController);
+
+        ok($controller !== $container->create(TestController::class), "creates a new instance for each call to create()");
+
+        eq($controller->cache, $container->get(CacheProvider::class), "can auto-inject service");
+
+        eq($controller->params, ["hello" => "world"], "can override constructor params");
+    }
+);
+
+test(
     'can override components by type-name',
     function () {
         $container = new Container();

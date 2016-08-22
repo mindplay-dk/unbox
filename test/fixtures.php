@@ -63,6 +63,18 @@ class UserRepository
     }
 }
 
+class TestController
+{
+    public $cache;
+    public $params;
+
+    public function __construct(CacheProvider $cache, array $params)
+    {
+        $this->cache = $cache;
+        $this->params = $params;
+    }
+}
+
 class TestProvider implements ProviderInterface
 {
     public function register(Container $container)

@@ -38,6 +38,16 @@ class Container implements ContainerInterface, FactoryInterface
     protected $factory_map = [];
 
     /**
+     * @var Closure[] map where prototype name => factory function
+     */
+    protected $prototypes = [];
+
+    /**
+     * @var array map where prototype name => mixed list/map of prototype parameters
+     */
+    protected $prototype_maps = [];
+
+    /**
      * @var bool[] map where component name => true (if the component is immutable)
      */
     protected $immutable = [];
@@ -362,33 +372,106 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * Create an instance of a given class.
+     * Override a constructor with a custom factory function, override constructor arguments, or
+     * define a custom named prototype.
      *
-     * The container will internally resolve and inject any constructor arguments
-     * not explicitly provided in the (optional) second parameter.
+     * This effectively replaces the constructor in calls to {see create()}, and thereby also
+     * replaces indirect use of constructors for registrations such as `register(Foo::class)`.
      *
-     * @param string        $class_name fully-qualified class-name
-     * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
+     * As such, an override function *should* be declared with parameter types (and/or names)
+     * identical to those of the constructor they replace. This is not a strict requirement, but
+     * it helps to make the consumption of packaged providers more predictable for other developers.
+     *
+     * There are two valid forms of constructor override:
+     *
+     *   * `override(Foo::class, ["a" => 123])` overrides (or defines default) constructor arguments.
+     *
+     *   * `override(Foo::class, function ($a) { return new Foo($a); })` completely overrides the
+     *     constructor with a custom function.
+     *
+     *   * `override(Foo::class, function ($a) { return new Foo($a); } ,["a" => 123])` overrides the
+     *     constructor with a custom function, and injects custom arguments into that function. (the
+     *     common use-case for this, is injecting component references using calls to `ref()`)
+     *
+     * Override registrations do *not* generate service registrations - an override function affects
+     * the behavior of calls to {@see create()} only - calls to {@see get()} are unaffected by this feature.
+     *
+     * Override registrations are useful primarily for transient non-services, such as controllers,
+     * which get created and used by your application once, and then fall out of scope.
+     *
+     * The optional `$map` argument can be used to provide defaults - any custom arguments given
+     * in calls to {@see create()} will override those defined for the custom factory function.
+     *
+     * Note that a subsequent call to `override()` replaces any previous call to `override()`.
+     *
+     * @param string         $name        fully-qualified class/interface-name (or any prototype name)
+     * @param callable|array $func_or_map factory function creating an instance of the specified class/interface
+     *                                    (or, if no third argument is given, a mixed list/map of parameter values)
+     * @param array|null     $map         mixed list/map of default parameter values (and/or boxed values)
+     *                                    (optional, if given as the second argument)
+     *
+     * @return void
+     */
+    public function override($name, $func_or_map, $map = [])
+    {
+        if (is_callable($func_or_map)) {
+            $this->prototypes[$name] = $func_or_map;
+            $this->prototype_maps[$name] = $map;
+        } elseif (is_array($func_or_map)) {
+            unset($this->prototypes[$name]);
+            $this->prototype_maps[$name] = $func_or_map;
+        } else {
+            throw new InvalidArgumentException("invalid argument type: " . gettype($func_or_map));
+        }
+    }
+
+    /**
+     * Create an instance of a given class, interface, or other prototype override.
+     *
+     * When given a class-name, the container will internally resolve and inject any
+     * constructor arguments not explicitly provided in the (optional) second parameter.
+     *
+     * Custom constructor arguments, and custom prototypes for interface (or other named
+     * prototypes) can be defined by calling {@see override()}.
+     *
+     * @param string        $name fully-qualified class-name
+     * @param mixed|mixed[] $map  mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed
      */
-    public function create($class_name, $map = [])
+    public function create($name, $map = [])
     {
-        if (!class_exists($class_name)) {
-            throw new InvalidArgumentException("unable to create component: {$class_name}");
+        if (isset($this->prototypes[$name])) {
+            // call user-defined constructor override:
+
+            $constructor = new ReflectionFunction($this->prototypes[$name]);
+
+            $params = $map + $this->prototype_maps[$name];
+
+            return $constructor->invokeArgs($this->resolve($constructor->getParameters(), $params));
         }
 
-        $reflection = new ReflectionClass($class_name);
+        if (!class_exists($name)) {
+            throw new InvalidArgumentException("unable to create component: {$name}");
+        }
+
+        $reflection = new ReflectionClass($name);
 
         if (!$reflection->isInstantiable()) {
-            throw new InvalidArgumentException("unable to create instance of abstract class: {$class_name}");
+            throw new InvalidArgumentException("unable to create instance of abstract class: {$name}");
         }
 
         $constructor = $reflection->getConstructor();
 
+        if (isset($this->prototype_maps[$name])) {
+            // pad with default constructor arguments:
+
+            $map = $map + $this->prototype_maps[$name];
+        }
+
         $params = $constructor
             ? $this->resolve($constructor->getParameters(), $map)
-            : [];
+            : []; // no constructor, hence no parameters to inject
 
         return $reflection->newInstanceArgs($params);
     }

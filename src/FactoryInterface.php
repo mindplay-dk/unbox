@@ -14,10 +14,10 @@ interface FactoryInterface
      * The factory will internally resolve and inject any constructor arguments
      * not explicitly provided in the (optional) second parameter.
      *
-     * @param string        $class_name fully-qualified class-name
-     * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
+     * @param string        $name fully-qualified class/interface-name (or any prototype name)
+     * @param mixed|mixed[] $map  mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed
      */
-    public function create($class_name, $map = []);
+    public function create($name, $map = []);
 }
