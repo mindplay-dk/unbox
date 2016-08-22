@@ -75,15 +75,13 @@ class Dispatcher
 
     public function run($path, $params)
     {
-        list($controller, $action) = explode("/", $path);
+        list($controller_name, $action_method) = explode("/", $path);
 
-        $class = ucfirst($controller) . "Controller";
-        $method = $action;
+        $class = ucfirst($controller_name) . "Controller";
 
-        $this->container->call(
-            [$this->container->create($class), $method],
-            $params
-        );
+        $controller = $this->container->create($class);
+
+        $this->container->call([$controller, $action_method], $params);
     }
 }
 
