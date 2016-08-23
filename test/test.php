@@ -86,41 +86,40 @@ test(
         $c = new Container();
 
         $c->register('a', function () { return 'A'; });
-        $c->register('b', function () { return 'B'; });
-        $c->set('c', 'C');
-        $c->set('d', 'D');
-
         $c->register('a', function () { return 'AA'; });
-        $c->set('b', 'BB');
-        $c->register('c', function () { return 'CC'; });
-        $c->set('d', 'DD');
-
         eq($c->get('a'), 'AA', 'can override registered component');
+
+        $c->register('b', function () { return 'B'; });
+        $c->set('b', 'BB');
         eq($c->get('b'), 'BB', 'can overwrite registered component');
+
+        $c->set('c', 'C');
+        $c->register('c', function () { return 'CC'; });
         eq($c->get('c'), 'CC', 'can override set component');
+
+        $c->set('d', 'D');
+        $c->set('d', 'DD');
         eq($c->get('d'), 'DD', 'can overwrite set component');
 
-        expect(
-            ContainerException::class,
-            'attempted override of registered component after initialization',
-            function () use ($c) {
-                $c->register('a', function () { return 'AA'; });
-            }
-        );
+        foreach (['a', 'b', 'c', 'd'] as $id) {
+            expect(
+                ContainerException::class,
+                'should throw on attempted override of active component',
+                function () use ($c, $id) {
+                    $c->register($id, function () { return 'VALUE'; });
+                },
+                "/attempted re-registration of active component: {$id}/"
+            );
 
-        $c->set('b', 'BBB');
-        eq($c->get('b'), 'BBB', 'can overwrite registered component after initialization');
-
-        expect(
-            ContainerException::class,
-            'attempted override of set component after initialization',
-            function () use ($c) {
-                $c->set('c', function () { return 'CC'; });
-            }
-        );
-
-        $c->set('d', 'DDD');
-        eq($c->get('d'), 'DDD', 'can overwrite set component after initialization');
+            expect(
+                ContainerException::class,
+                'should throw on attempted overwrite of active component',
+                function () use ($c, $id) {
+                    $c->set($id, 'VALUE');
+                },
+                "/attempted overwrite of initialized component: {$id}/"
+            );
+        }
     }
 );
 
