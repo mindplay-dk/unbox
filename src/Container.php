@@ -38,11 +38,6 @@ class Container implements ContainerInterface, FactoryInterface
     protected $factory_map = [];
 
     /**
-     * @var bool[] map where component name => true (if the component is immutable)
-     */
-    protected $immutable = [];
-
-    /**
      * @var (callable[])[] map where component name => list of configuration functions
      */
     protected $config = [];
@@ -57,11 +52,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function __construct()
     {
-        $this->values[get_class($this)] =
-        $this->values[__CLASS__] =
-        $this->values[ContainerInterface::class] =
-        $this->values[FactoryInterface::class] =
-            $this;
+        $this->init();
     }
 
     /**
@@ -73,8 +64,20 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function __clone()
     {
+        $this->init();
+    }
+
+    /**
+     * Internally self-register after construction or cloning.
+     */
+    private function init()
+    {
         $this->values = [];
-        $this->immutable = [];
+
+        $this->set(get_class($this), $this);
+        $this->set(__CLASS__, $this);
+        $this->set(ContainerInterface::class, $this);
+        $this->set(FactoryInterface::class, $this);
     }
 
     /**
@@ -98,14 +101,12 @@ class Container implements ContainerInterface, FactoryInterface
 
             $reflection = new ReflectionFunction($factory);
 
-            $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
+            $params = $this->resolve($reflection->getParameters(), @$this->factory_map[$name]);
 
             $this->values[$name] = call_user_func_array($factory, $params);
 
             $this->initialize($name);
         }
-
-        $this->immutable[$name] = true; // prevent further changes to this component
 
         return $this->values[$name];
     }
@@ -123,15 +124,13 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function set($name, $value)
     {
-        if (isset($this->immutable[$name])) {
+        if ($this->isActive($name)) {
             throw new ContainerException("attempted overwrite of initialized component: {$name}");
         }
 
-        $this->values[$name] = $value;
-
-        unset($this->factory[$name], $this->factory_map[$name]);
-
-        $this->initialize($name);
+        $this->factory[$name] = function() use ($value) {
+            return $value;
+        };
     }
 
     /**
@@ -184,7 +183,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function register($name, $func_or_map_or_type = null, $map = [])
     {
-        if (isset($this->immutable[$name])) {
+        if ($this->isActive($name)) {
             throw new ContainerException("attempted re-registration of active component: {$name}");
         }
 
@@ -213,8 +212,6 @@ class Container implements ContainerInterface, FactoryInterface
         $this->factory[$name] = $func;
 
         $this->factory_map[$name] = $map;
-
-        unset($this->values[$name]);
     }
 
     /**
@@ -281,13 +278,13 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @return void
      *
-     * @throws NotFoundException
+     * @throws ContainerException
      */
     public function configure($name_or_func, $func_or_map = null, $map = [])
     {
         if (is_callable($name_or_func)) {
             $func = $name_or_func;
-            $map = $func_or_map;
+            $map = $func_or_map ?: [];
 
             // no component name supplied, infer it from the closure:
 
@@ -315,14 +312,12 @@ class Container implements ContainerInterface, FactoryInterface
             }
         }
 
+        if ($this->isActive($name)) {
+            throw new ContainerException("attempted re-registration of active component: {$name}");
+        }
+
         $this->config[$name][] = $func;
         $this->config_map[$name][] = $map;
-
-        if ($this->isActive($name)) {
-            // component is already active - initialize the component immediately:
-
-            $this->initialize($name);
-        }
     }
 
     /**
@@ -486,7 +481,7 @@ class Container implements ContainerInterface, FactoryInterface
      * This is the heart of the beast.
      *
      * @param ReflectionParameter[] $params parameter reflections
-     * @param mixed|mixed[]         $map    mixed list/map of parameter values (and/or boxed values)
+     * @param array                 $map    mixed list/map of parameter values (and/or boxed values)
      *
      * @return array parameters
      *
@@ -496,8 +491,6 @@ class Container implements ContainerInterface, FactoryInterface
     protected function resolve(array $params, $map)
     {
         $args = [];
-
-        $map = (array)$map;
 
         foreach ($params as $index => $param) {
             $param_name = $param->name;

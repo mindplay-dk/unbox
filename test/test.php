@@ -207,23 +207,9 @@ test(
     function () {
         $container = new Container();
 
-        $container->register(FileCache::class, ["/tmp/foo"]);
+        $container->register(FileCache::class, ["/by-type"]);
 
-        $container->register("cache", FileCache::class, ["/tmp/bar"]);
-
-        /** @var FileCache|null $by_type */
-        $by_type = null;
-
-        $container->call(function (FileCache $cache) use (&$by_type) {
-            $by_type = $cache;
-        });
-
-        /** @var FileCache|null $by_name */
-        $by_name = null;
-
-        $container->call(function ($cache) use (&$by_name) {
-            $by_name = $cache;
-        });
+        $container->register("cache", FileCache::class, ["/by-name"]);
 
         /** @var FileCache|null $conf_by_type */
         $conf_by_type = null;
@@ -239,14 +225,28 @@ test(
             $conf_by_name = $cache;
         });
 
-        eq($container->get(FileCache::class)->path, "/tmp/foo");
-        eq($container->get("cache")->path, "/tmp/bar");
+        /** @var FileCache|null $by_type */
+        $by_type = null;
 
-        eq($by_type->path, "/tmp/foo");
-        eq($by_name->path, "/tmp/bar");
+        $container->call(function (FileCache $cache) use (&$by_type) {
+            $by_type = $cache;
+        });
 
-        eq($conf_by_type->path, "/tmp/foo");
-        eq($conf_by_name->path, "/tmp/bar");
+        /** @var FileCache|null $by_name */
+        $by_name = null;
+
+        $container->call(function ($cache) use (&$by_name) {
+            $by_name = $cache;
+        });
+
+        eq($container->get(FileCache::class)->path, "/by-type");
+        eq($container->get("cache")->path, "/by-name");
+
+        eq($by_type->path, "/by-type");
+        eq($by_name->path, "/by-name");
+
+        eq($conf_by_type->path, "/by-type");
+        eq($conf_by_name->path, "/by-name");
     }
 );
 
@@ -483,27 +483,31 @@ test(
     'can clone containers',
     function () {
         /**
-         * @var UserRepository $original_repo
-         * @var UserRepository $cloned_repo
+         * @var UserRepository $original_component
+         * @var UserRepository $cloned_component
          */
 
         $container = new Container();
 
-        $container->add(new TestProvider());
+        $container->register(FileCache::class, ["path" => "/foo"]);
 
-        $original_repo = $container->get(UserRepository::class);
+        $called_by = [];
+
+        $container->configure(function (FileCache $cache, Container $container) use (&$called_by) {
+            $called_by[] = spl_object_hash($container);
+        });
+
+        $original_component = $container->get(FileCache::class);
 
         $cloned_container = clone $container;
 
-        $cloned_repo = $cloned_container->get(UserRepository::class);
+        $cloned_component = $cloned_container->get(FileCache::class);
 
-        ok($cloned_repo instanceof UserRepository);
+        ok($cloned_component instanceof FileCache);
 
-        ok($cloned_repo->cache instanceof FileCache);
+        ok($cloned_component !== $original_component);
 
-        ok($cloned_repo !== $original_repo);
-
-        ok($cloned_repo->cache !== $original_repo->cache);
+        eq($called_by, [spl_object_hash($container), spl_object_hash($cloned_container)]);
     }
 );
 
