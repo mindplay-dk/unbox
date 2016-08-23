@@ -65,6 +65,19 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * This method makes Containers cloneable, and ensures that a cloned Container has
+     * no active components. This effectively enables you to use an existing Container
+     * as a prototype for new Containers, without having to bootstrap it from scratch.
+     *
+     * @internal
+     */
+    public function __clone()
+    {
+        $this->values = [];
+        $this->immutable = [];
+    }
+
+    /**
      * Resolve the registered component with the given name.
      *
      * @param string $name component name
@@ -555,7 +568,5 @@ class Container implements ContainerInterface, FactoryInterface
                 }
             }
         }
-
-        unset($this->config[$name]);
     }
 }

@@ -481,6 +481,34 @@ test(
 );
 
 test(
+    'can clone containers',
+    function () {
+        /**
+         * @var UserRepository $original_repo
+         * @var UserRepository $cloned_repo
+         */
+
+        $container = new Container();
+
+        $container->add(new TestProvider());
+
+        $original_repo = $container->get(UserRepository::class);
+
+        $cloned_container = clone $container;
+
+        $cloned_repo = $cloned_container->get(UserRepository::class);
+
+        ok($cloned_repo instanceof UserRepository);
+
+        ok($cloned_repo->cache instanceof FileCache);
+
+        ok($cloned_repo !== $original_repo);
+
+        ok($cloned_repo->cache !== $original_repo->cache);
+    }
+);
+
+test(
     'internal reflection guard clauses',
     function () {
         $c = new Container();
