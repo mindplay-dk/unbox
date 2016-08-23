@@ -4,7 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "69e62817fa658b33aec6335253931e70",
+    "hash": "a3e96edeaed9202f91911a619e8f4444",
+    "content-hash": "e318895142d5e367bb3100a1f42111d4",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -32,19 +33,21 @@
             ],
             "description": "Promoting the interoperability of container objects (DIC, SL, etc.)",
             "time": "2014-12-30 15:22:37"
-        },
+        }
+    ],
+    "packages-dev": [
         {
             "name": "mindplay/benchpress",
             "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mindplay-dk/benchpress.git",
-                "reference": "fb712d97407daea04cca379c8b965c8409957828"
+                "reference": "e46935bb0c220ba2ecd6d32314f875f3d8511f16"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mindplay-dk/benchpress/zipball/fb712d97407daea04cca379c8b965c8409957828",
-                "reference": "fb712d97407daea04cca379c8b965c8409957828",
+                "url": "https://api.github.com/repos/mindplay-dk/benchpress/zipball/e46935bb0c220ba2ecd6d32314f875f3d8511f16",
+                "reference": "e46935bb0c220ba2ecd6d32314f875f3d8511f16",
                 "shasum": ""
             },
             "require": {
@@ -67,30 +70,28 @@
                 }
             ],
             "description": "A simple benchmark suite for PHP 5.3 and up",
-            "time": "2015-06-08 16:34:50"
-        }
-    ],
-    "packages-dev": [
+            "time": "2016-08-07 13:44:25"
+        },
         {
             "name": "mindplay/testies",
-            "version": "0.2.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mindplay-dk/testies.git",
-                "reference": "7f7ee264e47ab6fd9f67dfc63c3fd347f9c52a69"
+                "reference": "272516fe2232929032e09002f380437a23aa3feb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mindplay-dk/testies/zipball/7f7ee264e47ab6fd9f67dfc63c3fd347f9c52a69",
-                "reference": "7f7ee264e47ab6fd9f67dfc63c3fd347f9c52a69",
+                "url": "https://api.github.com/repos/mindplay-dk/testies/zipball/272516fe2232929032e09002f380437a23aa3feb",
+                "reference": "272516fe2232929032e09002f380437a23aa3feb",
                 "shasum": ""
             },
             "require-dev": {
                 "guzzlehttp/guzzle": "5.*",
-                "phpunit/php-code-coverage": "2.*@dev"
+                "phpunit/php-code-coverage": "^3.0"
             },
             "suggest": {
-                "phpunit/php-code-coverage": "2.*@dev"
+                "phpunit/php-code-coverage": "^3.0"
             },
             "type": "library",
             "autoload": {
@@ -112,20 +113,20 @@
                 }
             ],
             "description": "Yeah, testies: a lightweight library for quick, simple unit-testing",
-            "time": "2015-08-20 10:47:19"
+            "time": "2016-05-09 09:41:04"
         },
         {
             "name": "php-di/invoker",
-            "version": "1.0.0",
+            "version": "1.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-DI/Invoker.git",
-                "reference": "7ea703c62dbb29d64763fa85258826034ce3c97d"
+                "reference": "1f4ca63b9abc66109e53b255e465d0ddb5c2e3f7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-DI/Invoker/zipball/7ea703c62dbb29d64763fa85258826034ce3c97d",
-                "reference": "7ea703c62dbb29d64763fa85258826034ce3c97d",
+                "url": "https://api.github.com/repos/PHP-DI/Invoker/zipball/1f4ca63b9abc66109e53b255e465d0ddb5c2e3f7",
+                "reference": "1f4ca63b9abc66109e53b255e465d0ddb5c2e3f7",
                 "shasum": ""
             },
             "require": {
@@ -155,42 +156,45 @@
                 "invoke",
                 "invoker"
             ],
-            "time": "2015-04-24 10:18:34"
+            "time": "2016-07-14 13:09:58"
         },
         {
             "name": "php-di/php-di",
-            "version": "5.0.3",
+            "version": "5.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-DI/PHP-DI.git",
-                "reference": "c59af31dcf2ee6246e28464e775599321df40955"
+                "reference": "854a6d8f54e2146f0a34f0a28f0adea688b634a3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-DI/PHP-DI/zipball/c59af31dcf2ee6246e28464e775599321df40955",
-                "reference": "c59af31dcf2ee6246e28464e775599321df40955",
+                "url": "https://api.github.com/repos/PHP-DI/PHP-DI/zipball/854a6d8f54e2146f0a34f0a28f0adea688b634a3",
+                "reference": "854a6d8f54e2146f0a34f0a28f0adea688b634a3",
                 "shasum": ""
             },
             "require": {
                 "container-interop/container-interop": "~1.0",
-                "php": ">=5.4.0",
-                "php-di/invoker": "~1.0",
-                "php-di/phpdoc-reader": "~2.0"
+                "php": ">=5.5.0",
+                "php-di/invoker": "^1.1.1",
+                "php-di/phpdoc-reader": "^2.0.1"
+            },
+            "provide": {
+                "container-interop/container-interop-implementation": "^1.0"
             },
             "replace": {
                 "mnapoli/php-di": "*"
             },
             "require-dev": {
                 "doctrine/annotations": "~1.2",
-                "doctrine/cache": "~1.0",
-                "mnapoli/phpunit-easymock": "~0.1.4",
-                "ocramius/proxy-manager": "~1.0",
+                "doctrine/cache": "~1.4",
+                "mnapoli/phpunit-easymock": "~0.2.0",
+                "ocramius/proxy-manager": "~1.0|~2.0",
                 "phpunit/phpunit": "~4.5"
             },
             "suggest": {
                 "doctrine/annotations": "Install it if you want to use annotations (version ~1.2)",
-                "doctrine/cache": "Install it if you want to use the cache (version ~1.0)",
-                "ocramius/proxy-manager": "Install it if you want to use lazy injection (version ~1.0)"
+                "doctrine/cache": "Install it if you want to use the cache (version ~1.4)",
+                "ocramius/proxy-manager": "Install it if you want to use lazy injection (version ~1.0 or ~2.0)"
             },
             "type": "library",
             "autoload": {
@@ -212,20 +216,20 @@
                 "dependency injection",
                 "di"
             ],
-            "time": "2015-08-12 13:46:41"
+            "time": "2016-06-01 17:23:41"
         },
         {
             "name": "php-di/phpdoc-reader",
-            "version": "2.0.0",
+            "version": "2.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-DI/PhpDocReader.git",
-                "reference": "21dce5e29f640d655e7b4583ecfb7d166127a5da"
+                "reference": "83f5ead159defccfa8e7092e5b6c1c533b326d68"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-DI/PhpDocReader/zipball/21dce5e29f640d655e7b4583ecfb7d166127a5da",
-                "reference": "21dce5e29f640d655e7b4583ecfb7d166127a5da",
+                "url": "https://api.github.com/repos/PHP-DI/PhpDocReader/zipball/83f5ead159defccfa8e7092e5b6c1c533b326d68",
+                "reference": "83f5ead159defccfa8e7092e5b6c1c533b326d68",
                 "shasum": ""
             },
             "require": {
@@ -249,20 +253,20 @@
                 "phpdoc",
                 "reflection"
             ],
-            "time": "2015-06-01 14:23:20"
+            "time": "2015-11-29 10:34:25"
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "2.2.2",
+            "version": "2.2.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "2d7c03c0e4e080901b8f33b2897b0577be18a13c"
+                "reference": "eabf68b476ac7d0f73793aada060f1c1a9bf8979"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/2d7c03c0e4e080901b8f33b2897b0577be18a13c",
-                "reference": "2d7c03c0e4e080901b8f33b2897b0577be18a13c",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/eabf68b476ac7d0f73793aada060f1c1a9bf8979",
+                "reference": "eabf68b476ac7d0f73793aada060f1c1a9bf8979",
                 "shasum": ""
             },
             "require": {
@@ -311,7 +315,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-08-04 03:42:39"
+            "time": "2015-10-06 15:47:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -403,16 +407,16 @@
         },
         {
             "name": "phpunit/php-token-stream",
-            "version": "1.4.6",
+            "version": "1.4.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-token-stream.git",
-                "reference": "3ab72c62e550370a6cd5dc873e1a04ab57562f5b"
+                "reference": "3144ae21711fb6cac0b1ab4cbe63b75ce3d4e8da"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-token-stream/zipball/3ab72c62e550370a6cd5dc873e1a04ab57562f5b",
-                "reference": "3ab72c62e550370a6cd5dc873e1a04ab57562f5b",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-token-stream/zipball/3144ae21711fb6cac0b1ab4cbe63b75ce3d4e8da",
+                "reference": "3144ae21711fb6cac0b1ab4cbe63b75ce3d4e8da",
                 "shasum": ""
             },
             "require": {
@@ -448,7 +452,7 @@
             "keywords": [
                 "tokenizer"
             ],
-            "time": "2015-08-16 08:51:00"
+            "time": "2015-09-15 10:49:45"
         },
         {
             "name": "pimple/pimple",
@@ -498,23 +502,23 @@
         },
         {
             "name": "sebastian/environment",
-            "version": "1.3.2",
+            "version": "1.3.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/environment.git",
-                "reference": "6324c907ce7a52478eeeaede764f48733ef5ae44"
+                "reference": "be2c607e43ce4c89ecd60e75c6a85c126e754aea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/6324c907ce7a52478eeeaede764f48733ef5ae44",
-                "reference": "6324c907ce7a52478eeeaede764f48733ef5ae44",
+                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/be2c607e43ce4c89ecd60e75c6a85c126e754aea",
+                "reference": "be2c607e43ce4c89ecd60e75c6a85c126e754aea",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.3"
+                "php": "^5.3.3 || ^7.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4.4"
+                "phpunit/phpunit": "^4.8 || ^5.0"
             },
             "type": "library",
             "extra": {
@@ -544,7 +548,7 @@
                 "environment",
                 "hhvm"
             ],
-            "time": "2015-08-03 06:14:51"
+            "time": "2016-08-18 05:49:44"
         },
         {
             "name": "sebastian/version",
@@ -585,7 +589,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "mindplay/benchpress": 20
+        "mindplay/benchpress": 20,
+        "mindplay/testies": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

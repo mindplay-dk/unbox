@@ -90,9 +90,9 @@ class Container implements ContainerInterface, FactoryInterface
             $this->values[$name] = call_user_func_array($factory, $params);
 
             $this->initialize($name);
-
-            $this->immutable[$name] = true; // prevent further changes to this component
         }
+
+        $this->immutable[$name] = true; // prevent further changes to this component
 
         return $this->values[$name];
     }
@@ -115,6 +115,8 @@ class Container implements ContainerInterface, FactoryInterface
         }
 
         $this->values[$name] = $value;
+
+        unset($this->factory[$name], $this->factory_map[$name]);
 
         $this->initialize($name);
     }
@@ -169,7 +171,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function register($name, $func_or_map_or_type = null, $map = [])
     {
-        if (@$this->immutable[$name]) {
+        if (isset($this->immutable[$name])) {
             throw new ContainerException("attempted re-registration of active component: {$name}");
         }
 
@@ -319,8 +321,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function has($name)
     {
-        return array_key_exists($name, $this->values)
-        || isset($this->factory[$name]);
+        return array_key_exists($name, $this->values) || isset($this->factory[$name]);
     }
 
     /**
@@ -535,8 +536,6 @@ class Container implements ContainerInterface, FactoryInterface
      * @param string $name component name
      *
      * @return void
-     *
-     * @throws ContainerException on attempt to initialize an already-initialized component
      */
     protected function initialize($name)
     {
