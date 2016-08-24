@@ -553,7 +553,7 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @return void
      */
-    protected function initialize($name)
+    private function initialize($name)
     {
         if (isset($this->config[$name])) {
             foreach ($this->config[$name] as $index => $config) {
