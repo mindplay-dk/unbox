@@ -28,6 +28,11 @@ class Container implements ContainerInterface, FactoryInterface
     protected $values = [];
 
     /**
+     * @var bool[] map where component name => flag
+     */
+    protected $active = [];
+
+    /**
      * @var callable[] map where component name => factory function
      */
     protected $factory = [];
@@ -73,6 +78,7 @@ class Container implements ContainerInterface, FactoryInterface
     private function init()
     {
         $this->values = [];
+        $this->active = [];
 
         $this->set(get_class($this), $this);
         $this->set(__CLASS__, $this);
@@ -92,18 +98,20 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function get($name)
     {
-        if (!array_key_exists($name, $this->values)) {
-            if (!isset($this->factory[$name])) {
+        if (!isset($this->active[$name])) {
+            if (isset($this->factory[$name])) {
+                $factory = $this->factory[$name];
+
+                $reflection = new ReflectionFunction($factory);
+
+                $params = $this->resolve($reflection->getParameters(), @$this->factory_map[$name]);
+
+                $this->values[$name] = call_user_func_array($factory, $params);
+            } elseif (!array_key_exists($name, $this->values)) {
                 throw new NotFoundException($name);
             }
 
-            $factory = $this->factory[$name];
-
-            $reflection = new ReflectionFunction($factory);
-
-            $params = $this->resolve($reflection->getParameters(), @$this->factory_map[$name]);
-
-            $this->values[$name] = call_user_func_array($factory, $params);
+            $this->active[$name] = true;
 
             $this->initialize($name);
         }
@@ -128,9 +136,9 @@ class Container implements ContainerInterface, FactoryInterface
             throw new ContainerException("attempted overwrite of initialized component: {$name}");
         }
 
-        $this->factory[$name] = function() use ($value) {
-            return $value;
-        };
+        $this->values[$name] = $value;
+
+        unset($this->factory[$name], $this->factory_map[$name]);
     }
 
     /**
@@ -212,6 +220,8 @@ class Container implements ContainerInterface, FactoryInterface
         $this->factory[$name] = $func;
 
         $this->factory_map[$name] = $map;
+
+        unset($this->values[$name]);
     }
 
     /**
@@ -341,7 +351,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function isActive($name)
     {
-        return array_key_exists($name, $this->values);
+        return isset($this->active[$name]);
     }
 
     /**

@@ -322,18 +322,16 @@ might also be using `CacheInterface` as a default.
 
 #### Direct Insertion
 
-In some cases, you already have an instance of a component, such as the `ClassLoader`
-provided by Composer - in this case, you can insert it directly into the container, to
-make it available for dependency injection:
+Not all dependencies are expensive to create - simple values (such as host-names and port-numbers)
+do not benefit from deferred initialization with `register()`, and instead should be inserted
+into the container directly:
 
 ```php
-$loader = require __DIR__ . '/vendor/autoload.php';
-
-$container->set(ClassLoader::class, $loader);
+$container->set("db.host", "localhost");
+$container->set("db.port", "12345");
 ```
 
-Another common use-case for `set()` is to configure simple values like host-names or
-port-numbers.
+Another common use-case for `set()` is to inject objects for which you can't defer creation.
 
 #### Overrides
 
