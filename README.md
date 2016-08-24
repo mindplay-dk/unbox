@@ -194,11 +194,10 @@ set of rules - in order of priority:
      instance (or one "preferred" instance) in the same container. Singletons are usually registered
      under their class-name, or interface-name, or sometimes both.
 
-  3. Parameter names, e.g. components maching the precise argument name (without `$`) - some may
-     think this is risky, as an unresolved type-hint could get resolved by a parameter-name not
-     intended for that function; if you don't wish to rely on this feature, you can simply adopt
-     a convention of using component names like `"db.name"` instead of `"db_name"`, since names
-     with a `"."` can't be used as parameter names.
+  3. Parameter names, e.g. components maching the precise argument name (without `$`) - this works
+     only when it's safe, which it is in most cases, the only exception being constructors invoked
+     via `create()` where component names in the Container happen to match parameter names in the
+     constructor. (constructor arguments given via the `$map` arguments are of course safe, too.)
 
   4. A default parameter value, if provided, will be used as a last resort - this can be useful
      in cases such as `function ($db_port = 3306) { ... }`, which allows for optional

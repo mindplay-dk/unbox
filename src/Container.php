@@ -406,7 +406,7 @@ class Container implements ContainerInterface, FactoryInterface
         $constructor = $reflection->getConstructor();
 
         $params = $constructor
-            ? $this->resolve($constructor->getParameters(), $map)
+            ? $this->resolve($constructor->getParameters(), $map, false)
             : [];
 
         return $reflection->newInstanceArgs($params);
@@ -492,13 +492,14 @@ class Container implements ContainerInterface, FactoryInterface
      *
      * @param ReflectionParameter[] $params parameter reflections
      * @param array                 $map    mixed list/map of parameter values (and/or boxed values)
+     * @param bool                  $safe   if TRUE, it's considered safe to resolve against parameter names
      *
      * @return array parameters
      *
      * @throws ContainerException
      * @throws NotFoundException
      */
-    protected function resolve(array $params, $map)
+    protected function resolve(array $params, $map, $safe = true)
     {
         $args = [];
 
@@ -520,7 +521,7 @@ class Container implements ContainerInterface, FactoryInterface
                     $value = $map[$type]; // resolve as user-provided type-hinted argument
                 } elseif ($type && $this->has($type)) {
                     $value = $this->get($type); // resolve as component registered by class/interface name
-                } elseif ($this->has($param_name)) {
+                } elseif ($safe && $this->has($param_name)) {
                     $value = $this->get($param_name); // resolve as component with matching parameter name
                 } elseif ($param->isOptional()) {
                     $value = $param->getDefaultValue(); // unresolved: resolve using default value
@@ -530,8 +531,8 @@ class Container implements ContainerInterface, FactoryInterface
                     $reflection = $param->getDeclaringFunction();
 
                     throw new ContainerException(
-                        "unable to resolve \"{$type}\" for parameter: \${$param_name}" .
-                        ' in file: ' . $reflection->getFileName() . ', line ' . $reflection->getStartLine()
+                        "unable to resolve parameter: \${$param_name} " . ($type ? "({$type}) " : "") .
+                        "in file: " . $reflection->getFileName() . ", line " . $reflection->getStartLine()
                     );
                 }
             }

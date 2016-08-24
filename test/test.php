@@ -443,6 +443,35 @@ test(
 );
 
 test(
+    'factory does not make unsafe constructor injections',
+    function () {
+        $container = new Container();
+
+        $container->register("path", "/foo");
+
+        expect(
+            ContainerException::class,
+            "should NOT inject the 'path' component",
+            function () use ($container) {
+                $container->create(FileCache::class);
+            },
+            "/unable to resolve parameter: .path/"
+        );
+    }
+);
+
+test(
+    'can register with constructor argument overrides',
+    function () {
+        $container = new Container();
+
+        $container->register("cache", FileCache::class, ["path" => "/bar"]);
+
+        eq($container->get("cache")->path, "/bar");
+    }
+);
+
+test(
     'can override factory maps',
     function () {
         $container = new Container();
