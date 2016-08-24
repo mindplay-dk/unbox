@@ -104,7 +104,7 @@ class Container implements ContainerInterface, FactoryInterface
 
                 $reflection = new ReflectionFunction($factory);
 
-                $params = $this->resolve($reflection->getParameters(), @$this->factory_map[$name]);
+                $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
 
                 $this->values[$name] = call_user_func_array($factory, $params);
             } elseif (!array_key_exists($name, $this->values)) {
