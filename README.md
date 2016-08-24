@@ -8,6 +8,8 @@
 Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
 with a gentle learning curve.
 
+To upgrade from an older version, please see the [upgrade guide](UPGRADING.md).
+
 ## Installation
 
 With Composer: `require mindplay/unbox`
