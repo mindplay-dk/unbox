@@ -227,12 +227,12 @@ class Container implements ContainerInterface, FactoryInterface
     /**
      * Register a component as an alias of another registered component.
      *
-     * @param string $name     new component name
-     * @param string $ref_name existing component name
+     * @param string $new_name new component name
+     * @param string $ref_name referenced existing component name
      */
-    public function alias($name, $ref_name)
+    public function alias($new_name, $ref_name)
     {
-        $this->register($name, function () use ($ref_name) {
+        $this->register($new_name, function () use ($ref_name) {
             return $this->get($ref_name);
         });
     }

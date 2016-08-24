@@ -145,7 +145,7 @@ register(string $name, string $type, array $map)       # ... and custom construc
 register(string $name, callable $func)                 # ... with a custom creation function
 register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
 
-alias(string $name, string $ref_name)                  # make $ref_name available as $name
+alias(string $new_name, string $ref_name)              # make $ref_name available as $new_name
 
 configure(callable $func)                              # manipulate a component upon creation
 configure(callable $func, array $map)                  # ... with custom arguments to the closure
