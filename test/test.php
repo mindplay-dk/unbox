@@ -4,6 +4,7 @@ use Interop\Container\ContainerInterface;
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
 use mindplay\unbox\NotFoundException;
+use mindplay\unbox\Reflection;
 
 require __DIR__ . '/header.php';
 
@@ -543,21 +544,19 @@ test(
 test(
     'internal reflection guard clauses',
     function () {
-        $c = new Container();
-
         expect(
             InvalidArgumentException::class,
             "should throw for invalid callable",
-            function () use ($c) {
-                invoke($c, "reflect", [["bleeeh", "meh"]]);
+            function () {
+                Reflection::createFromCallable(["bleeeh", "meh"]);
             }
         );
 
         expect(
             InvalidArgumentException::class,
             "should throw for invalid callable",
-            function () use ($c) {
-                invoke($c, "reflect", ["bleeeh"]);
+            function () {
+                Reflection::createFromCallable("bleeeh");
             }
         );
 
@@ -566,15 +565,15 @@ test(
         expect(
             InvalidArgumentException::class,
             "should throw for uncallable object",
-            function () use ($c, $bar) {
-                invoke($c, "reflect", [$bar]);
+            function () use ($bar) {
+                Reflection::createFromCallable($bar);
             }
         );
     }
 );
 
 test(
-    'Container::ARG_PATTERN works as intended',
+    'can obtain reflections from all types of callable',
     function () {
         $cases = [
             [function (Foo $foo) {}, 'Foo'],
@@ -594,11 +593,11 @@ test(
 
             $pattern_str = $params[0]->__toString();
 
-            if (preg_match(Container::ARG_PATTERN, $pattern_str, $matches) === 1) {
-                eq($matches[1], $expected, "{$pattern_str} should match: " . format($expected));
-            } else {
-                eq(null, $expected, "{$pattern_str} should match: " . format($expected));
-            }
+            eq(
+                Reflection::getParameterType($params[0]),
+                $expected,
+                "{$pattern_str} should match: " . format($expected)
+            );
         }
     }
 );

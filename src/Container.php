@@ -7,8 +7,6 @@ use Interop\Container\ContainerInterface;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionFunction;
-use ReflectionFunctionAbstract;
-use ReflectionMethod;
 use ReflectionParameter;
 
 /**
@@ -16,12 +14,6 @@ use ReflectionParameter;
  */
 class Container implements ContainerInterface, FactoryInterface
 {
-    /**
-     * @type string pattern for parsing an argument type from a ReflectionParameter string
-     * @see getArgumentType()
-     */
-    const ARG_PATTERN = '/(?:\<required\>|\<optional\>)\\s+([\\w\\\\]+)/';
-
     /**
      * @var mixed[] map where component name => value
      */
@@ -301,14 +293,11 @@ class Container implements ContainerInterface, FactoryInterface
             if ($func instanceof Closure) {
                 $param = new ReflectionParameter($func, 0); // shortcut reflection for closures (as an optimization)
             } else {
-                list($param) = $this->reflect($func)->getParameters();
+                list($param) = Reflection::createFromCallable($func)->getParameters();
             }
 
-            // obtain the type-hint, but avoid triggering autoload:
-
-            $name = preg_match(self::ARG_PATTERN, $param->__toString(), $matches) === 1
-                ? $matches[1] // infer component name from type-hint
-                : $param->name; // infer component name from parameter name
+            $name = Reflection::getParameterType($param) // infer component name from type-hint
+                ?: $param->name; // infer component name from parameter name
 
             if (!$this->has($name) && $this->has($param->name)) {
                 $name = $param->name;
@@ -375,7 +364,7 @@ class Container implements ContainerInterface, FactoryInterface
      */
     public function call($callback, $map = [])
     {
-        $params = $this->reflect($callback)->getParameters();
+        $params = Reflection::createFromCallable($callback)->getParameters();
 
         return call_user_func_array($callback, $this->resolve($params, $map));
     }
@@ -456,36 +445,6 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * Internally reflect on any type of callable
-     *
-     * @param callable $callback
-     *
-     * @return ReflectionFunctionAbstract
-     */
-    protected function reflect($callback)
-    {
-        if (is_object($callback)) {
-            if ($callback instanceof Closure) {
-                return new ReflectionFunction($callback);
-            } elseif (method_exists($callback, '__invoke')) {
-                return new ReflectionMethod($callback, '__invoke');
-            }
-
-            throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");
-        } elseif (is_array($callback)) {
-            if (is_callable($callback)) {
-                return new ReflectionMethod($callback[0], $callback[1]);
-            }
-
-            throw new InvalidArgumentException("expected callable");
-        } elseif (is_callable($callback)) {
-            return new ReflectionFunction($callback);
-        }
-
-        throw new InvalidArgumentException("unexpected value: " . var_export($callback, true) . " - expected callable");
-    }
-
-    /**
      * Internally resolves parameters to functions or constructors.
      *
      * This is the heart of the beast.
@@ -513,9 +472,7 @@ class Container implements ContainerInterface, FactoryInterface
             } else {
                 // as on optimization, obtain the argument type without triggering autoload:
 
-                $type = preg_match(self::ARG_PATTERN, $param->__toString(), $matches)
-                    ? $matches[1]
-                    : null; // no type-hint available
+                $type = Reflection::getParameterType($param);
 
                 if ($type && isset($map[$type])) {
                     $value = $map[$type]; // resolve as user-provided type-hinted argument
@@ -560,7 +517,7 @@ class Container implements ContainerInterface, FactoryInterface
             foreach ($this->config[$name] as $index => $config) {
                 $map = $this->config_map[$name][$index];
 
-                $reflection = $this->reflect($config);
+                $reflection = Reflection::createFromCallable($config);
 
                 $params = $this->resolve($reflection->getParameters(), $map);
 
