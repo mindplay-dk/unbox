@@ -7,7 +7,7 @@ use InvalidArgumentException;
 use ReflectionParameter;
 
 /**
- * TODO docs
+ * This class provides boostrapping/configuration facilities for creation of `Container` instances.
  */
 class ContainerFactory
 {
