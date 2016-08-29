@@ -396,8 +396,7 @@ resolved as well.
 The optional array `$map` is a mixed list/map of parameters, as covered [above](#bootstrapping).
 
 If no `$name` is supplied, the first argument from the given `$func` is used to infer the
-component name: if the first argument is type-hinted, the class/interface name is used -
-or, if no type-hint is supplied, the parameter name is used.
+component name from the type-hint.
 
 As an example, let's say you've configured a `PDO` component:
 
@@ -420,8 +419,8 @@ $factory->configure(function (PDO $db) {
 ```
 
 Note that, in this example, `configure()` will infer the component name `"PDO"` from the
-type-hint - in a scenario with multiple named `PDO` instances, you would use the optional
-first argument to explicitly specify the component, e.g.:
+type-hint - in a scenario with multiple named `PDO` instances, you must explicitly specify
+the component name as the first argument, e.g.:
 
 ```php
 $factory->configure("logger.pdo", function (PDO $db) {

@@ -151,7 +151,7 @@ class ContainerFactory
      * Register a configuration function, which will be applied as late as possible, e.g.
      * on first use of the component. For example:
      *
-     *     $container->configure('stack', function (MiddlewareStack $stack) {
+     *     $factory->configure('stack', function (MiddlewareStack $stack) {
      *         $stack->push(new MoreAwesomeMiddleware());
      *     });
      *
@@ -160,30 +160,31 @@ class ContainerFactory
      * will be resolved and injected.
      *
      * The first argument (component name) is optional - that is, the name can be inferred
-     * from the first parameter of the closure; the following will work:
+     * from a type-hint on the first parameter of the closure, so the following will work:
      *
-     *     $container->configure(function (PageLayout $layout) {
+     *     $factory->register(PageLayout::class);
+     *
+     *     $factory->configure(function (PageLayout $layout) {
      *         $layout->title = "Welcome";
      *     });
      *
-     * In some cases, such as using component names like "cache.path" (which because of the
-     * dot in the name cannot be resolved by parameter name), you can use a boxed reference
-     * in the optional `$map` argument, e.g.:
+     * In some cases, you may wish to fetch additional dependencies, by using additional
+     * arguments, and specifying how these should be resolved, e.g. using
+     * {@see Container::ref()} - for example:
      *
-     *     $container->configure(
+     *     $factory->register("cache", FileCache::class);
+     *
+     *     $factory->configure(
+     *         "cache",
      *         function (FileCache $cache, $path) {
      *             $cache->setPath($path);
      *         },
      *         ['path' => $container->ref('cache.path')]
      *     );
      *
-     * You may optionally provide a list/map of parameter values, similar to the one
-     * accepted by {@see Container::register()} - the typical reason to use this, is if
-     * you need to inject another component by name, e.g. using {@see Container::ref()}.
-     *
      * You can also use `configure()` to decorate objects, or manipulate (or replace) values:
      *
-     *     $container->configure('num_kittens', function ($num_kittens) {
+     *     $factory->configure('num_kittens', function ($num_kittens) {
      *         return $num_kittens + 6; // add another litter
      *     });
      *
@@ -214,11 +215,10 @@ class ContainerFactory
                 list($param) = Reflection::createFromCallable($func)->getParameters();
             }
 
-            $name = Reflection::getParameterType($param) // infer component name from type-hint
-                ?: $param->name; // infer component name from parameter name
+            $name = Reflection::getParameterType($param); // infer component name from type-hint
 
-            if (!$this->has($name) && $this->has($param->name)) {
-                $name = $param->name; // TODO QA: state-dependent configuration here. wrong?
+            if ($name === null) {
+                throw new InvalidArgumentException("no component-name or type-hint specified");
             }
         } else {
             $name = $name_or_func;
@@ -248,12 +248,12 @@ class ContainerFactory
     }
 
     /**
-     * Creates a boxed reference to a component in the container.
+     * Creates a boxed reference to a component with a given name.
      *
      * You can use this in conjunction with `register()` to provide a component reference
      * without expanding that reference until first use - for example:
      *
-     *     $container->register(UserRepo::class, [$container->ref('cache')]);
+     *     $factory->register(UserRepo::class, [$factory->ref('cache')]);
      *
      * This will reference the "cache" component and provide it as the first argument to the
      * constructor of `UserRepo` - compared with using `$container->get('cache')`, this has
@@ -262,7 +262,7 @@ class ContainerFactory
      *
      * Another reason (besides performance) to use references, is to defer the reference:
      *
-     *     $container->register(FileCache::class, ['root_path' => $container->ref('cache.path')]);
+     *     $factory->register(FileCache::class, ['root_path' => $factory->ref('cache.path')]);
      *
      * In this example, the component "cache.path" will be fetched from the container on
      * first use of `FileCache`, giving you a chance to configure "cache.path" later.

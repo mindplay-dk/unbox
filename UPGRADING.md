@@ -115,3 +115,31 @@ $container->register(
 ```
 
 This code is safer and more explicit.
+
+**Stricter configure()**
+
+The `configure()` method no longer attempts to infer the component-name from the parameter name - the
+following code previously worked *only* because `configure()` is called *after* `register()`:
+
+```php
+$factory = new ContainerFactory();
+
+$factory->register("cache", FileCache:class, ["/tmp/cache"]);
+
+$factory->configure(function (FileCache $cache) {
+    // ...
+});
+```
+
+In version 2, registration order causes no such side-effect - you therefore have to specify the
+component-name because it can't be inferred, so the last line of the above code would need to
+specify the component-name:
+
+```php
+$factory->configure("cache", function (FileCache $cache) {
+    // ...
+});
+```
+
+In other words, `configure()` without a component-name only works for components where the
+component name is equal to the type-hint.

@@ -148,7 +148,7 @@ test(
         $f->configure('a', function ($a) { return $a + 1; }); // $a = 3
 
         $f->configure('b', function ($b) { return $b + 1; }); // $b = 3
-        $f->configure(function ($b) { return $b + 1; }); // $b = 4 (component name "b" inferred from param name)
+        $f->configure('b', function ($b) { return $b + 1; }); // $b = 4
 
         $f->configure('b', function ($b) { $b += 1; }); // no change
 
@@ -242,7 +242,7 @@ test(
         /** @var FileCache|null $conf_by_name */
         $conf_by_name = null;
 
-        $f->configure(function ($cache) use (&$conf_by_name) {
+        $f->configure('cache', function ($cache) use (&$conf_by_name) {
             $conf_by_name = $cache;
         });
 
@@ -270,6 +270,24 @@ test(
 
         eq($conf_by_type->path, "/by-type");
         eq($conf_by_name->path, "/by-name");
+    }
+);
+
+test(
+    'configure() requires either type-hint or component name in version 2',
+    function () {
+        $f = new ContainerFactory();
+
+        $f->register("cache", FileCache::class, ["/foo"]);
+
+        expect(
+            InvalidArgumentException::class,
+            "should throw for missing component-name and missing type-hint",
+            function () use ($f) {
+                $f->configure(function ($cache) {});
+            },
+            "/no component-name or type-hint specified/"
+        );
     }
 );
 
