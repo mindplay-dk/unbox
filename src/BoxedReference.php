@@ -2,38 +2,29 @@
 
 namespace mindplay\unbox;
 
-use Interop\Container\ContainerInterface;
-
 /**
  * This class implements a boxed reference to a component in a Container.
  */
 class BoxedReference implements BoxedValueInterface
 {
     /**
-     * @var ContainerInterface
-     */
-    private $container;
-
-    /**
      * @var string
      */
     private $name;
 
     /**
-     * @param ContainerInterface $container container reference
-     * @param string             $name      component name
+     * @param string $name component name
      */
-    public function __construct(ContainerInterface $container, $name)
+    public function __construct($name)
     {
-        $this->container = $container;
         $this->name = $name;
     }
 
     /**
      * @return mixed the boxed value
      */
-    public function unbox()
+    public function unbox(Container $container)
     {
-        return $this->container->get($this->name);
+        return $container->get($this->name);
     }
 }

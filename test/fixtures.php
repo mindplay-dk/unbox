@@ -1,6 +1,6 @@
 <?php
 
-use mindplay\unbox\Container;
+use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\ProviderInterface;
 
 function test_func($foo) {
@@ -65,7 +65,7 @@ class UserRepository
 
 class TestProvider implements ProviderInterface
 {
-    public function register(Container $container)
+    public function register(ContainerFactory $container)
     {
         $container->set('cache_path', '/tmp/cache');
 

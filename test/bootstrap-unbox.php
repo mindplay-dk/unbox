@@ -1,13 +1,13 @@
 <?php
 
-use mindplay\unbox\Container;
+use mindplay\unbox\ContainerFactory;
 
 return call_user_func(function () {
 
-    $container = new Container();
+    $factory = new ContainerFactory();
 
-    $container->add(new TestProvider());
+    $factory->add(new TestProvider());
 
-    return $container;
+    return $factory->createContainer();
 
 });

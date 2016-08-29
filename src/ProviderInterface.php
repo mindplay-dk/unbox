@@ -5,16 +5,16 @@ namespace mindplay\unbox;
 /**
  * This interface enables you to package service definitions for reuse.
  *
- * @see Container::register()
+ * @see ContainerFactory::register()
  */
 interface ProviderInterface
 {
     /**
-     * Registers services and components with a given Container
+     * Registers services and components with a given `ContainerFactory`
      *
-     * @param Container $container
+     * @param ContainerFactory $container
      *
      * @return void
      */
-    public function register(Container $container);
+    public function register(ContainerFactory $container);
 }

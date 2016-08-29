@@ -3,7 +3,76 @@ Upgrading
 
 #### 2.0.0
 
-Version 2.0 introduces some minor BC breaks from version 1.x.
+Version 2 introduces some BC breaks from version 1.x, as described below.
+
+**Separation of Concerns**
+
+The biggest change in version 2 is the introduction of `ContainerFactory`, which provides a more
+natural separation of the bootstrapping/configuration phase from the life of the `Container` itself.
+We no longer have to enforce immutability of components and throw exceptions - the container, once
+created, doesn't have any mutation methods, and is thereby naturally immutable.
+
+Version 1 bootstrapping might look like this:
+
+```php
+$container = new Container();
+
+$container->add(new FooProvider);
+$container->add(new BarProvider);
+```
+
+Porting this to Version 2 should be straight-forward in most cases:
+
+```php
+$factory = new ContainerFactory();
+
+$factory->add(new FooProvider);
+$factory->add(new BarProvider);
+
+$container = $factory->createContainer();
+```
+
+A possible edge-case, is if you had closures that depend on a `Container` instance being
+in scope, such as:
+
+```php
+$container->register(PDO::class, function () use ($container) {
+    return new PDO($container->get("db.connection_string"));
+});
+```
+
+The `Container` is no longer available at the time of registration, but you can port such code
+simply by asking for the container instance, rather than relying on an instance being in scope, e.g.:
+
+```php
+$container->register(PDO::class, function (Container $container) {
+    return new PDO($container->get("db.connection_string"));
+});
+```
+
+**Provider Interface**
+
+The signature of `ProviderInterface` has changed - a provider is now exposed to `ContainerFactory`
+rather than to `Container`.
+
+Assuming your providers weren't reading from the container, which they shouldn't be, porting should
+be as simple as updating the method-signatures of your providers to match this change, and renaming
+the argument from `$container` to `$factory` to accurately reflect the role of this argument in the
+context of your provider, which is now boostrapping the container *factory* rather than the container
+itself.
+
+The registration/configuration methods of the API use the same signatures as in version 1.x, so this
+should be an easy change to implement.
+
+**Boxed Value Interface**
+
+The signature of `BoxedValueInterface` has changed - the Container instance is now provided as an
+argument to the `unbox()` method; this was introduced because some boxed value types (including the
+built-in `BoxedReference` type) depend upon the Container, which is now unavailable at the time of
+bootstrapping/configuration.
+
+You're not required to use the provided instance for anything - if you don't need it, simply add
+the container argument to your boxed value type to satisfy the interface, and ignore the argument.
 
 **Consistent Mutability**
 

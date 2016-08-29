@@ -8,7 +8,7 @@
 Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
 with a gentle learning curve.
 
-To upgrade from an older version, please see the [upgrade guide](UPGRADING.md).
+To upgrade from an older (1.x) version, please see the [upgrade guide](UPGRADING.md).
 
 ## Installation
 
@@ -50,33 +50,48 @@ class UserRepository {
 }
 ```
 
-Now, let's wire that up with a `Container` in a "bootstrap" file somewhere:
+Unbox has a two-stage life-cycle. The first stage is the creation of a `ContainerFactory` - this
+class provides bootstrapping and configuration facilities. The second stage begins with a call
+to `ContainerFactory::createFactory()` which creates the actual `Container` instance, which
+provides the facilities enabling client-code to invoke functions and constructors, etc.
+
+Let's bootstrap a `ContainerFactory` with those dependencies, in a "bootstrap" file somewhere:
 
 ```php
-use mindplay\unbox\Container;
+use mindplay\unbox\ContainerFactory;
 
-$container = new Container();
+$factory = new ContainerFactory();
 
 // register a component named "cache":
-$container->register("cache", function ($cache_path) {
+$factory->register("cache", function ($cache_path) {
     return new FileCache($cache_path);
 });
 
 // register "CacheInterface" as a component referencing "cache":
-$container->alias(CacheInterface::class, "cache");
+$factory->alias(CacheInterface::class, "cache");
 
 // register "UserRepository" as a component:
-$container->register(UserRepository::class);
+$factory->register(UserRepository::class);
 ```
 
-Then configure the missing cache path in a "config" file somewhere:
+Then configure the missing `$cache_path` for the `cache` component, add that to a "config" file somewhere:
 
 ```php
-$container->set("cache_path", "/tmp/cache");
+$factory->set("cache_path", "/tmp/cache");
 ```
 
-That's enough to get going - you can now take your `UserRepository` out of the `Container`,
-either by asking for it directly:
+Now that the `ContainerFactory` is fully bootstrapped, we're ready to create a `Container`:
+
+```php
+$container = $factory->createContainer();
+```
+
+In this simple example, we're now done with `ContainerFactory`, which can simply fall out of
+scope. (In more advanced scenarios, such as long-running [React](http://reactphp.org/) or
+[PHP-PM](https://github.com/php-pm/php-pm) applications, you might want to maintain a
+reference to `ContainerFactory`, so you can create a fresh `Container` for each request.)
+
+You can now take your `UserRepository` out of the `Container`, either by asking for it directly:
 
 ```php
 $users = $container->get(UserRepository::class);
@@ -128,22 +143,19 @@ That's the quick, high-level overview.
 #### API
 
 If you're already comfortable with dependency injection, and just want to know what the API looks
-like, below is a quick overview.
+like, below is a quick overview of the `ContainerFactory` API:
 
 ```php
-get(string $name) : mixed                              # unbox a component
-set(string $name, mixed $value)                        # directly insert an existing component
-has(string $name) : bool                               # check if a component is defined/exists
-isActive(string $name) : bool                          # check if a component has been unboxed
-
-add(ProviderInterface $provider)                       # register a configuration provider
-
 register(string $type)                                 # register a component (for auto-creation)
 register(string $type, array $map)                     # ... with custom constructor arguments
 register(string $name, string $type)                   # ... with a specific name for auto-creation
 register(string $name, string $type, array $map)       # ... and custom constructor arguments
 register(string $name, callable $func)                 # ... with a custom creation function
 register(string $name, callable $func, array $map)     # ... and custom arguments to that closure
+
+set(string $name, mixed $value)                        # directly insert an existing component
+
+add(ProviderInterface $provider)                       # register a configuration provider
 
 alias(string $new_name, string $ref_name)              # make $ref_name available as $new_name
 
@@ -152,13 +164,25 @@ configure(callable $func, array $map)                  # ... with custom argumen
 configure(string $name, callable $func)                # ... for a component with a specific name
 configure(string $name, callable $func, array $map)    # ... with custom arguments
 
+has(string $name) : bool                               # check if a component is defined/exists
+
+ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
+
+createContainer() : Container                          # create a bootstrapped Container instance
+```
+
+The following provides a quick overview of the `Container` API:
+
+```php
+get(string $name) : mixed                              # unbox a component
+has(string $name) : bool                               # check if a component is defined/exists
+isActive(string $name) : bool                          # check if a component has been unboxed
+
 call(callable $func) : mixed                           # call any callable an inject arguments
 call(callable $func, array $map) : mixed               # ... and override or add missing params
 
 create(string $class_name) : mixed                     # invoke a constructor and auto-inject
 create(string $class_name, array $map) : mixed         # ... and override or add missing params
-
-ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 ```
 
 If you're new to dependency injection, or if any of this baffles you, don't panic - everything is
@@ -212,12 +236,12 @@ good practice (when possible) as this provides self-documenting configurations w
 
 ## Guide
 
-In the following sections, we'll assume that a `Container` instance is in scope, e.g.:
+In the following sections, we'll assume that a `ContainerFactory` instance is in scope, e.g.:
 
 ```php
-use mindplay\unbox\Container;
+use mindplay\unbox\ContainerFactory;
 
-$container = new Container();
+$factory = new ContainerFactory();
 ```
 
 ### Bootstrapping
@@ -251,7 +275,7 @@ parameters without keys (such as `['apple', 'pear']`) these are taken as being p
 arguments, while parameters with keys (such as `['lives' => 9]`) are matched against
 the parameter name of the callable or constructor being invoked.
 
-When supplying custom arguments via `$map`, it is common to use `$container->ref('name')`
+When supplying custom arguments via `$map`, it is common to use `$factory->ref('name')`
 to obtain a "boxed" reference to a component - when the registered component is created
 (on first use) any "boxed" arguments will be "unboxed" at that time. In other words, this
 enables you to supply other components as arguments "lazily", without activating them
@@ -271,7 +295,7 @@ The following examples are all valid use-cases of the above forms:
   * `register(Foo::class, ['bar'])` registers a component by it's class-name, and will
     use `'bar'` as the first constructor argument, and try to resolve the rest.
 
-  * `register(Foo::class, [$container->ref(Bar::class)])` creates a boxed reference to
+  * `register(Foo::class, [$factory->ref(Bar::class)])` creates a boxed reference to
     a registered component `Bar` and provides that as the first argument.
 
   * `register(Foo::class, ['bat' => 'zap'])` registers a component by it's class-name
@@ -289,14 +313,14 @@ The following examples are all valid use-cases of the above forms:
   * `register(Bar::class, function (Foo $foo) { return new Bar(...); })` registers a
     component with a custom factory function.
 
-  * `register(Bar::class, function ($name) { ... }, [$container->ref('db.name')]);`
+  * `register(Bar::class, function ($name) { ... }, [$factory->ref('db.name')]);`
     registers a component creation function with a reference to a component "db.name"
     as the first argument.
 
 In effect, you can think of `$func` as being an optional argument.
 
-The provided parameter values may include any `BoxedValueInterface`, such as the boxed
-component reference created by `Container::ref()` - these will be unboxed as late as possible.
+The provided parameter values may include any `BoxedValueInterface`, such as (commonly) the boxed
+component reference created by `ContainerFactory::ref()` - these will be unboxed as late as possible.
 
 #### Aliasing
 
@@ -307,11 +331,13 @@ for a class and an interface.
 For example, it's ordinary to register a cache component twice:
 
 ```php
-$container->register(CacheInterface::class, function () {
+$factory->register(CacheInterface::class, function () {
     return new FileCache();
 });
 
-$container->alias("db.cache", CacheInterface::class); // "db.cache" becomes an alias!
+$factory->alias("db.cache", CacheInterface::class); // "db.cache" becomes an alias!
+
+$container = $factory->createContainer();
 
 var_dump($container->get("db.cache") === $container->get(CacheInterface::class)); // => bool(true)
 ```
@@ -328,8 +354,8 @@ do not benefit from deferred initialization with `register()`, and instead shoul
 into the container directly:
 
 ```php
-$container->set("db.host", "localhost");
-$container->set("db.port", "12345");
+$factory->set("db.host", "localhost");
+$factory->set("db.port", "12345");
 ```
 
 Another common use-case for `set()` is to inject objects for which you can't defer creation.
@@ -376,7 +402,7 @@ or, if no type-hint is supplied, the parameter name is used.
 As an example, let's say you've configured a `PDO` component:
 
 ```php
-$container->register(PDO::class, function ($db_host, $db_name, $db_user, $db_password) {
+$factory->register(PDO::class, function ($db_host, $db_name, $db_user, $db_password) {
     $connection = "mysql:host={$db_host};dbname={$db_name}";
 
     return new PDO($connection, $db_user, $db_password);
@@ -384,11 +410,11 @@ $container->register(PDO::class, function ($db_host, $db_name, $db_user, $db_pas
 ```
 
 In a configuration file, simple values like `$db_host` can be inserted directly, e.g. with
-`$container->set("db_host", "localhost")` - but suppose you need to do something *after*
+`$factory->set("db_host", "localhost")` - but suppose you need to do something *after*
 the connection is created? Here's where `configure()` comes into play:
 
 ```php
-$container->configure(function (PDO $db) {
+$factory->configure(function (PDO $db) {
     $db->exec("SET NAMES utf8");
 });
 ```
@@ -398,7 +424,7 @@ type-hint - in a scenario with multiple named `PDO` instances, you would use the
 first argument to explicitly specify the component, e.g.:
 
 ```php
-$container->configure("logger.pdo", function (PDO $db) {
+$factory->configure("logger.pdo", function (PDO $db) {
     $db->exec("SET NAMES utf8");
 });
 ```
@@ -409,7 +435,7 @@ This library doesn't support neither property nor setter injection, but both can
 by just doing those things in a call to `configure()` - for example:
 
 ```php
-$container->configure(function (Connection $db, LoggerInterface $logger) {
+$factory->configure(function (Connection $db, LoggerInterface $logger) {
     $db->setLogger($logger);
 });
 ```
@@ -426,7 +452,7 @@ You can use `configure()` to modify values (such as strings, numbers or arrays) 
 For example, let's say you have a middleware stack defined as an array:
 
 ```php
-$container->set("app.middleware", function () {
+$factory->set("app.middleware", function () {
     return [new RouterMiddleware, new NotFoundMiddleware];
 );
 ```
@@ -434,14 +460,14 @@ $container->set("app.middleware", function () {
 If you need to append to the stack, you can do this:
 
 ```php
-$container->configure("app.middleware", function ($middleware) {
+$factory->configure("app.middleware", function ($middleware) {
     $middleware[] = new CacheMiddleware();
 
     return $middleware;
 });
 ```
 
-Note the return statement - this is what causes the value to get updated in the container..
+Note the `return` statement - this is what causes the value to get updated in the container.
 
 ##### Decoration
 
@@ -450,22 +476,22 @@ that can be implemented with `configure()` - for example, lets say you bootstrap
 container with a product repository implementation and interface:
 
 ```php
-$container->register(ProductRepository::class, function () { ... });
+$factory->register(ProductRepository::class, function () { ... });
 
-$container->alias(ProductRepositoryInterface::class, ProductRepository::class);
+$factory->alias(ProductRepositoryInterface::class, ProductRepository::class);
 ```
 
 Now lets say you implement a cached product repository decorator - you can bootstrap this
 by creating and returning the decorator instance like this:
 
 ```php
-$container->configure(function (ProductRepositoryInterface $repo) {
+$factory->configure(function (ProductRepositoryInterface $repo) {
     return new CachedProductRepository($repo);
 });
 ```
 
 Note that, when replacing components in this manner, of course you must be certain that the
-replacement has type that can pass a type-check in the recipient constructor or method.
+replacement has a type that can pass a type-check in the recipient constructor or method.
 
 ##### Packaged Providers
 
@@ -475,10 +501,10 @@ implementing `ProviderInterface` - for example:
 ```php
 class MyProvider implements ProviderInterface
 {
-    public function register(Container $container)
+    public function register(ContainerFactory $factory)
     {
-        $container->register(...);
-        $container->configure(...);
+        $factory->register(...);
+        $factory->configure(...);
         // ...
     }
 }
@@ -487,13 +513,13 @@ class MyProvider implements ProviderInterface
 You can then easily bootstrap your projects with providers, e.g.:
 
 ```php
-$container->add(new MyProvider);
-$container->add(new TestDependenciesProvider);
-$container->add(new DevelopmentDebugProvider);
+$factory->add(new MyProvider);
+$factory->add(new TestDependenciesProvider);
+$factory->add(new DevelopmentDebugProvider);
 // ...
 ```
 
-Providers of course can also call `Container::add()` to bootstrap other providers - with
+Providers of course can also call `ContainerFactory::add()` to bootstrap other providers - with
 this in mind, you can make e.g. development or production setup for your app as easy as
 calling e.g. `$container->add(new DevelopmentProvider)` to provide complete bootstrapping
 for a quick development setup. Even if somebody wanted to override some of the registrations
@@ -502,9 +528,19 @@ in e.g. your default development setup, they can of course still do that, e.g. b
 
 ### Consumption
 
-Consuming the contents of a container is very simple, convenient and powerful - and therefore very
-tempting! You should [inform yourself](http://stackoverflow.com/questions/11316688/inversion-of-control-vs-dependency-injection-with-selected-quotes-is-my-unders/11319026#11319026)
-about the difference, and **avoid** using the container as a [service locator](https://en.wikipedia.org/wiki/Service_locator_pattern).
+In the following sections, we'll assume that a `Container` instance is in scope, e.g.:
+
+```php
+$factory = new ContainerFactory();
+
+// ... bootstrapping ...
+
+$container = $factory->createContainer();
+```
+
+Consuming the contents of a container by simply pulling components out of it is very simple and convenient - and therefore
+tempting, but often wrong! You should [inform yourself](http://stackoverflow.com/questions/11316688/inversion-of-control-vs-dependency-injection-with-selected-quotes-is-my-unders/11319026#11319026)
+about the difference and **avoid** using the container as a [service locator](https://en.wikipedia.org/wiki/Service_locator_pattern).
 
 The most basic form of component access, is a direct lookup:
 
@@ -523,7 +559,7 @@ $container->call(function (CacheInterface $cache, $db_name) {
 
 The result in these two examples, is the same - but it's important to note that, in the `call()`
 example, the two arguments are being resolved in two different ways: the `CacheInterface` param
-is resolved by class-name, whereas the `$db_name` param is being resolve by parameter name.
+is resolved by class-name, whereas the `$db_name` param is being resolved by parameter name.
 
 The latter only works because the `$db_name` component is registered under that precise name -
 if it had been registered under a name such as `"db.name"`, the container would be unable to
@@ -539,12 +575,13 @@ Note that `call()` will accept [any type of callable](http://php.net/manual/en/l
 
 #### Factory Facet
 
-The `create()` method can be used to construct an instance of any class, on demand.
+The `create()` method can be used to invoke a constructor, to create an instance of any
+class, on demand.
 
 An important thing to understand, is that e.g. `register()` and `configure()` have *no*
 bearing on this functionality - the purpose of this method, is to create instance of types
-that *aren't* registered as components in the container, but may have *dependencies* that
-can be resolved by the container.
+that *aren't* registered as components in the container, but (likely) have *dependencies*
+which can be *provided* by the container.
 
 Controllers are a great example - you most likely don't want to register every individual
 controller class as a component in the container; rather, you probably want a controller
@@ -579,14 +616,14 @@ class ControllerFactory
 }
 ```
 
-Note thte `FactoryInterface` type-hint in the constructor - in situations where you care
-only about using the container as a factory, you should type-hint against this facet.
+Note the `FactoryInterface` type-hint in the constructor - in situations where you only
+care about using the container as a factory, you should type-hint against this facet.
 
 #### Inspection
 
 You can inspect the state of components in a container using `has()` and `isActive()`.
 
-To check if a component is defined:
+To check if a component is defined, use `has()` - for example:
 
 ```php
 var_dump($container->has("foo")); // => bool(false)
@@ -599,7 +636,7 @@ var_dump($container->has("foo")); // => bool(true)
 Whether a component is directly inserted with `set()`, or defined using `register()`, the
 `has()` method will return `true`.
 
-To check if a component has been activated:
+To check if a component has been activated, use `isActive()` - for example:
 
 ```php
 $container->register("foo", function () { return "bar"; });
@@ -611,7 +648,9 @@ $foo = $container->get("foo"); // component activates on first use
 var_dump($container->isActive("foo")); // => bool(true)
 ```
 
-If a component is directly inserted with `set()`, it is considered active immediately.
+A component is considered "active" when it has been used for the first time - components
+may get activated directly by calls to `get()`, or may get indirectly activated by
+cascading activation of dependencies.
 
 ## Opinionated
 
@@ -643,8 +682,8 @@ Non-features:
     designates something as being a service; unintentionally treating a non-singleton as a singleton
     can be a weird experience.
 
-  * **NO caching** and no "builder" or "container factory" class - because configuring a container
-    really shouldn't be so much overhead as to justify the need for caching.
+  * **NO caching** - because configuring a container really shouldn't be so much overhead as to
+    justify the need for caching. Unbox is fast.
 
   * **NO property/setter injections** because it blurs your dependencies - use constructor injection,
     and for optional dependencies, use optional constructor arguments; you don't, after all, need to
@@ -671,7 +710,7 @@ different qualities - from the smallest and simplest to the largest and most amb
   * [pimple](http://pimple.sensiolabs.org/) is as simple as a DI container can get, with absolutely
     no bell and whistles, and barely any learning curve.
 
-  * **unbox** with just two classes (less than 400 lines of code) and a few interfaces - more concepts
+  * **unbox** with just a few classes (just over 300 source lines) and a few interfaces - more concepts
     than pimple (and therefore a bit more learning curve) and convenient closure injections, which
     are somewhat more costly in terms of performance.
 
@@ -683,30 +722,28 @@ a Windows 10 system running PHP 5.6.12.
 
 Time to configure the container:
 
-    pimple ........ 0.078 msec ...... 59.80% ......... 1.00x
-    unbox ......... 0.088 msec ...... 67.57% ......... 1.13x
-    php-di ........ 0.131 msec ..... 100.00% ......... 1.67x
+    pimple ........ 0.098 msec ....... 72.31% ......... 1.00x
+    unbox ......... 0.106 msec ....... 77.98% ......... 1.08x
+    php-di ........ 0.136 msec ...... 100.00% ......... 1.38x
 
 Time to resolve the dependencies in the container, on first access:
 
-    pimple ........ 0.035 msec ...... 10.48% ......... 1.00x
-    unbox ......... 0.078 msec ...... 23.22% ......... 2.21x
-    php-di ........ 0.336 msec ..... 100.00% ......... 9.54x
+    pimple ........ 0.026 msec ....... 10.88% ......... 1.00x
+    unbox ......... 0.055 msec ....... 23.59% ......... 2.17x
+    php-di ........ 0.234 msec ...... 100.00% ......... 9.19x
 
 Time for multiple subsequent lookups:
 
-    pimple: 3 repeated resolutions ........ 0.038 msec ........ 10.95% ......... 1.00x
-    unbox: 3 repeated resolutions ......... 0.083 msec ........ 24.15% ......... 2.21x
-    php-di: 3 repeated resolutions ........ 0.345 msec ....... 100.00% ......... 9.13x
-
-    pimple: 5 repeated resolutions ........ 0.045 msec ........ 13.04% ......... 1.00x
-    unbox: 5 repeated resolutions ......... 0.092 msec ........ 26.50% ......... 2.03x
-    php-di: 5 repeated resolutions ........ 0.346 msec ....... 100.00% ......... 7.67x
-
-    pimple: 10 repeated resolutions ........ 0.052 msec ....... 14.55% ......... 1.00x
-    unbox: 10 repeated resolutions ......... 0.103 msec ....... 28.80% ......... 1.98x
-    php-di: 10 repeated resolutions ........ 0.357 msec ...... 100.00% ......... 6.87x
-
-Benchmarking under PHP 7, all three containers are about equal in terms of time to configure.
+    pimple: 3 repeated resolutions ........ 0.028 msec ....... 11.68% ......... 1.00x
+    unbox: 3 repeated resolutions ......... 0.058 msec ....... 24.04% ......... 2.06x
+    php-di: 3 repeated resolutions ........ 0.243 msec ...... 100.00% ......... 8.56x
+    
+    pimple: 5 repeated resolutions ........ 0.028 msec ....... 11.60% ......... 1.00x
+    unbox: 5 repeated resolutions ......... 0.062 msec ....... 25.64% ......... 2.21x
+    php-di: 5 repeated resolutions ........ 0.242 msec ...... 100.00% ......... 8.62x
+    
+    pimple: 10 repeated resolutions ....... 0.040 msec ....... 15.60% ......... 1.00x
+    unbox: 10 repeated resolutions ........ 0.069 msec ....... 27.02% ......... 1.73x
+    php-di: 10 repeated resolutions ....... 0.256 msec ...... 100.00% ......... 6.41x
 
 With Unbox, the time needed to resolve a component is 8-10 times less than under PHP 5.6.12.
