@@ -164,8 +164,6 @@ configure(callable $func, array $map)                  # ... with custom argumen
 configure(string $name, callable $func)                # ... for a component with a specific name
 configure(string $name, callable $func, array $map)    # ... with custom arguments
 
-has(string $name) : bool                               # check if a component is defined/exists
-
 ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 
 createContainer() : Container                          # create a bootstrapped Container instance

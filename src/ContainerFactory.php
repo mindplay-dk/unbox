@@ -234,20 +234,6 @@ class ContainerFactory
     }
 
     /**
-     * Check if a component with a given name has been registered
-     *
-     * TODO QA: should this method be public or protected? it creates state-dependency.
-     *
-     * @param string $name component name
-     *
-     * @return bool true, if a component with the given name has been defined
-     */
-    public function has($name)
-    {
-        return array_key_exists($name, $this->values) || isset($this->factory[$name]);
-    }
-
-    /**
      * Creates a boxed reference to a component with a given name.
      *
      * You can use this in conjunction with `register()` to provide a component reference

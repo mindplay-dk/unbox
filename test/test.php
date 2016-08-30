@@ -12,21 +12,21 @@ require __DIR__ . '/header.php';
 // TESTS:
 
 test(
-    'Container/Factory: can create components',
+    'can register/set components; can check component state',
     function () {
         $f = new ContainerFactory();
 
         $f->register('a', function () { return 'A'; });
         $f->register('b', function () { return 'B'; });
 
-        ok($f->has('a'), 'first component defined');
-        ok($f->has('b'), 'second component defined');
+        ok($f->createContainer()->has('a'), 'first component defined');
+        ok($f->createContainer()->has('b'), 'second component defined');
 
-        ok(!$f->has('c'), 'no third component defined');
+        ok(!$f->createContainer()->has('c'), 'no third component defined');
 
         $f->set('c', 'C');
 
-        ok($f->has('c'), 'third component initialized directly');
+        ok($f->createContainer()->has('c'), 'third component initialized directly');
 
         $c = $f->createContainer();
 
