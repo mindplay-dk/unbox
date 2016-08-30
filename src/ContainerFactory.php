@@ -36,6 +36,9 @@ class ContainerFactory
      */
     protected $config_map = [];
 
+    public function __construct()
+    {}
+
     /**
      * Register a component for dependency injection.
      *
