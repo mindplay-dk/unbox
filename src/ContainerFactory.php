@@ -9,33 +9,8 @@ use ReflectionParameter;
 /**
  * This class provides boostrapping/configuration facilities for creation of `Container` instances.
  */
-class ContainerFactory
+class ContainerFactory extends Configuration
 {
-    /**
-     * @var mixed[] map where component name => value
-     */
-    protected $values = [];
-
-    /**
-     * @var callable[] map where component name => factory function
-     */
-    protected $factory = [];
-
-    /**
-     * @var array map where component name => mixed list/map of parameter names
-     */
-    protected $factory_map = [];
-
-    /**
-     * @var (callable[])[] map where component name => list of configuration functions
-     */
-    protected $config = [];
-
-    /**
-     * @var array map where component name => mixed list/map of parameter names
-     */
-    protected $config_map = [];
-
     public function __construct()
     {}
 
@@ -286,12 +261,6 @@ class ContainerFactory
      */
     public function createContainer()
     {
-        return new Container(
-            $this->values,
-            $this->factory,
-            $this->factory_map,
-            $this->config,
-            $this->config_map
-        );
+        return new Container($this);
     }
 }

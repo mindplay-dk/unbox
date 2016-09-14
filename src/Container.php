@@ -11,7 +11,7 @@ use ReflectionParameter;
 /**
  * This class implements a simple dependency injection container.
  */
-class Container implements ContainerInterface, FactoryInterface
+class Container extends Configuration implements ContainerInterface, FactoryInterface
 {
     /**
      * @var bool[] map where component name => TRUE, if the component has been initialized
@@ -19,51 +19,19 @@ class Container implements ContainerInterface, FactoryInterface
     protected $active = [];
 
     /**
-     * @var mixed[] map where component name => value
+     * @param Configuration $config
      */
-    protected $values = [];
-
-    /**
-     * @var callable[] map where component name => factory function
-     */
-    protected $factory = [];
-
-    /**
-     * @var array map where component name => mixed list/map of parameter names
-     */
-    protected $factory_map = [];
-
-    /**
-     * @var (callable[])[] map where component name => list of configuration functions
-     */
-    protected $config = [];
-
-    /**
-     * @var array map where component name => mixed list/map of parameter names
-     */
-    protected $config_map = [];
-
-    /**
-     * @param mixed[]        $values
-     * @param callable[]     $factory
-     * @param array          $factory_map
-     * @param (callable[])[] $config
-     * @param array          $config_map
-     */
-    public function __construct(array $values, array $factory, array $factory_map, array $config, array $config_map)
+    public function __construct(Configuration $config)
     {
-        $this->values = $values +
+        $config->copyTo($this);
+
+        $this->values = $this->values +
             [
                 get_class($this)          => $this,
                 __CLASS__                 => $this,
                 ContainerInterface::class => $this,
                 FactoryInterface::class   => $this,
             ];
-
-        $this->factory = $factory;
-        $this->factory_map = $factory_map;
-        $this->config = $config;
-        $this->config_map = $config_map;
     }
 
     /**

@@ -84,13 +84,7 @@ class CustomContainerFactory extends ContainerFactory
 {
     public function createContainer()
     {
-        return new CustomContainer(
-            $this->values,
-            $this->factory,
-            $this->factory_map,
-            $this->config,
-            $this->config_map
-        );
+        return new CustomContainer($this);
     }
 }
 
