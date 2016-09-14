@@ -244,6 +244,20 @@ class Container implements ContainerInterface, FactoryInterface
     }
 
     /**
+     * Dynamically inject a component into this Container.
+     *
+     * Enables classes that extend `Container` to dynamically inject components (to implement "auto-wiring")
+     *
+     * @param string $name
+     * @param mixed  $value
+     */
+    protected function inject($name, $value)
+    {
+        $this->values[$name] = $value;
+        $this->active[$name] = true;
+    }
+
+    /**
      * Internally initialize an active component.
      *
      * @param string $name component name

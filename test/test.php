@@ -364,6 +364,21 @@ test(
     }
 );
 
+test(
+    'can implement "auto-wiring" by using the internal inject() method',
+    function () {
+        $factory = new CustomContainerFactory();
+
+        $container = $factory->createContainer();
+
+        ok($container->getAutoWired(Bar::class) instanceof Bar);
+
+        ok($container->has(Bar::class));
+
+        ok($container->get(Bar::class) instanceof Bar);
+    }
+);
+
 /**
  * @param ContainerInterface $container
  */
