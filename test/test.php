@@ -3,28 +3,32 @@
 use Interop\Container\ContainerInterface;
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
+use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
+use mindplay\unbox\Reflection;
 
 require __DIR__ . '/header.php';
 
 // TESTS:
 
 test(
-    'Container: can create components',
+    'can register/set components; can check component state',
     function () {
-        $c = new Container();
+        $f = new ContainerFactory();
 
-        $c->register('a', function () { return 'A'; });
-        $c->register('b', function () { return 'B'; });
+        $f->register('a', function () { return 'A'; });
+        $f->register('b', function () { return 'B'; });
 
-        ok($c->has('a'), 'first component defined');
-        ok($c->has('b'), 'second component defined');
+        ok($f->createContainer()->has('a'), 'first component defined');
+        ok($f->createContainer()->has('b'), 'second component defined');
 
-        ok(!$c->has('c'), 'no third component defined');
+        ok(!$f->createContainer()->has('c'), 'no third component defined');
 
-        $c->set('c', 'C');
+        $f->set('c', 'C');
 
-        ok($c->has('c'), 'third component initialized directly');
+        ok($f->createContainer()->has('c'), 'third component initialized directly');
+
+        $c = $f->createContainer();
 
         ok(!$c->isActive('a'), 'first component not yet active');
         ok(!$c->isActive('b'), 'first component not yet active');
@@ -36,15 +40,34 @@ test(
 
         eq($c->get('b'), 'B', 'returns the second component');
         ok($c->isActive('b'), 'second component activated');
+    }
+);
 
-        $c->register('x', Foo::class);
+test(
+    'Container/Factory: can auto-register with various factory methods',
+    function () {
+        $f = new ContainerFactory();
+
+        $f->register('x', Foo::class);
+        $f->register(Foo::class);
+        $f->register(FileCache::class, ['/tmp/foo']);
+
+        $c = $f->createContainer();
+
         ok($c->get('x') instanceof Foo, 'registers a default factory function when $func is a name');
 
-        $c->register(Foo::class);
         ok($c->get(Foo::class) instanceof Foo, 'registers a default factory function when $func is NULL');
 
-        $c->register(FileCache::class, ['/tmp/foo']);
         ok($c->get(FileCache::class) instanceof FileCache, 'registers a default factory function when $func is a map');
+    }
+);
+
+test(
+    'Factory: expected exceptions',
+    function () {
+        $f = new ContainerFactory();
+
+        $c = $f->createContainer();
 
         expect(
             NotFoundException::class,
@@ -55,26 +78,10 @@ test(
         );
 
         expect(
-            ContainerException::class,
-            'should throw on attempt to register initialized component',
-            function () use ($c) {
-                $c->register('a', function () {});
-            }
-        );
-
-        expect(
-            ContainerException::class,
-            'should throw on attempt to set initialized component',
-            function () use ($c) {
-                $c->register('a', function () {});
-            }
-        );
-
-        expect(
             InvalidArgumentException::class,
             'should throw on invalid argument',
-            function () use ($c) {
-                $c->register('z', (object) []);
+            function () use ($f) {
+                $f->register('z', (object) []);
             }
         );
     }
@@ -83,137 +90,166 @@ test(
 test(
     'Container: can override components',
     function () {
-        $c = new Container();
+        // register overrides register:
 
-        $c->register('a', function () { return 'A'; });
-        $c->register('b', function () { return 'B'; });
-        $c->set('c', 'C');
-        $c->set('d', 'D');
+        $f = new ContainerFactory();
 
-        $c->register('a', function () { return 'AA'; });
-        $c->set('b', 'BB');
-        $c->register('c', function () { return 'CC'; });
-        $c->set('d', 'DD');
+        $f->register('a', function () { return 'A'; });
+        $f->register('a', function () { return 'AA'; });
+
+        $c = $f->createContainer();
 
         eq($c->get('a'), 'AA', 'can override registered component');
+
+        // ---
+
+        $f = new ContainerFactory();
+
+        $f->register('b', function () { return 'B'; });
+        $f->set('b', 'BB');
+
+        $c = $f->createContainer();
+
         eq($c->get('b'), 'BB', 'can overwrite registered component');
+
+        // ---
+
+        $f = new ContainerFactory();
+
+        $f->set('c', 'C');
+        $f->register('c', function () { return 'CC'; });
+
+        $c = $f->createContainer();
+
         eq($c->get('c'), 'CC', 'can override set component');
+
+        // ---
+
+        $f = new ContainerFactory();
+
+        $f->set('d', 'D');
+        $f->set('d', 'DD');
+
+        $c = $f->createContainer();
+
         eq($c->get('d'), 'DD', 'can overwrite set component');
-
-        expect(
-            ContainerException::class,
-            'attempted override of registered component after initialization',
-            function () use ($c) {
-                $c->register('a', function () { return 'AA'; });
-            }
-        );
-
-        $c->set('b', 'BBB');
-        eq($c->get('b'), 'BBB', 'can overwrite registered component after initialization');
-
-        expect(
-            ContainerException::class,
-            'attempted override of set component after initialization',
-            function () use ($c) {
-                $c->set('c', function () { return 'CC'; });
-            }
-        );
-
-        $c->set('d', 'DDD');
-        eq($c->get('d'), 'DDD', 'can overwrite set component after initialization');
     }
 );
 
 test(
-    'Container: can configure registered components',
+    'Factory: can configure registered components',
     function () {
-        $c = new Container();
+        $f = new ContainerFactory();
 
-        $c->register('a', function () { return 1; }); // $a = 1
-        $c->set('b', 2); // $b = 2
+        $f->register('a', function () { return 1; }); // $a = 1
+        $f->set('b', 2); // $b = 2
 
-        $c->configure('a', function ($a) { return $a + 1; }); // $a = 2
-        $c->configure('a', function ($a) { return $a + 1; }); // $a = 3
+        $f->configure('a', function ($a) { return $a + 1; }); // $a = 2
+        $f->configure('a', function ($a) { return $a + 1; }); // $a = 3
 
-        $c->configure('b', function ($b) { return $b + 1; }); // $b = 3
-        $c->configure(function ($b) { return $b + 1; }); // $b = 4 (component name "b" inferred from param name)
+        $f->configure('b', function ($b) { return $b + 1; }); // $b = 3
+        $f->configure('b', function ($b) { return $b + 1; }); // $b = 4
 
-        $c->configure('b', function ($b) { $b += 1; }); // no change
+        $f->configure('b', function ($b) { $b += 1; }); // no change
+
+        $c = $f->createContainer();
 
         eq($c->get('a'), 3, 'can apply multiple configuration functions');
         eq($c->get('b'), 4, 'can infer component name from param name');
+    }
+);
 
-        $c = new Container();
+test(
+    'Factory: can configure with reference-based dependency injection',
+    function () {
+        $f = new ContainerFactory();
 
-        $c->register(Foo::class);
+        $f->register(Foo::class);
 
-        $c->register('zap', Bar::class);
+        $f->register('zap', Bar::class);
 
         $ok = false;
 
-        $c->configure(
+        $f->configure(
             Foo::class,
             function (Foo $foo, Bar $bar) use (&$ok) {
                 $ok = true;
             },
-            ['bar' => $c->ref('zap')]
+            ['bar' => $f->ref('zap')]
         );
 
         $got_foo = false;
 
-        $c->configure(function (Foo $few) use (&$got_foo) {
+        $f->configure(function (Foo $few) use (&$got_foo) {
             $got_foo = true;
         });
+
+        $c = $f->createContainer();
 
         $c->get(Foo::class);
 
         ok($ok, 'can use parameter list/map in calls to configure()');
         ok($got_foo, 'can infer component name from argument type-hint');
+    }
+);
 
-        $c = new Container();
+test(
+    'can configure directly injected components',
+    function () {
+        $f = new ContainerFactory();
 
-        $c->configure("foo", function ($foo) { return $foo + 1; });
+        $f->configure("foo", function ($foo) { return $foo + 1; });
 
-        $c->set("foo", 1);
+        $f->set("foo", 1);
+
+        $c = $f->createContainer();
 
         eq($c->get("foo"), 2, 'can apply configuration to directly injected values');
+    }
+);
 
-        $c = new Container();
+test(
+    'can configure using static method as callable',
+    function () {
+        $f = new ContainerFactory();
 
-        $c->set(FileCache::class, new FileCache('/tmp'));
+        $f->set(FileCache::class, new FileCache('/tmp'));
 
-        $c->configure([AbstractClass::class, "staticFunc"]);
+        $f->configure([AbstractClass::class, "staticFunc"]);
+
+        $c = $f->createContainer();
 
         eq($c->get(FileCache::class)->path, AbstractClass::CACHE_PATH, "can use static configuration function");
     }
 );
 
 test(
-    'configure("name", function (T $o))',
-    function () {
-        $container = new Container();
-
-        $container->register('name', Bar::class);
-
-        $container->configure('name', function (Bar $bar) {
-            $bar->value += 1;
-        });
-
-        eq($container->get('name')->value, 2, 'can configure named component');
-    }
-);
-
-test(
     'named components take precedence over type-hints',
     function () {
-        $container = new Container();
+        $f = new ContainerFactory();
 
-        $container->register(FileCache::class, ["/tmp/foo"]);
+        $f->register(FileCache::class, ["/by-type"]);
 
-        $container->register("cache", FileCache::class, ["/tmp/bar"]);
+        $f->register("cache", FileCache::class, ["/by-name"]);
+
+        /** @var FileCache|null $conf_by_type */
+        $conf_by_type = null;
+
+        $f->configure(function (FileCache $cache) use (&$conf_by_type) {
+            $conf_by_type = $cache;
+        });
+
+        /** @var FileCache|null $conf_by_name */
+        $conf_by_name = null;
+
+        $f->configure('cache', function ($cache) use (&$conf_by_name) {
+            $conf_by_name = $cache;
+        });
 
         /** @var FileCache|null $by_type */
         $by_type = null;
+
+        $container = $f->createContainer();
 
         $container->call(function (FileCache $cache) use (&$by_type) {
             $by_type = $cache;
@@ -226,37 +262,43 @@ test(
             $by_name = $cache;
         });
 
-        /** @var FileCache|null $conf_by_type */
-        $conf_by_type = null;
+        eq($container->get(FileCache::class)->path, "/by-type");
+        eq($container->get("cache")->path, "/by-name");
 
-        $container->configure(function (FileCache $cache) use (&$conf_by_type) {
-            $conf_by_type = $cache;
-        });
+        eq($by_type->path, "/by-type");
+        eq($by_name->path, "/by-name");
 
-        /** @var FileCache|null $conf_by_name */
-        $conf_by_name = null;
+        eq($conf_by_type->path, "/by-type");
+        eq($conf_by_name->path, "/by-name");
+    }
+);
 
-        $container->configure(function ($cache) use (&$conf_by_name) {
-            $conf_by_name = $cache;
-        });
+test(
+    'configure() requires either type-hint or component name in version 2',
+    function () {
+        $f = new ContainerFactory();
 
-        eq($container->get(FileCache::class)->path, "/tmp/foo");
-        eq($container->get("cache")->path, "/tmp/bar");
+        $f->register("cache", FileCache::class, ["/foo"]);
 
-        eq($by_type->path, "/tmp/foo");
-        eq($by_name->path, "/tmp/bar");
-
-        eq($conf_by_type->path, "/tmp/foo");
-        eq($conf_by_name->path, "/tmp/bar");
+        expect(
+            InvalidArgumentException::class,
+            "should throw for missing component-name and missing type-hint",
+            function () use ($f) {
+                $f->configure(function ($cache) {});
+            },
+            "/no component-name or type-hint specified/"
+        );
     }
 );
 
 test(
     'can call all the things',
     function () {
-        $container = new Container();
+        $factory = new ContainerFactory();
 
-        $container->set('foo', 'bar');
+        $factory->set('foo', 'bar');
+
+        $container = $factory->createContainer();
 
         eq($container->call('test_func'), 'bar', 'can call function');
 
@@ -277,17 +319,19 @@ test(
 test(
     'can resolve dependencies by name',
     function () {
-        $container = new Container();
+        $factory = new ContainerFactory();
 
-        $container->set('cache.path', '/tmp/cache');
+        $factory->set('cache.path', '/tmp/cache');
 
-        $container->register(CacheProvider::class, function (Container $c) {
+        $factory->register(CacheProvider::class, function (Container $c) {
             return new FileCache($c->get('cache.path'));
         });
 
-        $container->register(UserRepository::class, function (Container $c) {
+        $factory->register(UserRepository::class, function (Container $c) {
             return new UserRepository($c->get(CacheProvider::class));
         });
+
+        $container = $factory->createContainer();
 
         $repo = $container->get(UserRepository::class);
 
@@ -295,13 +339,11 @@ test(
         ok($repo->cache instanceof CacheProvider);
         eq($repo->cache->path, '/tmp/cache');
 
-        $container = new Container();
-
         expect(
             ContainerException::class,
             "should throw for unresolvable components",
             function () use ($container) {
-                $container->call(function (FileCache $cache) {});
+                $container->call(function (Foo $foo) {});
             }
         );
     }
@@ -310,13 +352,30 @@ test(
 test(
     'can alias names',
     function () {
-        $container = new Container();
+        $factory = new ContainerFactory();
 
-        $container->register(FileCache::class, ['path' => '/tmp/foo']);
+        $factory->register(FileCache::class, ['path' => '/tmp/foo']);
 
-        $container->alias(CacheProvider::class, FileCache::class);
+        $factory->alias(CacheProvider::class, FileCache::class);
 
-        eq($container->get(FileCache::class), $container->get(CacheProvider::class), 'alias return same singleton');
+        $container = $factory->createContainer();
+
+        eq($container->get(FileCache::class), $container->get(CacheProvider::class), 'alias returns same component');
+    }
+);
+
+test(
+    'can implement "auto-wiring" by using the internal inject() method',
+    function () {
+        $factory = new CustomContainerFactory();
+
+        $container = $factory->createContainer();
+
+        ok($container->getAutoWired(Bar::class) instanceof Bar);
+
+        ok($container->has(Bar::class));
+
+        ok($container->get(Bar::class) instanceof Bar);
     }
 );
 
@@ -375,27 +434,29 @@ test(
 );
 
 test(
-    'can resolve dependencies using dependency maps',
+    'can resolve dependencies using named/positional argument maps',
     function () {
-        $container = new Container();
+        $factory = new ContainerFactory();
 
-        $container->set('cache.path', '/tmp/cache');
+        $factory->set('cache.path', '/tmp/cache');
 
-        $container->register(
+        $factory->register(
             'cache',
             function ($path) {
                 return new FileCache($path);
             },
-            [$container->ref('cache.path')]
+            [$factory->ref('cache.path')]
         );
 
-        $container->register(
+        $factory->register(
             UserRepository::class,
             function (CacheProvider $cp) {
                 return new UserRepository($cp);
             },
-            ['cp' => $container->ref('cache')]
+            ['cp' => $factory->ref('cache')]
         );
+
+        $container = $factory->createContainer();
 
         $repo = $container->get(UserRepository::class);
 
@@ -408,14 +469,16 @@ test(
 test(
     'can act as a factory',
     function () {
-        $container = new Container();
+        $factory = new ContainerFactory();
 
-        $container->register(
+        $factory->register(
             CacheProvider::class,
             function () {
                 return new FileCache('/tmp/cache');
             }
         );
+
+        $container = $factory->createContainer();
 
         $repo = $container->create(UserRepository::class);
 
@@ -444,13 +507,48 @@ test(
 );
 
 test(
+    'create() does not make unsafe constructor injections',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("path", "/foo");
+
+        $container = $factory->createContainer();
+
+        expect(
+            ContainerException::class,
+            "should NOT inject the 'path' component",
+            function () use ($container) {
+                $container->create(FileCache::class);
+            },
+            "/unable to resolve parameter: .path/"
+        );
+    }
+);
+
+test(
+    'can register with constructor argument overrides',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("cache", FileCache::class, ["path" => "/bar"]);
+
+        $container = $factory->createContainer();
+
+        eq($container->get("cache")->path, "/bar");
+    }
+);
+
+test(
     'can override factory maps',
     function () {
-        $container = new Container();
+        $factory = new ContainerFactory();
 
-        $container->set('cache.path', '/tmp/cache');
+        $factory->set('cache.path', '/tmp/cache');
 
-        $container->register(CacheProvider::class, FileCache::class, [$container->ref('cache.path')]);
+        $factory->register(CacheProvider::class, FileCache::class, [$factory->ref('cache.path')]);
+
+        $container = $factory->createContainer();
 
         $repo = $container->create(UserRepository::class);
 
@@ -465,9 +563,11 @@ test(
 test(
     'can override components by type-name',
     function () {
-        $container = new Container();
+        $factory = new ContainerFactory();
 
-        $container->register(CacheProvider::class, FileCache::class, ["/tmp/cache"]);
+        $factory->register(CacheProvider::class, FileCache::class, ["/tmp/cache"]);
+
+        $container = $factory->createContainer();
 
         $returned = $container->call(
             function (CacheProvider $provider) {
@@ -483,21 +583,19 @@ test(
 test(
     'internal reflection guard clauses',
     function () {
-        $c = new Container();
-
         expect(
             InvalidArgumentException::class,
             "should throw for invalid callable",
-            function () use ($c) {
-                invoke($c, "reflect", [["bleeeh", "meh"]]);
+            function () {
+                Reflection::createFromCallable(["bleeeh", "meh"]);
             }
         );
 
         expect(
             InvalidArgumentException::class,
             "should throw for invalid callable",
-            function () use ($c) {
-                invoke($c, "reflect", ["bleeeh"]);
+            function () {
+                Reflection::createFromCallable("bleeeh");
             }
         );
 
@@ -506,15 +604,15 @@ test(
         expect(
             InvalidArgumentException::class,
             "should throw for uncallable object",
-            function () use ($c, $bar) {
-                invoke($c, "reflect", [$bar]);
+            function () use ($bar) {
+                Reflection::createFromCallable($bar);
             }
         );
     }
 );
 
 test(
-    'Container::ARG_PATTERN works as intended',
+    'can obtain reflections from all types of callable',
     function () {
         $cases = [
             [function (Foo $foo) {}, 'Foo'],
@@ -534,14 +632,26 @@ test(
 
             $pattern_str = $params[0]->__toString();
 
-            if (preg_match(Container::ARG_PATTERN, $pattern_str, $matches) === 1) {
-                eq($matches[1], $expected, "{$pattern_str} should match: " . format($expected));
-            } else {
-                eq(null, $expected, "{$pattern_str} should match: " . format($expected));
-            }
+            eq(
+                Reflection::getParameterType($params[0]),
+                $expected,
+                "{$pattern_str} should match: " . format($expected)
+            );
         }
     }
 );
+
+if (version_compare(PHP_VERSION, "7", ">=")) {
+    require __DIR__ . "/test-php70.php";
+} else {
+    ok(true, "skipping PHP 7.0 tests");
+}
+
+if (version_compare(PHP_VERSION, "7.1.0rc3", ">=")) {
+    require __DIR__ . "/test-php71.php";
+} else {
+    ok(true, "skipping PHP 7.1 tests");
+}
 
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 

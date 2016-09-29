@@ -5,6 +5,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 // This is the example featured in the documentation.
 
 use mindplay\unbox\Container;
+use mindplay\unbox\ContainerFactory;
 
 ### src/*.php:
 
@@ -89,23 +90,25 @@ class Dispatcher
 
 ### bootstrap.php:
 
-$container = new Container();
+$factory = new ContainerFactory();
 
-$container->register("cache", function ($cache_path) {
+$factory->register("cache", function ($cache_path) {
     return new FileCache($cache_path);
 });
 
-$container->alias(CacheProvider::class, "cache");
+$factory->alias(CacheProvider::class, "cache");
 
-$container->register(UserRepository::class);
+$factory->register(UserRepository::class);
 
-$container->register(Dispatcher::class);
+$factory->register(Dispatcher::class);
 
 ### config.php:
 
-$container->set("cache_path", "/tmp/cache");
+$factory->set("cache_path", "/tmp/cache");
 
 ### index.php:
+
+$container = $factory->createContainer();
 
 $container->call(function (Dispatcher $dispatcher) {
     $path = "user/show"; // $path = $_SERVER["PATH_INFO"];

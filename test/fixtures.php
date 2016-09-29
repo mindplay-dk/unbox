@@ -1,6 +1,7 @@
 <?php
 
 use mindplay\unbox\Container;
+use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\ProviderInterface;
 
 function test_func($foo) {
@@ -65,7 +66,7 @@ class UserRepository
 
 class TestProvider implements ProviderInterface
 {
-    public function register(Container $container)
+    public function register(ContainerFactory $container)
     {
         $container->set('cache_path', '/tmp/cache');
 
@@ -76,5 +77,30 @@ class TestProvider implements ProviderInterface
         $container->register(UserRepository::class, function (CacheProvider $cache) {
             return new UserRepository($cache);
         });
+    }
+}
+
+class CustomContainerFactory extends ContainerFactory
+{
+    public function createContainer()
+    {
+        return new CustomContainer($this);
+    }
+}
+
+class CustomContainer extends Container
+{
+    /**
+     * @param $name
+     *
+     * @return mixed
+     */
+    public function getAutoWired($name)
+    {
+        if (! $this->has($name)) {
+            $this->inject($name, $this->create($name));
+        }
+
+        return $this->get($name);
     }
 }

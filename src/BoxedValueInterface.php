@@ -9,7 +9,9 @@ namespace mindplay\unbox;
 interface BoxedValueInterface
 {
     /**
-     * @return mixed the boxed value
+     * @param Container $container Container from which to Unbox a value
+     *
+     * @return mixed the unboxed value
      */
-    public function unbox();
+    public function unbox(Container $container);
 }
