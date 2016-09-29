@@ -188,7 +188,9 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 } elseif ($safe && $this->has($param_name)) {
                     $value = $this->get($param_name); // resolve as component with matching parameter name
                 } elseif ($param->isOptional()) {
-                    $value = $param->getDefaultValue(); // unresolved: resolve using default value
+                    $value = $param->getDefaultValue(); // unresolved, optional: resolve using default value
+                } elseif ($type && $param->allowsNull()) {
+                    $value = null; // unresolved, type-hinted, nullable: resolve as NULL
                 } else {
                     // unresolved - throw a container exception:
 

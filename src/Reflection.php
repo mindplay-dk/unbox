@@ -60,6 +60,14 @@ abstract class Reflection
      */
     public static function getParameterType(ReflectionParameter $param)
     {
+        if (method_exists($param, "getType")) {
+            $type = $param->getType();
+
+            return $type === null || $type->isBuiltin()
+                ? null // ignore scalar type-hints
+                : $type->__toString();
+        }
+
         if (preg_match(self::ARG_PATTERN, $param->__toString(), $matches) === 1) {
             return $matches[1];
         }

@@ -641,6 +641,18 @@ test(
     }
 );
 
+if (version_compare(PHP_VERSION, "7", ">=")) {
+    require __DIR__ . "/test-php70.php";
+} else {
+    ok(true, "skipping PHP 7.0 tests");
+}
+
+if (version_compare(PHP_VERSION, "7.1.0rc3", ">=")) {
+    require __DIR__ . "/test-php71.php";
+} else {
+    ok(true, "skipping PHP 7.1 tests");
+}
+
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 
 exit(run()); // exits with errorlevel (for CI tools etc.)
