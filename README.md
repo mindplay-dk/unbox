@@ -743,4 +743,4 @@ Time for multiple subsequent lookups:
     unbox: 10 repeated resolutions ........ 0.069 msec ....... 27.02% ......... 1.73x
     php-di: 10 repeated resolutions ....... 0.256 msec ...... 100.00% ......... 6.41x
 
-With Unbox, the time needed to resolve a component is 8-10 times less than under PHP 5.6.12.
+With Unbox, the time needed to resolve a component under PHP 7.x is around 8-10 times less than under PHP 5.6.12.
