@@ -641,6 +641,36 @@ test(
     }
 );
 
+test(
+    'can import registrations from an existing Container',
+    function () {
+        $shared = new ContainerFactory();
+
+        $shared->register(CacheProvider::class, FileCache::class, ["path" => $shared->ref("cache.path")]);
+
+        $shared->set("cache.path", "/tmp");
+
+        $factory = new ContainerFactory();
+
+        $factory->register(UserRepository::class);
+
+        $shared_container = $shared->createContainer();
+
+        $factory->import($shared_container);
+
+        eq($shared_container->isActive(CacheProvider::class), false);
+
+        $repo_1 = $factory->createContainer()->get(UserRepository::class);
+        $repo_2 = $factory->createContainer()->get(UserRepository::class);
+
+        ok($shared_container->isActive(CacheProvider::class));
+
+        ok($repo_1 !== $repo_2, "each Container creates unique components");
+
+        ok($repo_1->cache === $repo_2->cache, "each Container shares an imported component");
+    }
+);
+
 if (version_compare(PHP_VERSION, "7", ">=")) {
     require __DIR__ . "/test-php70.php";
 } else {
