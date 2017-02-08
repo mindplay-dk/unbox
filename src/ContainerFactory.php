@@ -255,6 +255,36 @@ class ContainerFactory extends Configuration
     }
 
     /**
+     * Import all available components from a given `Container` instance.
+     *
+     * This does *not* copy the components from the given `Container`, but rather creates
+     * registrations in *this* `Container` that `get()` components from another `Container`.
+     *
+     * This can be useful in scenarios where another `Container` instance has components
+     * that survive several instances of a `Container` created by this `ContainerFactory` -
+     * for example, this `ContainerFactory` might be used to define components that get
+     * disposed after a single web-request, and the imported `Container` defines components
+     * that can be safely reused across multiple web-requests.
+     *
+     * @param Container $container
+     *
+     * @return void
+     */
+    public function import(Container $container)
+    {
+        $names = array_merge(
+            array_keys($container->factory),
+            array_keys($container->values)
+        );
+
+        foreach ($names as $name) {
+            $this->register($name, function () use ($container, $name) {
+                return $container->get($name);
+            });
+        }
+    }
+
+    /**
      * Create and bootstrap a new `Container` instance
      *
      * @return Container

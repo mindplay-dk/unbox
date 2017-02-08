@@ -166,6 +166,8 @@ configure(string $name, callable $func, array $map)    # ... with custom argumen
 
 ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 
+import(Container $container)                           # import components from another Container
+
 createContainer() : Container                          # create a bootstrapped Container instance
 ```
 
@@ -366,6 +368,44 @@ component name - this will completely replace an existing component definition.
 Note that overriding a component does *not* affect any registered configuration functions -
 it is therefore important that, if you do override a component, the new component must be
 compatible with the replaced component. Configuration in general is covered below.
+
+#### Imports
+
+To deal with scenarios where components have different life-cycles, the `import()` method
+allows you to import all available component registrations from an existing `Container`.
+
+This can be useful in the context of long-lived applications (such as applications running
+under [php-pm](https://github.com/php-pm/php-pm) or [reactphp](http://reactphp.org/), etc.)
+where another `Container` instance has components that survive multiple `Container` instances
+created by the same `ContainerFactory`.
+
+For example:
+
+```php
+$shared = new ContainerFactory();
+
+$shared->register(PDO::class, function () {
+    return new PDO("...");
+});
+
+$request = new ContainerFactory();
+
+$request->import($shared->createContainer());
+
+$container = $request->createContainer();
+```
+
+This example creates a single instance of `Container` that provides a `PDO` instance, and
+imports it into a second `ContainerFactory` - because there is only one instance of the
+`Container` with the `PDO` instance in it, that same instance will be made available for
+all `Container` instances created by the `$request` factory.
+
+To be clear, this method does *not* copy the components from another `Container`, but rather
+creates registrations in *this* `ContainerFactory` that use `get()` to obtain components
+from a specified `Container`.
+
+(Refer to the [test](test/test.php) labeled "can import registrations from an
+existing Container" for a precise specification and working example.)
 
 #### Configuration
 
