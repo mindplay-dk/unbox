@@ -183,6 +183,8 @@ call(callable $func, array $map) : mixed               # ... and override or add
 
 create(string $class_name) : mixed                     # invoke a constructor and auto-inject
 create(string $class_name, array $map) : mixed         # ... and override or add missing params
+
+inject(string $name, $value)                           # dynamically inject a component
 ```
 
 If you're new to dependency injection, or if any of this baffles you, don't panic - everything is
@@ -656,6 +658,32 @@ class ControllerFactory
 Note the `FactoryInterface` type-hint in the constructor - in situations where you only
 care about using the container as a factory, you should type-hint against this facet.
 
+#### Dynamic Injection
+
+The `Container::inject()` method allows for implementation of "auto-wiring" patterns, where
+missing components are injected at run-time into a live `Container` instance.
+
+For example, you may not wish to explicitly register all controller implementations, if you
+have hundreds, and most of them only need a simple `register()` call with the class-name -
+in that case, you can use a pattern like the following to obtain a controller instance:
+
+```php
+if ($container->has($controller_type)) {
+    $controller = $container->get($controller_type);
+} else {
+    $controller = $container->create($controller_type);
+
+    $container->inject($controller_type, $controller);
+}
+```
+
+In other words, if the required `$controller_type` has not been registered, attempt to
+create it by using `create()` to invoke the constructor - then `inject()` the controller
+instance into the `Container`, to ensure that only a single instance gets created.
+
+Note that dynamic injection does *not* make components mutable - it merely allows you to
+fill in missing components on-the-fly.
+
 #### Inspection
 
 You can inspect the state of components in a container using `has()` and `isActive()`.
@@ -717,7 +745,8 @@ Non-features:
 
   * **NO auto-wiring** - because `$container->register(Foo::name)` isn't a burden, and explicitly
     designates something as being a service; unintentionally treating a non-singleton as a singleton
-    can be a weird experience.
+    can be a weird experience. (You can use the `inject()` method to implement auto-wiring for specific
+    use-cases, but blindly doing "magic" auto-wiring by default isn't meaningful or safe.)
 
   * **NO caching** - because configuring a container really shouldn't be so much overhead as to
     justify the need for caching. Unbox is fast.

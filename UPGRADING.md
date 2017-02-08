@@ -1,6 +1,19 @@
 Upgrading
 =========
 
+#### 2.1.0
+
+The `Container::inject()` method is now `public`, so that auto-wiring scenarios can be implemented
+without extending the `Container` itself, which should help improve separation of concerns.
+
+Also, this method will now throw an `InvalidArgumentException` on attempted override of an existing
+component - this is *technically* a minor BC break, since, previously, it did not throw under this
+condition; however, you *should* have been testing with `has()` before injecting any component at
+run-time, and hopefully you were, as replacing an active dependency could have otherwise resulted
+in very strange side-effects and bugs.
+
+This method *should* have been throwing, and, hence, we regard this change as a bug-fix.
+
 #### 2.0.0
 
 Version 2 introduces some BC breaks from version 1.x, as described below.

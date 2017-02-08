@@ -79,28 +79,3 @@ class TestProvider implements ProviderInterface
         });
     }
 }
-
-class CustomContainerFactory extends ContainerFactory
-{
-    public function createContainer()
-    {
-        return new CustomContainer($this);
-    }
-}
-
-class CustomContainer extends Container
-{
-    /**
-     * @param $name
-     *
-     * @return mixed
-     */
-    public function getAutoWired($name)
-    {
-        if (! $this->has($name)) {
-            $this->inject($name, $this->create($name));
-        }
-
-        return $this->get($name);
-    }
-}

@@ -216,13 +216,23 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     /**
      * Dynamically inject a component into this Container.
      *
-     * Enables classes that extend `Container` to dynamically inject components (to implement "auto-wiring")
+     * Enables implementation of "auto-wiring" patterns, where missing components are injected
+     * at run-time into a live `Container` instance.
      *
-     * @param string $name
+     * You should always test with {@see has()} prior to injecting a component - attempting to
+     * override an existing component will generate an exception.
+     *
+     * @throws InvalidArgumentException if the specified component has already been defined
+     *
+     * @param string $name component name
      * @param mixed  $value
      */
-    protected function inject($name, $value)
+    public function inject($name, $value)
     {
+        if ($this->has($name)) {
+            throw new InvalidArgumentException("attempted override of existing component: {$name}");
+        }
+
         $this->values[$name] = $value;
         $this->active[$name] = true;
     }

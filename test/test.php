@@ -365,17 +365,31 @@ test(
 );
 
 test(
-    'can implement "auto-wiring" by using the internal inject() method',
+    'can implement "auto-wiring" by using the inject() method',
     function () {
-        $factory = new CustomContainerFactory();
+        $factory = new ContainerFactory();
 
         $container = $factory->createContainer();
 
-        ok($container->getAutoWired(Bar::class) instanceof Bar);
+        eq($container->has(Bar::class), false);
 
-        ok($container->has(Bar::class));
+        $instance = new Bar();
 
-        ok($container->get(Bar::class) instanceof Bar);
+        $container->inject(Bar::class, $instance);
+
+        eq($container->has(Bar::class), true);
+
+        eq($container->isActive(Bar::class), true);
+
+        eq($container->get(Bar::class), $instance);
+
+        expect(
+            InvalidArgumentException::class,
+            "should throw on attempted overrride",
+            function () use ($container) {
+                $container->inject(Bar::class, new Bar());
+            }
+        );
     }
 );
 
