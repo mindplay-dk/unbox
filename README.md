@@ -490,7 +490,7 @@ $factory->configure(function (ProductRepositoryInterface $repo) {
 Note that, when replacing components in this manner, of course you must be certain that the
 replacement has a type that can pass a type-check in the recipient constructor or method.
 
-##### Packaged Providers
+#### Packaged Providers
 
 You can package a set of `register()` and `configure()` calls for convenient reuse, by
 implementing `ProviderInterface` - for example:
@@ -525,6 +525,16 @@ in e.g. your default development setup, they can of course still do that, e.g. b
 
 ### Consumption
 
+Consuming the contents of a container by simply pulling components out of it can *seem* very convenient, and is therefore
+tempting - but usually wrong! You should [inform yourself](http://stackoverflow.com/questions/11316688/inversion-of-control-vs-dependency-injection-with-selected-quotes-is-my-unders/11319026#11319026)
+about the difference and **avoid** using the container as a [service locator](https://en.wikipedia.org/wiki/Service_locator_pattern).
+
+**Rule of Thumb:**
+
+> ***Never* use a Container to look up a component's own *direct* dependencies.**
+
+Conversely, using a Container to look up dependencies on behalf of *other* components is usually okay.
+
 In the following sections, we'll assume that a `Container` instance is in scope, e.g.:
 
 ```php
@@ -534,10 +544,6 @@ $factory = new ContainerFactory();
 
 $container = $factory->createContainer();
 ```
-
-Consuming the contents of a container by simply pulling components out of it is very simple and convenient - and therefore
-tempting, but often wrong! You should [inform yourself](http://stackoverflow.com/questions/11316688/inversion-of-control-vs-dependency-injection-with-selected-quotes-is-my-unders/11319026#11319026)
-about the difference and **avoid** using the container as a [service locator](https://en.wikipedia.org/wiki/Service_locator_pattern).
 
 The most basic form of component access, is a direct lookup:
 
