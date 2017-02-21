@@ -3,13 +3,11 @@
 namespace mindplay\unbox;
 
 use Exception;
-use Interop\Container\Exception\ContainerException as InteropContainerException;
+use Psr\Container\ContainerExceptionInterface as InteropContainerException;
 
 /**
  * @inheritdoc
  */
-class ContainerException
-    extends Exception
-    implements InteropContainerException
+class ContainerException extends Exception implements InteropContainerException
 {
 }

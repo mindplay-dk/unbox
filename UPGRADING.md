@@ -1,7 +1,63 @@
 Upgrading
 =========
 
-#### 2.0.0
+### 3.0.0
+
+Version 3 introduces some BC breaks from version 2.x.
+
+These changes improve composability, and provide overall better integration with the PSR-11 ecosystem.
+
+#### Upgrading to final PSR-11 interfaces
+
+Support for the now-deprecated `container-interop` package has been removed - you should update
+any references to the following interface names:
+
+    DEPRECATED INTERFACE:                               FINAL PSR-11 INTERFACE:
+    ------------------------------------                -----------------------------------------
+    Interop\Container\ContainerInterface            ->  Psr\Container\ContainerInterface
+    Interop\Container\Exception\ContainerException  ->  Psr\Container\ContainerExceptionInterface
+    Interop\Container\Exception\NotFoundException   ->  Psr\Container\NotFoundExceptionInterface
+
+No breaking changes were made to these interfaces upon final release of PSR-11 - a simple search and
+replace should set you straight.
+
+#### `Resolver` vs `Container`
+
+The public interface of `Container` now strictly complies with PSR-11.
+
+The public interface of the `Resolver` class in version 3.0 is identical to the `Container` class
+in version 2.0.
+
+If you were previously calling `ContainerFactory::createContainer()`, you now very likely want to
+call `ContainerFactory::createResolver()` instead, which creates a `Resolver` instance with the
+`Container` already inside it.
+
+The new `Resolver` component also adheres to PSR-11, but improves on composability - because
+`Resolver` depends only on `ContainerInterface`, it is able to directly support *any* third-party
+PSR-11 Container implementation directly. The `Resolver` provides the ability to resolve function
+and constructor arguments against any PSR-11 Container.
+
+#### Improved Boxed Values
+
+The `BoxedValueInterface` and `BoxedReference` implementation now type-hint the `$container` argument
+as `ContainerInterface`, where previously this was type-hinted against the `Container` implementation.
+
+This change improves alignment with PSR-11 and adheres better with the interface-segregation principle.
+
+This change won't affect you unless you have custom implementations of `BoxedValueInterface`.
+
+#### Simplified "auto-wiring" scenarios
+
+Where previously, the `inject()` method was a `protected` method allowing a `Container` extension to
+inject values at run-time, this has been removed from `Container`.
+
+Instead, the `Resolver` class now has a `public inject()` method, allowing effectively the same patterns,
+but *without* altering or polluting the state of any actual Container.
+
+This simplifies and improves implementation of "auto-wiring" scenarios, where you can now practice
+composition over inheritance.
+
+### 2.0.0
 
 Version 2 introduces some BC breaks from version 1.x, as described below.
 

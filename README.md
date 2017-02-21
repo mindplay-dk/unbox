@@ -8,7 +8,11 @@
 Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
 with a gentle learning curve.
 
-To upgrade from an older (1.x) version, please see the [upgrade guide](UPGRADING.md).
+This implementation is compatible with the
+[PSR-11](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-11-container.md)
+community standard for Dependency Injection Containers.
+
+To upgrade from an older (1.x or 2.x) version, please see the [upgrade guide](UPGRADING.md).
 
 ## Installation
 
@@ -25,9 +29,6 @@ configuration as just the class-name. It will also resolve arguments to any call
 objects that implement `__invoke()`. It can also be used as a generic factory class, capable of
 creating any object for which the constructor arguments can be resolved - the common use-case
 for this is in your own factory classes, e.g. a controller factory or action dispatcher.
-
-The container implementation is compatible
-with [container-interop](https://github.com/container-interop/container-interop).
 
 ### Quick Overview
 
@@ -52,8 +53,13 @@ class UserRepository {
 
 Unbox has a two-stage life-cycle. The first stage is the creation of a `ContainerFactory` - this
 class provides bootstrapping and configuration facilities. The second stage begins with a call
-to `ContainerFactory::createFactory()` which creates the actual `Container` instance, which
-provides the facilities enabling client-code to invoke functions and constructors, etc.
+to `ContainerFactory::createResolver()` which creates the actual `Container` instance, wrapped
+in a `Resolver` instance, which provides the facilities enabling client-code to invoke functions
+and constructors, etc.
+
+Note that the low-level `ContainerFactory::createContainer()` method creates a plain `ContainerInterface`
+instance (with just the `get()` and `has()` methods prescribed by PSR-11) - if you're new to DI
+and Unbox, you most likely want a `Resolver`.
 
 Let's bootstrap a `ContainerFactory` with those dependencies, in a "bootstrap" file somewhere:
 
@@ -83,7 +89,7 @@ $factory->set("cache_path", "/tmp/cache");
 Now that the `ContainerFactory` is fully bootstrapped, we're ready to create a `Container`:
 
 ```php
-$container = $factory->createContainer();
+$resolver = $factory->createResolver();
 ```
 
 In this simple example, we're now done with `ContainerFactory`, which can simply fall out of
@@ -91,16 +97,16 @@ scope. (In more advanced scenarios, such as long-running [React](http://reactphp
 [PHP-PM](https://github.com/php-pm/php-pm) applications, you might want to maintain a
 reference to `ContainerFactory`, so you can create a fresh `Container` for each request.)
 
-You can now take your `UserRepository` out of the `Container`, either by asking for it directly:
+You can now take your `UserRepository` out of the `Resolver`, either by asking for it directly:
 
 ```php
-$users = $container->get(UserRepository::class);
+$users = $resolver->get(UserRepository::class);
 ```
 
 Or, by using a type-hinted closure for IDE support:
 
 ```php
-$container->call(function (UserRepository $users) {
+$resolver->call(function (UserRepository $users) {
     $users->...
 });
 ```
@@ -122,17 +128,17 @@ class UserController
 }
 ```
 
-Using the container as a factory, you can create an instance of any controller class:
+Using the Resolver as a factory, you can create an instance of any controller class:
 
 ```php
-$controller = $container->create(UserController::class);
+$controller = $resolver->create(UserController::class);
 ```
 
-Finally, you can dispatch the `show()` action, with dependency injection - as a naive example,
+Finally, you can dispatch the `show()` method, with dependency injection - as a naive example,
 we're simply going to inject `$_GET` directly as parameters to the method:
 
 ```php
-$container->call([$controller, "show"], $_GET);
+$resolver->call([$controller, "show"], $_GET);
 ```
 
 Using `$_GET` as parameters to the call, the `$user_id` argument to `UserController:show()` will
@@ -167,9 +173,10 @@ configure(string $name, callable $func, array $map)    # ... with custom argumen
 ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 
 createContainer() : Container                          # create a bootstrapped Container instance
+createResolver() : Resolver                            # create a bootstrapped Resolver instance
 ```
 
-The following provides a quick overview of the `Container` API:
+The following provides a quick overview of the `Resolver` API:
 
 ```php
 get(string $name) : mixed                              # unbox a component
@@ -182,6 +189,9 @@ call(callable $func, array $map) : mixed               # ... and override or add
 create(string $class_name) : mixed                     # invoke a constructor and auto-inject
 create(string $class_name, array $map) : mixed         # ... and override or add missing params
 ```
+
+The `Container` API itself isn't that interesting - it only has the `get()` and `has()` methods
+as prescribed by the PSR-11 community standard.
 
 If you're new to dependency injection, or if any of this baffles you, don't panic - everything is
 covered in the guide below.
@@ -204,6 +214,8 @@ The following terminology is used in the documentation below:
     component, by a constructor (when using the container as a factory) or by any callable.
 
 ## Dependency Resolution
+
+The `Resolver` dynamically resolves arguments and invokes any `callable` or constructor.
 
 Any argument, whether to a closure being manually invoked, or to a constructor being automatically
 invoked as part of resolving a longer chain of dependencies, is resolved according to a consistent
@@ -335,9 +347,9 @@ $factory->register(CacheInterface::class, function () {
 
 $factory->alias("db.cache", CacheInterface::class); // "db.cache" becomes an alias!
 
-$container = $factory->createContainer();
+$resolver = $factory->createResolver();
 
-var_dump($container->get("db.cache") === $container->get(CacheInterface::class)); // => bool(true)
+var_dump($resolver->get("db.cache") === $resolver->get(CacheInterface::class)); // => bool(true)
 ```
 
 Using an alias, in this example, means that `"db.cache"` by default will resolve as
@@ -533,29 +545,29 @@ about the difference and **avoid** using the container as a [service locator](ht
 
 > ***Never* use a Container to look up a component's own *direct* dependencies.**
 
-Conversely, using a Container to look up dependencies on behalf of *other* components is usually okay.
+Conversely, using a Container to look up the dependencies of *other* components is usually okay.
 
-In the following sections, we'll assume that a `Container` instance is in scope, e.g.:
+In the following sections, we'll assume that a `Resolver` instance is in scope, e.g.:
 
 ```php
 $factory = new ContainerFactory();
 
 // ... bootstrapping ...
 
-$container = $factory->createContainer();
+$resolver = $factory->createResolver();
 ```
 
 The most basic form of component access, is a direct lookup:
 
 ```php
-$cache = $container->get(CacheInterface::class);
-$db_name = $container->get("db_name");
+$cache = $resolver->get(CacheInterface::class);
+$db_name = $resolver->get("db_name");
 ```
 
 The more indirect form of component access, is an indirect lookup, by resolving parameters:
 
 ```php
-$container->call(function (CacheInterface $cache, $db_name) {
+$resolver->call(function (CacheInterface $cache, $db_name) {
     // ...
 });
 ```
@@ -565,13 +577,13 @@ example, the two arguments are being resolved in two different ways: the `CacheI
 is resolved by class-name, whereas the `$db_name` param is being resolved by parameter name.
 
 The latter only works because the `$db_name` component is registered under that precise name -
-if it had been registered under a name such as `"db.name"`, the container would be unable to
+if it had been registered under a name such as `"db.name"`, the Resolver would be unable to
 resolve this argument automatically; instead, you would have had to write:
 
 ```php
-$container->call(function (CacheInterface $cache, $name) {
+$resolver->call(function (CacheInterface $cache, $name) {
     // ...
-}, ["name" => $container->ref("db.name")]);
+}, ["name" => $factory->ref("db.name")]);
 ```
 
 Note that `call()` will accept [any type of callable](http://php.net/manual/en/language.types.callable.php).
@@ -620,40 +632,84 @@ class ControllerFactory
 ```
 
 Note the `FactoryInterface` type-hint in the constructor - in situations where you only
-care about using the container as a factory, you should type-hint against this facet.
+care about using the Resolver as a factory, you should type-hint against this facet.
 
 #### Inspection
 
-You can inspect the state of components in a container using `has()` and `isActive()`.
-
-To check if a component is defined, use `has()` - for example:
+You can check if a component is defined in a `Container` or `Resolver` by using `has()` -
+for example:
 
 ```php
-var_dump($container->has("foo")); // => bool(false)
+var_dump($resolver->has("foo")); // => bool(false)
 
-$container->set("foo", "bar");
+$resolver->inject("foo", "bar");
 
-var_dump($container->has("foo")); // => bool(true)
+var_dump($resolver->has("foo")); // => bool(true)
 ```
 
-Whether a component is directly inserted with `set()`, or defined using `register()`, the
-`has()` method will return `true`.
+Whether a component was directly inserted into the `ContainerFactory` using `set()`, or
+defined using `register()`, or injected at run-time into the `Resolver`, the `has()` method
+will return `true`.
 
-To check if a component has been activated, use `isActive()` - for example:
+To check if a component has been activated by a Resolver, use `isActive()` - for example:
 
 ```php
-$container->register("foo", function () { return "bar"; });
+$factory->register("foo", function () { return "bar"; });
 
-var_dump($container->isActive("foo")); // => bool(false)
+$resolver = $factory->createResolver();
 
-$foo = $container->get("foo"); // component activates on first use
+var_dump($resolver->isActive("foo")); // => bool(false)
 
-var_dump($container->isActive("foo")); // => bool(true)
+$foo = $resolver->get("foo"); // component activates on first use
+
+var_dump($resolver->isActive("foo")); // => bool(true)
 ```
 
 A component is considered "active" when it has been used for the first time - components
 may get activated directly by calls to `get()`, or may get indirectly activated by
 cascading activation of dependencies.
+
+#### "Auto-wiring" scenarios
+
+While Unbox will not "magically" attempt to create components that haven't been explicitly
+registered, injecting components into a `Resolver` instance at run-time is possible, and
+allows for implementation of so-called "auto-wiring" scenarios.
+
+This can be particularly convenient when you have a large number of similar classes, all
+(or most) of which would require only a call like `$factory->register(ClassName::class)`.
+
+For example, the following implements basic auto-wiring of controllers:
+
+```php
+class ControllerFactory
+{
+    /**
+     * @var Resolver
+     */
+    private $resolver;
+
+    public function __construct(Resolver $resolver)
+    {
+        $this->resolver = $resolver;
+    }
+
+    public function getController($type)
+    {
+        if (! $this->resolver->has($type)) {
+            $this->resolver->inject($type, $this->resolver->create($type));
+        }
+
+        return $this->resolver->get($type);
+    }
+}
+```
+
+Calling `getController()` on this class will check for an existing registration, and if none
+is available, it will use the Resolver to create one, inject it back into the Resolver, at
+which point the `get()` call will succeed.
+
+Of course this works only for controllers that have no special dependencies - if that's most
+of them, you can register any other special controllers explicitly, as normal.
 
 ## Opinionated
 

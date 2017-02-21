@@ -11,7 +11,7 @@
     ],
     "require": {
         "php": ">=5.5",
-        "container-interop/container-interop": "~1.0"
+        "psr/container": "^1"
     },
     "require-dev": {
         "mindplay/benchpress": "dev-master",

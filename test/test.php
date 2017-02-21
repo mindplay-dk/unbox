@@ -1,15 +1,28 @@
 <?php
 
-use Interop\Container\ContainerInterface;
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
 use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
+use Psr\Container\ContainerInterface;
 
 require __DIR__ . '/header.php';
 
+// TODO add test demonstrating multiple containers
+
 // TESTS:
+
+test(
+    'Complies with PSR-11 ContainerInterface',
+    function () {
+        $f = new ContainerFactory();
+
+        ok($f->createContainer() instanceof ContainerInterface);
+
+        ok($f->createResolver() instanceof ContainerInterface);
+    }
+);
 
 test(
     'can register/set components; can check component state',
@@ -19,16 +32,16 @@ test(
         $f->register('a', function () { return 'A'; });
         $f->register('b', function () { return 'B'; });
 
-        ok($f->createContainer()->has('a'), 'first component defined');
-        ok($f->createContainer()->has('b'), 'second component defined');
+        ok($f->createResolver()->has('a'), 'first component defined');
+        ok($f->createResolver()->has('b'), 'second component defined');
 
-        ok(!$f->createContainer()->has('c'), 'no third component defined');
+        ok(!$f->createResolver()->has('c'), 'no third component defined');
 
         $f->set('c', 'C');
 
-        ok($f->createContainer()->has('c'), 'third component initialized directly');
+        ok($f->createResolver()->has('c'), 'third component initialized directly');
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         ok(!$c->isActive('a'), 'first component not yet active');
         ok(!$c->isActive('b'), 'first component not yet active');
@@ -52,7 +65,7 @@ test(
         $f->register(Foo::class);
         $f->register(FileCache::class, ['/tmp/foo']);
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         ok($c->get('x') instanceof Foo, 'registers a default factory function when $func is a name');
 
@@ -67,7 +80,7 @@ test(
     function () {
         $f = new ContainerFactory();
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         expect(
             NotFoundException::class,
@@ -97,7 +110,7 @@ test(
         $f->register('a', function () { return 'A'; });
         $f->register('a', function () { return 'AA'; });
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         eq($c->get('a'), 'AA', 'can override registered component');
 
@@ -108,7 +121,7 @@ test(
         $f->register('b', function () { return 'B'; });
         $f->set('b', 'BB');
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         eq($c->get('b'), 'BB', 'can overwrite registered component');
 
@@ -119,7 +132,7 @@ test(
         $f->set('c', 'C');
         $f->register('c', function () { return 'CC'; });
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         eq($c->get('c'), 'CC', 'can override set component');
 
@@ -130,7 +143,7 @@ test(
         $f->set('d', 'D');
         $f->set('d', 'DD');
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         eq($c->get('d'), 'DD', 'can overwrite set component');
     }
@@ -152,7 +165,7 @@ test(
 
         $f->configure('b', function ($b) { $b += 1; }); // no change
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         eq($c->get('a'), 3, 'can apply multiple configuration functions');
         eq($c->get('b'), 4, 'can infer component name from param name');
@@ -184,7 +197,7 @@ test(
             $got_foo = true;
         });
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         $c->get(Foo::class);
 
@@ -202,7 +215,7 @@ test(
 
         $f->set("foo", 1);
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         eq($c->get("foo"), 2, 'can apply configuration to directly injected values');
     }
@@ -217,7 +230,7 @@ test(
 
         $f->configure([AbstractClass::class, "staticFunc"]);
 
-        $c = $f->createContainer();
+        $c = $f->createResolver();
 
         eq($c->get(FileCache::class)->path, AbstractClass::CACHE_PATH, "can use static configuration function");
     }
@@ -249,7 +262,7 @@ test(
         /** @var FileCache|null $by_type */
         $by_type = null;
 
-        $container = $f->createContainer();
+        $container = $f->createResolver();
 
         $container->call(function (FileCache $cache) use (&$by_type) {
             $by_type = $cache;
@@ -298,7 +311,7 @@ test(
 
         $factory->set('foo', 'bar');
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         eq($container->call('test_func'), 'bar', 'can call function');
 
@@ -331,7 +344,7 @@ test(
             return new UserRepository($c->get(CacheProvider::class));
         });
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         $repo = $container->get(UserRepository::class);
 
@@ -358,24 +371,28 @@ test(
 
         $factory->alias(CacheProvider::class, FileCache::class);
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         eq($container->get(FileCache::class), $container->get(CacheProvider::class), 'alias returns same component');
     }
 );
 
 test(
-    'can implement "auto-wiring" by using the internal inject() method',
+    'can implement "auto-wiring" by using a Resolver',
     function () {
-        $factory = new CustomContainerFactory();
+        $factory = new ContainerFactory();
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
-        ok($container->getAutoWired(Bar::class) instanceof Bar);
+        ok(! $container->has(Bar::class));
+
+        $instance = new Bar();
+
+        $container->inject(Bar::class, $instance);
 
         ok($container->has(Bar::class));
 
-        ok($container->get(Bar::class) instanceof Bar);
+        eq($container->get(Bar::class), $instance, "it returns the injected instance");
     }
 );
 
@@ -456,7 +473,7 @@ test(
             ['cp' => $factory->ref('cache')]
         );
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         $repo = $container->get(UserRepository::class);
 
@@ -478,7 +495,7 @@ test(
             }
         );
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         $repo = $container->create(UserRepository::class);
 
@@ -513,7 +530,7 @@ test(
 
         $factory->register("path", "/foo");
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         expect(
             ContainerException::class,
@@ -533,7 +550,7 @@ test(
 
         $factory->register("cache", FileCache::class, ["path" => "/bar"]);
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         eq($container->get("cache")->path, "/bar");
     }
@@ -548,7 +565,7 @@ test(
 
         $factory->register(CacheProvider::class, FileCache::class, [$factory->ref('cache.path')]);
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         $repo = $container->create(UserRepository::class);
 
@@ -567,7 +584,7 @@ test(
 
         $factory->register(CacheProvider::class, FileCache::class, ["/tmp/cache"]);
 
-        $container = $factory->createContainer();
+        $container = $factory->createResolver();
 
         $returned = $container->call(
             function (CacheProvider $provider) {

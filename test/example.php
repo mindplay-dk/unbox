@@ -6,6 +6,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerFactory;
+use mindplay\unbox\Resolver;
 
 ### src/*.php:
 
@@ -65,13 +66,13 @@ class UserController
 class Dispatcher
 {
     /**
-     * @var Container
+     * @var Resolver
      */
-    private $container;
+    private $resolver;
 
-    public function __construct(Container $factory)
+    public function __construct(Resolver $resolver)
     {
-        $this->container = $factory;
+        $this->resolver = $resolver;
     }
 
     public function run($path, $params)
@@ -81,8 +82,8 @@ class Dispatcher
         $class = ucfirst($controller) . "Controller";
         $method = $action;
 
-        $this->container->call(
-            [$this->container->create($class), $method],
+        $this->resolver->call(
+            [$this->resolver->create($class), $method],
             $params
         );
     }
@@ -108,9 +109,9 @@ $factory->set("cache_path", "/tmp/cache");
 
 ### index.php:
 
-$container = $factory->createContainer();
+$resolver = $factory->createResolver();
 
-$container->call(function (Dispatcher $dispatcher) {
+$resolver->call(function (Dispatcher $dispatcher) {
     $path = "user/show"; // $path = $_SERVER["PATH_INFO"];
     $params = ["user_id" => 123]; // $params = $_GET;
 

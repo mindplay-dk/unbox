@@ -3,14 +3,12 @@
 namespace mindplay\unbox;
 
 use Exception;
-use Interop\Container\Exception\NotFoundException as InteropNotFoundException;
+use Psr\Container\NotFoundExceptionInterface as InteropNotFoundException;
 
 /**
  * @inheritdoc
  */
-class NotFoundException
-    extends Exception
-    implements InteropNotFoundException
+class NotFoundException extends Exception implements InteropNotFoundException
 {
     /**
      * @param string $name component name

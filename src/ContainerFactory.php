@@ -4,6 +4,7 @@ namespace mindplay\unbox;
 
 use Closure;
 use InvalidArgumentException;
+use Psr\Container\ContainerInterface;
 use ReflectionParameter;
 
 /**
@@ -70,18 +71,18 @@ class ContainerFactory extends Configuration
         } elseif (is_string($func_or_map_or_type)) {
             // second argument is a class-name
             $func = function (Container $container) use ($func_or_map_or_type, $map) {
-                return $container->create($func_or_map_or_type, $map);
+                return Invoker::invokeConstructor($container, $func_or_map_or_type, $map);
             };
             $map = [];
         } elseif (is_array($func_or_map_or_type)) {
             // second argument is a map of constructor arguments
             $func = function (Container $container) use ($name, $func_or_map_or_type) {
-                return $container->create($name, $func_or_map_or_type);
+                return Invoker::invokeConstructor($container, $name, $func_or_map_or_type);
             };
         } elseif (is_null($func_or_map_or_type)) {
             // first argument is both the component and class-name
             $func = function (Container $container) use ($name) {
-                return $container->create($name);
+                return Invoker::invokeConstructor($container, $name);
             };
         } else {
             throw new InvalidArgumentException("unexpected argument type for \$func_or_map_or_type: " . gettype($func_or_map_or_type));
@@ -255,9 +256,30 @@ class ContainerFactory extends Configuration
     }
 
     /**
-     * Create and bootstrap a new `Container` instance
+     * Create and bootstrap a new Container in a Resolver instance.
      *
-     * @return Container
+     * This is a high-level factory-method for use-cases involving a single Container.
+     *
+     * The {@see createContainer()} method provides a more low-level method for use-cases
+     * involving multiple Containers.
+     *
+     * @return Resolver
+     */
+    public function createResolver()
+    {
+        return new Resolver([$this->createContainer()]);
+    }
+
+    /**
+     * Create and bootstrap a new Container instance.
+     *
+     * This is a low-level factory-method for use-cases involving multiple Containers,
+     * and possibly even other (third-party) PSR-11 `ContainerInterface` implementations.
+     *
+     * The {@see createResolver()} method provides a high-level method for use-cases
+     * involving only a single Container.
+     *
+     * @return ContainerInterface
      */
     public function createContainer()
     {

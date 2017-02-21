@@ -2,6 +2,8 @@
 
 namespace mindplay\unbox;
 
+use Psr\Container\ContainerInterface;
+
 /**
  * This class implements a boxed reference to a component in a Container.
  */
@@ -21,9 +23,11 @@ class BoxedReference implements BoxedValueInterface
     }
 
     /**
+     * @param ContainerInterface $container
+     *
      * @return mixed the boxed value
      */
-    public function unbox(Container $container)
+    public function unbox(ContainerInterface $container)
     {
         return $container->get($this->name);
     }
