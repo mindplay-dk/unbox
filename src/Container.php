@@ -23,8 +23,6 @@ class Container extends Configuration implements ContainerInterface
         $config->copyTo($this);
 
         $defaults = [
-            get_class($this)          => $this,
-            __CLASS__                 => $this,
             ContainerInterface::class => $this,
         ];
 

@@ -121,7 +121,7 @@ class ContainerFactory extends Configuration
      */
     public function alias($new_name, $ref_name)
     {
-        $this->register($new_name, function (Container $container) use ($ref_name) {
+        $this->register($new_name, function (ContainerInterface $container) use ($ref_name) {
             return $container->get($ref_name);
         });
     }

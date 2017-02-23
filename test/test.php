@@ -337,11 +337,11 @@ test(
 
         $factory->set('cache.path', '/tmp/cache');
 
-        $factory->register(CacheProvider::class, function (Container $c) {
+        $factory->register(CacheProvider::class, function (ContainerInterface $c) {
             return new FileCache($c->get('cache.path'));
         });
 
-        $factory->register(UserRepository::class, function (Container $c) {
+        $factory->register(UserRepository::class, function (ContainerInterface $c) {
             return new UserRepository($c->get(CacheProvider::class));
         });
 

@@ -46,6 +46,17 @@ This change improves alignment with PSR-11 and adheres better with the interface
 
 This change won't affect you unless you have custom implementations of `BoxedValueInterface`.
 
+#### Simplified Default Registrations
+
+Because the public interface of `Container` is precisely equal to `ContainerInterface`, the `Container`
+object itself, as a dependency, becomes an implementation detail - you should update your type-hints
+to depend on either `Resolver` (most likely), `ContainerInterface` (where possible, if you depend on
+`get()` and `has()` only) or `FactoryInterface` (now implemented by `Resolver`).
+
+If you wish, you can use e.g. `$factory->alias(Container::class, ContainerInterface::class)` to retain
+backwards compatibility with hard dependencies on `ContainerInteface`, although this is discouraged -
+the default registration was removed to avoid dependency clutter.
+
 #### Simplified "auto-wiring" scenarios
 
 Where previously, the `inject()` method was a `protected` method allowing a `Container` extension to
