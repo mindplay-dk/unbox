@@ -70,18 +70,18 @@ class ContainerFactory extends Configuration
             $func = $func_or_map_or_type;
         } elseif (is_string($func_or_map_or_type)) {
             // second argument is a class-name
-            $func = function (Container $container) use ($func_or_map_or_type, $map) {
+            $func = function (ContainerInterface $container) use ($func_or_map_or_type, $map) {
                 return Invoker::invokeConstructor($container, $func_or_map_or_type, $map);
             };
             $map = [];
         } elseif (is_array($func_or_map_or_type)) {
             // second argument is a map of constructor arguments
-            $func = function (Container $container) use ($name, $func_or_map_or_type) {
+            $func = function (ContainerInterface $container) use ($name, $func_or_map_or_type) {
                 return Invoker::invokeConstructor($container, $name, $func_or_map_or_type);
             };
         } elseif (is_null($func_or_map_or_type)) {
             // first argument is both the component and class-name
-            $func = function (Container $container) use ($name) {
+            $func = function (ContainerInterface $container) use ($name) {
                 return Invoker::invokeConstructor($container, $name);
             };
         } else {

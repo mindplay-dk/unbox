@@ -16,19 +16,19 @@ class Container extends Configuration implements ContainerInterface
     protected $active = [];
 
     /**
-     * @param Configuration $config
+     * @param Configuration $config    Configuration (e.g. ContainerFactory) to copy to this Container instance
      */
     public function __construct(Configuration $config)
     {
         $config->copyTo($this);
 
-        $this->values = $this->values +
-            [
-                get_class($this)          => $this,
-                __CLASS__                 => $this,
-                ContainerInterface::class => $this,
-                FactoryInterface::class   => $this,
-            ];
+        $defaults = [
+            get_class($this)          => $this,
+            __CLASS__                 => $this,
+            ContainerInterface::class => $this,
+        ];
+
+        $this->values = $this->values + $defaults;
     }
 
     /**
@@ -52,7 +52,7 @@ class Container extends Configuration implements ContainerInterface
                 $params = Invoker::resolveParameters($this, $reflection->getParameters(), $this->factory_map[$id]);
 
                 $this->values[$id] = call_user_func_array($factory, $params);
-            } elseif (!array_key_exists($id, $this->values)) {
+            } elseif (! array_key_exists($id, $this->values)) {
                 throw new NotFoundException($id);
             }
 

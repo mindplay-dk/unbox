@@ -4,7 +4,6 @@ namespace mindplay\unbox;
 
 use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
-use ReflectionClass;
 
 /**
  * This class implements a Resolver for PSR-11 Dependency Injection Containers.
@@ -37,6 +36,18 @@ class Resolver implements ContainerInterface, FactoryInterface
     public function __construct(array $containers)
     {
         $this->containers = $containers;
+
+        $this->injections = [
+            get_class($this)          => $this,
+            __CLASS__                 => $this,
+            ContainerInterface::class => $this,
+        ];
+
+        $this->active = [
+            get_class($this)          => true,
+            __CLASS__                 => true,
+            ContainerInterface::class => true,
+        ];
     }
 
     /**
