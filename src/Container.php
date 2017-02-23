@@ -32,14 +32,7 @@ class Container extends Configuration implements ContainerInterface
     }
 
     /**
-     * Resolve the registered component with the given name.
-     *
-     * @param string $id component name
-     *
-     * @return mixed
-     *
-     * @throws ContainerException
-     * @throws NotFoundException
+     * @inheritdoc
      */
     public function get($id)
     {
@@ -65,11 +58,7 @@ class Container extends Configuration implements ContainerInterface
     }
 
     /**
-     * Check for the existence of a component with a given name.
-     *
-     * @param string $name component name
-     *
-     * @return bool true, if a component with the given name has been defined
+     * @inheritdoc
      */
     public function has($name)
     {

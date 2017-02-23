@@ -1,11 +1,11 @@
 <?php
 
+use mindplay\unbox\Composite;
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
 use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
-use mindplay\unbox\Resolver;
 use Psr\Container\ContainerInterface;
 
 require __DIR__ . '/header.php';
@@ -660,7 +660,7 @@ test(
 );
 
 test(
-    'can Resolve for multiple Containers',
+    'Composite can delegate to multiple Containers',
     function () {
         $factory_a = new ContainerFactory();
         $factory_a->set("a", "A");
@@ -671,12 +671,13 @@ test(
         $container_a = $factory_a->createContainer();
         $container_b = $factory_b->createContainer();
 
-        $resolver = new Resolver([$container_a, $container_b]);
+        $composite = new Composite([$container_a, $container_b]);
 
-        eq($resolver->get(Resolver::class), $resolver, "Resolver has self-registered");
-        eq($resolver->get(ContainerInterface::class), $resolver, "Resolver has self-registered as ContainerInterface");
-        eq($resolver->get("a"), "A", "can get component from first container");
-        eq($resolver->get("b"), "B", "can get component from second container");
+        eq($composite->get("a"), "A", "can get component from first container");
+        eq($composite->get("b"), "B", "can get component from second container");
+
+        ok($composite->has("a"), "composite has component from first container");
+        ok($composite->has("b"), "composite has component from second container");
     }
 );
 

@@ -267,14 +267,14 @@ class ContainerFactory extends Configuration
      */
     public function createResolver()
     {
-        return new Resolver([$this->createContainer()]);
+        return new Resolver($this->createContainer());
     }
 
     /**
      * Create and bootstrap a new Container instance.
      *
-     * This is a low-level factory-method for use-cases involving multiple Containers,
-     * and possibly even other (third-party) PSR-11 `ContainerInterface` implementations.
+     * This is a low-level factory-method for use-cases involving {@see Composite} Containers,
+     * and possibly other (third-party) PSR-11 `ContainerInterface` implementations.
      *
      * The {@see createResolver()} method provides a high-level method for use-cases
      * involving only a single Container.

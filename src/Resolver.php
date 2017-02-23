@@ -6,17 +6,16 @@ use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 
 /**
- * This class implements a Resolver for PSR-11 Dependency Injection Containers.
- *
- * It also doubles as a PSR-11 Container implementation, and provides support for
- * prioritized look-ups via one or several PSR-11 Containers.
+ * This class implements a Resolver for any PSR-11 Dependency Injection Container,
+ * and doubles as a proxy to the inner Container, with the option to inject (at run-time)
+ * additional components in "auto-wiring" scenarios.
  */
 class Resolver implements ContainerInterface, FactoryInterface
 {
     /**
-     * @var ContainerInterface[]
+     * @var ContainerInterface
      */
-    protected $containers = [];
+    protected $container;
 
     /**
      * @var bool[] map where component name => TRUE, if the component has been initialized
@@ -28,14 +27,14 @@ class Resolver implements ContainerInterface, FactoryInterface
      *
      * @see inject()
      */
-    private $injections = [];
+    protected $injections = [];
 
     /**
-     * @param ContainerInterface[] $containers
+     * @param ContainerInterface $container
      */
-    public function __construct(array $containers)
+    public function __construct(ContainerInterface $container)
     {
-        $this->containers = $containers;
+        $this->container = $container;
 
         $this->injections = [
             get_class($this)          => $this,
@@ -59,12 +58,10 @@ class Resolver implements ContainerInterface, FactoryInterface
             return $this->injections[$id];
         }
 
-        foreach ($this->containers as $container) {
-            if ($container->has($id)) {
-                $this->active[$id] = true;
+        if ($this->container->has($id)) {
+            $this->active[$id] = true;
 
-                return $container->get($id);
-            }
+            return $this->container->get($id);
         }
 
         throw new NotFoundException($id);
@@ -75,10 +72,8 @@ class Resolver implements ContainerInterface, FactoryInterface
      */
     public function has($id)
     {
-        foreach ($this->containers as $container) {
-            if ($container->has($id)) {
-                return true;
-            }
+        if ($this->container->has($id)) {
+            return true;
         }
 
         if (array_key_exists($id, $this->injections)) {
