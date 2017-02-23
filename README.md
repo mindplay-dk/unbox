@@ -669,7 +669,7 @@ A component is considered "active" when it has been used for the first time - co
 may get activated directly by calls to `get()`, or may get indirectly activated by
 cascading activation of dependencies.
 
-#### "Auto-wiring" scenarios
+#### Dynamic Injection in "auto-wiring" Scenarios
 
 While Unbox will not "magically" attempt to create components that haven't been explicitly
 registered, injecting components into a `Resolver` instance at run-time is possible, and
@@ -737,9 +737,10 @@ Non-features:
   * **NO annotations** - because sprinkling bits of your container configuration across
     your domain model is a really terrible idea.
 
-  * **NO auto-wiring** - because `$container->register(Foo::name)` isn't a burden, and explicitly
+  * **NO magic auto-wiring** - because `$container->register(Foo::name)` isn't a burden, and explicitly
     designates something as being a service; unintentionally treating a non-singleton as a singleton
-    can be a weird experience.
+    can be a weird experience. (You can however use `Resolver::inject()` to implement controlled
+    auto-wiring scenarios for specific use-cases.)
 
   * **NO caching** - because configuring a container really shouldn't be so much overhead as to
     justify the need for caching. Unbox is fast.
