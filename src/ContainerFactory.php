@@ -279,7 +279,7 @@ class ContainerFactory extends Configuration
      * The {@see createResolver()} method provides a high-level method for use-cases
      * involving only a single Container.
      *
-     * @return ContainerInterface
+     * @return Container
      */
     public function createContainer()
     {
