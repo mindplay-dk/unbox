@@ -63,6 +63,25 @@ test(
 );
 
 test(
+    'can indirectly activate components',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(UserRepository::class);
+
+        $factory->register(CacheProvider::class, FileCache::class, ["path" => "/tmp"]);
+
+        $container = $factory->createResolver();
+
+        ok(! $container->isActive(CacheProvider::class), "initially inactive");
+
+        $container->get(UserRepository::class);
+
+        ok($container->isActive(CacheProvider::class), "indirectly activated");
+    }
+);
+
+test(
     'Container/Factory: can auto-register with various factory methods',
     function () {
         $f = new ContainerFactory();

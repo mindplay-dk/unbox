@@ -191,10 +191,10 @@ class Resolver implements ContainerInterface, FactoryInterface
 
                 if ($type && isset($map[$type])) {
                     $value = $map[$type]; // resolve as user-provided type-hinted argument
-                } elseif ($type && $this->container->has($type)) {
-                    $value = $this->container->get($type); // resolve as component registered by class/interface name
-                } elseif ($safe && $this->container->has($param_name)) {
-                    $value = $this->container->get($param_name); // resolve as component with matching parameter name
+                } elseif ($type && $this->has($type)) {
+                    $value = $this->get($type); // resolve as component registered by class/interface name
+                } elseif ($safe && $this->has($param_name)) {
+                    $value = $this->get($param_name); // resolve as component with matching parameter name
                 } elseif ($param->isOptional()) {
                     $value = $param->getDefaultValue(); // unresolved, optional: resolve using default value
                 } elseif ($type && $param->allowsNull()) {
