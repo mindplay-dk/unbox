@@ -706,6 +706,17 @@ test(
 );
 
 test(
+    'Resolver can proxy a third-party (PHP-DI) container',
+    function () {
+        $php_di = require __DIR__ . '/bootstrap-php-di.php';
+
+        $resolver = new Resolver($php_di);
+
+        ok($resolver->get(UserRepository::class) instanceof UserRepository);
+    }
+);
+
+test(
     'ContainerFactory internally registers Resolver under various aliases',
     function () {
         $factory = new ContainerFactory();
