@@ -33,13 +33,7 @@ class Container extends Configuration implements ContainerInterface
     {
         if (! isset($this->active[$id])) {
             if (isset($this->factory[$id])) {
-                $factory = $this->factory[$id];
-
-                $reflection = new ReflectionFunction($factory);
-
-                $params = $this->getResolver()->resolve($reflection->getParameters(), $this->factory_map[$id]);
-
-                $this->values[$id] = call_user_func_array($factory, $params);
+                $this->values[$id] = $this->getResolver()->call($this->factory[$id], $this->factory_map[$id]);
             } elseif (! array_key_exists($id, $this->values)) {
                 throw new NotFoundException($id);
             }
@@ -79,13 +73,7 @@ class Container extends Configuration implements ContainerInterface
     {
         if (isset($this->config[$name])) {
             foreach ($this->config[$name] as $index => $config) {
-                $map = $this->config_map[$name][$index];
-
-                $reflection = Reflection::createFromCallable($config);
-
-                $params = $this->getResolver()->resolve($reflection->getParameters(), $map);
-
-                $value = call_user_func_array($config, $params);
+                $value = $this->getResolver()->call($config, $this->config_map[$name][$index]);
 
                 if ($value !== null) {
                     $this->values[$name] = $value;
