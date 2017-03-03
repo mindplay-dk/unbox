@@ -143,7 +143,27 @@ class Resolver implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * Resolves parameters against the proxied `ContainerInterface` instance
+     * Dynamically inject a component into this Resolver.
+     *
+     * Allows for implementation of "auto-wiring" patterns, without altering the state of any internal Containers.
+     *
+     * @param string $name
+     * @param mixed  $value
+     *
+     * @throws InvalidArgumentException on attempted override of any component provided by the internal Containers
+     */
+    public function inject($name, $value)
+    {
+        if ($this->has($name)) {
+            throw new InvalidArgumentException("attempted override of component: {$name}");
+        }
+
+        $this->injections[$name] = $value;
+        $this->active[$name] = true;
+    }
+
+    /**
+     * Internally resolves parameters against the proxied `ContainerInterface` instance
      *
      * @param ReflectionParameter[] $params    parameter reflections
      * @param array                 $map       mixed list/map of parameter values (and/or boxed values)
@@ -153,7 +173,7 @@ class Resolver implements ContainerInterface, FactoryInterface
      *
      * @throws ContainerException
      */
-    public function resolve(array $params, $map, $safe = true)
+    protected function resolve(array $params, $map, $safe = true)
     {
         $args = [];
 
@@ -199,25 +219,5 @@ class Resolver implements ContainerInterface, FactoryInterface
         }
 
         return $args;
-    }
-
-    /**
-     * Dynamically inject a component into this Resolver.
-     *
-     * Allows for implementation of "auto-wiring" patterns, without altering the state of any internal Containers.
-     *
-     * @param string $name
-     * @param mixed  $value
-     *
-     * @throws InvalidArgumentException on attempted override of any component provided by the internal Containers
-     */
-    public function inject($name, $value)
-    {
-        if ($this->has($name)) {
-            throw new InvalidArgumentException("attempted override of component: {$name}");
-        }
-
-        $this->injections[$name] = $value;
-        $this->active[$name] = true;
     }
 }
