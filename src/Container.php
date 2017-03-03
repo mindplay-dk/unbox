@@ -37,7 +37,7 @@ class Container extends Configuration implements ContainerInterface
 
                 $reflection = new ReflectionFunction($factory);
 
-                $params = Invoker::resolveParameters($this->get(Resolver::class), $reflection->getParameters(), $this->factory_map[$id]);
+                $params = $this->getResolver()->resolve($reflection->getParameters(), $this->factory_map[$id]);
 
                 $this->values[$id] = call_user_func_array($factory, $params);
             } elseif (! array_key_exists($id, $this->values)) {
@@ -61,6 +61,14 @@ class Container extends Configuration implements ContainerInterface
     }
 
     /**
+     * @return Resolver
+     */
+    protected function getResolver()
+    {
+        return $this->get(Resolver::class);
+    }
+
+    /**
      * Internally initialize an active component.
      *
      * @param string $name component name
@@ -75,7 +83,7 @@ class Container extends Configuration implements ContainerInterface
 
                 $reflection = Reflection::createFromCallable($config);
 
-                $params = Invoker::resolveParameters($this->get(Resolver::class), $reflection->getParameters(), $map);
+                $params = $this->getResolver()->resolve($reflection->getParameters(), $map);
 
                 $value = call_user_func_array($config, $params);
 

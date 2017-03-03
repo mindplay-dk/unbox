@@ -189,6 +189,8 @@ call(callable $func, array $map) : mixed               # ... and override or add
 create(string $class_name) : mixed                     # invoke a constructor and auto-inject
 create(string $class_name, array $map) : mixed         # ... and override or add missing params
 
+resolve(array $params, array $map, bool $safe): array  # low-level method for parameter resolution
+
 inject(string $name, $value)                           # directly inject a component at run-time
 ```
 
