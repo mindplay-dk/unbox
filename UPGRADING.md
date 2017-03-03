@@ -23,7 +23,7 @@ replace should set you straight.
 
 #### `Resolver` vs `Container`
 
-The public interface of `Container` now strictly complies with PSR-11.
+The public interface of `Container` now strictly implements `ContainerInterface` of PSR-11, and nothing more.
 
 The public interface of the `Resolver` class in version 3.0 is identical to the `Container` class
 in version 2.0.
@@ -48,8 +48,8 @@ This change won't affect you unless you have custom implementations of `BoxedVal
 
 #### Simplified Default Registrations
 
-Because the public interface of `Container` is precisely equal to `ContainerInterface`, the `Container`
-object itself, as a dependency, becomes an implementation detail - you should update your type-hints
+Because the public interface of `Container` is precisely equal to `ContainerInterface`, the existence
+of the `Container` instance itself becomes an implementation detail - you should update your type-hints
 to depend on either `Resolver` (most likely), `ContainerInterface` (where possible, if you depend on
 `get()` and `has()` only) or `FactoryInterface` (now implemented by `Resolver`).
 

@@ -13,7 +13,10 @@ use ReflectionParameter;
 class ContainerFactory extends Configuration
 {
     public function __construct()
-    {}
+    {
+        $this->alias(ContainerInterface::class, Resolver::class);
+        $this->alias(FactoryInterface::class, Resolver::class);
+    }
 
     /**
      * Register a component for dependency injection.
@@ -70,19 +73,19 @@ class ContainerFactory extends Configuration
             $func = $func_or_map_or_type;
         } elseif (is_string($func_or_map_or_type)) {
             // second argument is a class-name
-            $func = function (ContainerInterface $container) use ($func_or_map_or_type, $map) {
-                return Invoker::invokeConstructor($container, $func_or_map_or_type, $map);
+            $func = function (Resolver $resolver) use ($func_or_map_or_type, $map) {
+                return $resolver->create($func_or_map_or_type, $map);
             };
             $map = [];
         } elseif (is_array($func_or_map_or_type)) {
             // second argument is a map of constructor arguments
-            $func = function (ContainerInterface $container) use ($name, $func_or_map_or_type) {
-                return Invoker::invokeConstructor($container, $name, $func_or_map_or_type);
+            $func = function (Resolver $resolver) use ($name, $func_or_map_or_type) {
+                return $resolver->create($name, $func_or_map_or_type);
             };
         } elseif (is_null($func_or_map_or_type)) {
             // first argument is both the component and class-name
-            $func = function (ContainerInterface $container) use ($name) {
-                return Invoker::invokeConstructor($container, $name);
+            $func = function (Resolver $resolver) use ($name) {
+                return $resolver->create($name);
             };
         } else {
             throw new InvalidArgumentException("unexpected argument type for \$func_or_map_or_type: " . gettype($func_or_map_or_type));
@@ -121,8 +124,8 @@ class ContainerFactory extends Configuration
      */
     public function alias($new_name, $ref_name)
     {
-        $this->register($new_name, function (ContainerInterface $container) use ($ref_name) {
-            return $container->get($ref_name);
+        $this->register($new_name, function (Resolver $resolver) use ($ref_name) {
+            return $resolver->get($ref_name);
         });
     }
 
@@ -256,33 +259,22 @@ class ContainerFactory extends Configuration
     }
 
     /**
-     * Create and bootstrap a new Container in a Resolver instance.
+     * Create and bootstrap a new Container instance.
      *
-     * This is a high-level factory-method for use-cases involving a single Container.
-     *
-     * The {@see createContainer()} method provides a more low-level method for use-cases
-     * involving multiple Containers.
+     * @return ContainerInterface
+     */
+    public function createContainer()
+    {
+        return new Container($this);
+    }
+
+    /**
+     * Create and bootstrap a new Container instance, and return the Resolver proxy.
      *
      * @return Resolver
      */
     public function createResolver()
     {
-        return new Resolver($this->createContainer());
-    }
-
-    /**
-     * Create and bootstrap a new Container instance.
-     *
-     * This is a low-level factory-method for use-cases involving {@see Composite} Containers,
-     * and possibly other (third-party) PSR-11 `ContainerInterface` implementations.
-     *
-     * The {@see createResolver()} method provides a high-level method for use-cases
-     * involving only a single Container.
-     *
-     * @return Container
-     */
-    public function createContainer()
-    {
-        return new Container($this);
+        return $this->createContainer()->get(Resolver::class);
     }
 }

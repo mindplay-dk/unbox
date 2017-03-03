@@ -6,9 +6,8 @@ use InvalidArgumentException;
 use Psr\Container\ContainerInterface;
 
 /**
- * This class implements a Resolver for any PSR-11 Dependency Injection Container,
- * and doubles as a proxy to the inner Container, with the option to inject (at run-time)
- * additional components in "auto-wiring" scenarios.
+ * This class implements parameter resolution, invokation of callables and constructors, and
+ * run-time injections, by proxying any PSR-11 Dependency Injection Container.
  */
 class Resolver implements ContainerInterface, FactoryInterface
 {
@@ -18,7 +17,7 @@ class Resolver implements ContainerInterface, FactoryInterface
     protected $container;
 
     /**
-     * @var bool[] map where component name => TRUE, if the component has been initialized
+     * @var bool[] map where active component name => TRUE
      */
     protected $active = [];
 
@@ -35,18 +34,6 @@ class Resolver implements ContainerInterface, FactoryInterface
     public function __construct(ContainerInterface $container)
     {
         $this->container = $container;
-
-        $this->injections = [
-            get_class($this)          => $this,
-            __CLASS__                 => $this,
-            ContainerInterface::class => $this,
-        ];
-
-        $this->active = [
-            get_class($this)          => true,
-            __CLASS__                 => true,
-            ContainerInterface::class => true,
-        ];
     }
 
     /**
@@ -60,11 +47,9 @@ class Resolver implements ContainerInterface, FactoryInterface
 
         if ($this->container->has($id)) {
             $this->active[$id] = true;
-
-            return $this->container->get($id);
         }
 
-        throw new NotFoundException($id);
+        return $this->container->get($id);
     }
 
     /**
@@ -84,7 +69,7 @@ class Resolver implements ContainerInterface, FactoryInterface
     }
 
     /**
-     * Check if a component has been unboxed and is currently active.
+     * Check if a component has been resolved and is currently active.
      *
      * @param string $name component name
      *

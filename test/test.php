@@ -1,11 +1,12 @@
 <?php
 
 use mindplay\unbox\Composite;
-use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
 use mindplay\unbox\ContainerFactory;
+use mindplay\unbox\FactoryInterface;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
+use mindplay\unbox\Resolver;
 use Psr\Container\ContainerInterface;
 
 require __DIR__ . '/header.php';
@@ -21,7 +22,11 @@ test(
 
         ok($f->createContainer() instanceof ContainerInterface);
 
-        ok($f->createResolver() instanceof ContainerInterface);
+        $resolver = $f->createResolver();
+
+        ok($resolver instanceof Resolver);
+        ok($resolver instanceof FactoryInterface);
+        ok($resolver instanceof ContainerInterface);
     }
 );
 
@@ -379,7 +384,7 @@ test(
 );
 
 test(
-    'can implement "auto-wiring" by using a Resolver',
+    'can implement "auto-wiring" patterns',
     function () {
         $factory = new ContainerFactory();
 
@@ -668,8 +673,8 @@ test(
         $factory_b = new ContainerFactory();
         $factory_b->set("b", "B");
 
-        $container_a = $factory_a->createContainer();
-        $container_b = $factory_b->createContainer();
+        $container_a = $factory_a->createResolver();
+        $container_b = $factory_b->createResolver();
 
         $composite = new Composite([$container_a, $container_b]);
 
@@ -678,6 +683,19 @@ test(
 
         ok($composite->has("a"), "composite has component from first container");
         ok($composite->has("b"), "composite has component from second container");
+    }
+);
+
+test(
+    'ContainerFactory internally registers Resolver under various aliases',
+    function () {
+        $factory = new ContainerFactory();
+
+        $container = $factory->createResolver();
+
+        eq($container, $container->get(Resolver::class));
+        eq($container, $container->get(ContainerInterface::class));
+        eq($container, $container->get(FactoryInterface::class));
     }
 );
 

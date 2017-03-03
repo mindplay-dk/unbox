@@ -16,17 +16,14 @@ class Container extends Configuration implements ContainerInterface
     protected $active = [];
 
     /**
-     * @param Configuration $config    Configuration (e.g. ContainerFactory) to copy to this Container instance
+     * @param Configuration $config Configuration (e.g. ContainerFactory) to copy to this Container instance
      */
     public function __construct(Configuration $config)
     {
         $config->copyTo($this);
 
-        $defaults = [
-            ContainerInterface::class => $this,
-        ];
-
-        $this->values = $this->values + $defaults;
+        $this->values[Resolver::class] = new Resolver($this);
+        $this->active[Resolver::class] = true;
     }
 
     /**
@@ -40,7 +37,7 @@ class Container extends Configuration implements ContainerInterface
 
                 $reflection = new ReflectionFunction($factory);
 
-                $params = Invoker::resolveParameters($this, $reflection->getParameters(), $this->factory_map[$id]);
+                $params = Invoker::resolveParameters($this->get(Resolver::class), $reflection->getParameters(), $this->factory_map[$id]);
 
                 $this->values[$id] = call_user_func_array($factory, $params);
             } elseif (! array_key_exists($id, $this->values)) {
@@ -78,7 +75,7 @@ class Container extends Configuration implements ContainerInterface
 
                 $reflection = Reflection::createFromCallable($config);
 
-                $params = Invoker::resolveParameters($this, $reflection->getParameters(), $map);
+                $params = Invoker::resolveParameters($this->get(Resolver::class), $reflection->getParameters(), $map);
 
                 $value = call_user_func_array($config, $params);
 

@@ -53,8 +53,8 @@ class UserRepository {
 
 Unbox has a two-stage life-cycle. The first stage is the creation of a `ContainerFactory` - this
 class provides bootstrapping and configuration facilities. The second stage begins with a call
-to `ContainerFactory::createResolver()` which creates the actual `Container` instance, wrapped
-in a `Resolver` instance, which provides the facilities enabling client-code to invoke functions
+to `ContainerFactory::createResolver()` which creates the actual `Container` instance, proxied by
+a `Resolver` instance, which provides the facilities enabling client-code to invoke functions
 and constructors, etc.
 
 Note that the low-level `ContainerFactory::createContainer()` method creates a plain `ContainerInterface`
@@ -86,7 +86,7 @@ Then configure the missing `$cache_path` for the `cache` component, add that to 
 $factory->set("cache_path", "/tmp/cache");
 ```
 
-Now that the `ContainerFactory` is fully bootstrapped, we're ready to create a `Container`:
+Now that the `ContainerFactory` is fully bootstrapped, we're ready to create a `Resolver`:
 
 ```php
 $resolver = $factory->createResolver();
@@ -128,7 +128,7 @@ class UserController
 }
 ```
 
-Using the Resolver as a factory, you can create an instance of any controller class:
+Using the `Resolver` as a factory, you can create an instance of any controller class:
 
 ```php
 $controller = $resolver->create(UserController::class);
@@ -172,8 +172,8 @@ configure(string $name, callable $func, array $map)    # ... with custom argumen
 
 ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 
-createContainer() : Container                          # create a bootstrapped Container instance
-createResolver() : Resolver                            # create a bootstrapped Resolver instance
+createResolver() : Resolver                            # create a Resolver-proxied Container instance
+createContainer() : ContainerInterface                 # create a bare ContainerInterface instance
 ```
 
 The following provides a quick overview of the `Resolver` API:
@@ -188,6 +188,8 @@ call(callable $func, array $map) : mixed               # ... and override or add
 
 create(string $class_name) : mixed                     # invoke a constructor and auto-inject
 create(string $class_name, array $map) : mixed         # ... and override or add missing params
+
+inject(string $name, $value)                           # directly inject a component at run-time
 ```
 
 The `Container` API itself isn't that interesting - it only has the `get()` and `has()` methods
@@ -347,7 +349,7 @@ $factory->register(CacheInterface::class, function () {
 
 $factory->alias("db.cache", CacheInterface::class); // "db.cache" becomes an alias!
 
-$resolver = $factory->createResolver();
+$resolver = $factory->createContainer();
 
 var_dump($resolver->get("db.cache") === $resolver->get(CacheInterface::class)); // => bool(true)
 ```
@@ -554,7 +556,7 @@ $factory = new ContainerFactory();
 
 // ... bootstrapping ...
 
-$resolver = $factory->createResolver();
+$resolver = $factory->createContainer();
 ```
 
 The most basic form of component access, is a direct lookup:
@@ -656,7 +658,7 @@ To check if a component has been activated by a Resolver, use `isActive()` - for
 ```php
 $factory->register("foo", function () { return "bar"; });
 
-$resolver = $factory->createResolver();
+$resolver = $factory->createContainer();
 
 var_dump($resolver->isActive("foo")); // => bool(false)
 
