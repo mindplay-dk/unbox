@@ -216,6 +216,23 @@ class ContainerFactory extends Configuration
     }
 
     /**
+     * Register a specified Container instance as "failover".
+     *
+     * Containers subsequently created by this factory, if unable to resolve a given
+     * dependency, will try the specified failover Container instead.
+     *
+     * This can be useful in scenarios with long-running applications, for example, to
+     * share an application-level Container by using it as a failover of request-level
+     * Container instances.
+     *
+     * @param ContainerInterface $container
+     */
+    public function setFailover(ContainerInterface $container)
+    {
+        $this->failover = $container;
+    }
+
+    /**
      * Creates a boxed reference to a component with a given name.
      *
      * You can use this in conjunction with `register()` to provide a component reference

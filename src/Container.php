@@ -34,6 +34,8 @@ class Container extends Configuration implements ContainerInterface
         if (! isset($this->active[$id])) {
             if (isset($this->factory[$id])) {
                 $this->values[$id] = $this->getResolver()->call($this->factory[$id], $this->factory_map[$id]);
+            } elseif ($this->failover && $this->failover->has($id)) {
+                $this->values[$id] = $this->failover->get($id);
             } elseif (! array_key_exists($id, $this->values)) {
                 throw new NotFoundException($id);
             }
@@ -51,7 +53,9 @@ class Container extends Configuration implements ContainerInterface
      */
     public function has($name)
     {
-        return array_key_exists($name, $this->values) || isset($this->factory[$name]);
+        return array_key_exists($name, $this->values)
+            || isset($this->factory[$name])
+            || ($this->failover && $this->failover->has($name));
     }
 
     /**

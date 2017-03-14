@@ -170,6 +170,8 @@ configure(callable $func, array $map)                  # ... with custom argumen
 configure(string $name, callable $func)                # ... for a component with a specific name
 configure(string $name, callable $func, array $map)    # ... with custom arguments
 
+setFailover(ContainerInterface $container)             # register a failover Container
+
 ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 
 createResolver() : Resolver                            # create a Resolver-proxied Container instance
@@ -670,6 +672,44 @@ var_dump($resolver->isActive("foo")); // => bool(true)
 A component is considered "active" when it has been used for the first time - components
 may get activated directly by calls to `get()`, or may get indirectly activated by
 cascading activation of dependencies.
+
+#### Specifying a "failover" Container
+
+In scenarios with long-running applications (such as long-running [React](http://reactphp.org/) or
+[PHP-PM](https://github.com/php-pm/php-pm) applications) you may wish to isolate long-lived
+application-level dependencies from short-lived request-level dependencies.
+
+You would likely want your request-level components to be able to depend on application-level
+shared services, but not the other way around: application-level components should not be able
+to depend on request-level components.
+
+Using a long-lived application-level Container as "failover" is one way to achieve this -
+for example, first bootstrap your application-level shared services and create a shared container:
+
+```php
+$app_factory = new ContainerFactory();
+
+$app_factory->register(CacheProvider::class, FileCache::class, ["path" => "/tmp"]);
+
+$app_container = $app_factory->createContainer();
+```
+
+Next, bootstrap your request-level components separately from the app container:
+
+```php
+$request_factory = new ContainerFactory();
+
+$request_factory->register(UserRepository::class);
+
+$request_factory->setFailover($app_container);
+
+$request_container = $request_factory->createResolver();
+```
+
+Using `ContainerFactory::setFailover()` allows us to use the application-level container
+as a "failover" for the request-level container - this permits the request-level container
+to look up any dependencies of request-level components in the application-level container,
+effectively creating a one-directional dependency "flow".
 
 #### Dynamic Injection in "auto-wiring" Scenarios
 

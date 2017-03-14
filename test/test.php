@@ -729,6 +729,27 @@ test(
     }
 );
 
+test(
+    'can bootstrap Containers with failover',
+    function () {
+        $app_factory = new ContainerFactory();
+
+        $app_factory->register(CacheProvider::class, FileCache::class, ["path" => "/tmp"]);
+
+        $app_container = $app_factory->createContainer();
+
+        $request_factory = new ContainerFactory();
+
+        $request_factory->register(UserRepository::class);
+
+        $request_factory->setFailover($app_container);
+
+        $request_container = $request_factory->createResolver();
+
+        ok($request_container->get(UserRepository::class) instanceof UserRepository);
+    }
+);
+
 if (version_compare(PHP_VERSION, "7", ">=")) {
     require __DIR__ . "/test-php70.php";
 } else {

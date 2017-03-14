@@ -2,6 +2,8 @@
 
 namespace mindplay\unbox;
 
+use Psr\Container\ContainerInterface;
+
 /**
  * This abstract base-class defines the internal state of `Container` and `ContainerFactory`
  */
@@ -33,6 +35,11 @@ abstract class Configuration
     protected $config_map = [];
 
     /**
+     * @var ContainerInterface|null optional failover Container
+     */
+    protected $failover;
+
+    /**
      * Internally copy configuration state, e.g. from `ContainerFactory` to `Container`
      *
      * @param Configuration $target
@@ -44,5 +51,6 @@ abstract class Configuration
         $target->factory_map = $this->factory_map;
         $target->config = $this->config;
         $target->config_map = $this->config_map;
+        $target->failover = $this->failover;
     }
 }
