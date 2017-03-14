@@ -9,9 +9,16 @@
             "email": "rasmus@mindplay.dk"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/mindplay-dk/provider-interop.git"
+        }
+    ],
     "require": {
         "php": ">=5.5",
-        "container-interop/container-interop": "~1.0"
+        "container-interop/container-interop": "~1.0",
+        "mindplay/provider-interop": "dev-master"
     },
     "require-dev": {
         "mindplay/benchpress": "dev-master",

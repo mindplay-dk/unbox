@@ -1,11 +1,14 @@
 <?php
 
 use Interop\Container\ContainerInterface;
+use Interop\Provider\ServiceProviderInterface;
+use Interop\Provider\ServiceRegistryInterface;
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
 use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
+use mindplay\unbox\ServiceRegistryAdapter;
 
 require __DIR__ . '/header.php';
 
@@ -638,6 +641,42 @@ test(
                 "{$pattern_str} should match: " . format($expected)
             );
         }
+    }
+);
+
+test(
+    'can import/export entries via service-registry adapter (provider-interop)',
+    function () {
+        // create a source Container with some dependencies:
+
+        $source_factory = new ContainerFactory();
+
+        $source_factory ->register("a", function () {
+            return "A";
+        });
+
+        $source_factory ->set("b", "B");
+
+        $source_container = $source_factory->createContainer();
+
+        ok($source_container instanceof ServiceProviderInterface);
+
+        // create a target ContainerFactory and a Service Registry adapter:
+
+        $target_factory = new ContainerFactory();
+
+        $target_adapter = new ServiceRegistryAdapter($target_factory);
+
+        ok($target_adapter instanceof ServiceRegistryInterface);
+
+        // export from source Container to target ContainerFactory:
+
+        $source_container->registerWith($target_adapter);
+
+        $target_container = $target_factory->createContainer();
+
+        eq($target_container->get("a"), "A", "can register entry-resolver");
+        eq($target_container->get("b"), "B", "can register entry-value");
     }
 );
 

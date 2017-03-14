@@ -3,6 +3,8 @@
 namespace mindplay\unbox;
 
 use Interop\Container\ContainerInterface;
+use Interop\Provider\ServiceProviderInterface;
+use Interop\Provider\ServiceRegistryInterface;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionFunction;
@@ -11,7 +13,7 @@ use ReflectionParameter;
 /**
  * This class implements a simple dependency injection container.
  */
-class Container extends Configuration implements ContainerInterface, FactoryInterface
+class Container extends Configuration implements ContainerInterface, FactoryInterface, ServiceProviderInterface
 {
     /**
      * @var bool[] map where component name => TRUE, if the component has been initialized
@@ -250,6 +252,24 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                     $this->values[$name] = $value;
                 }
             }
+        }
+    }
+
+    /**
+     * Registers all container entries published by this service-provider.
+     *
+     * @param ServiceRegistryInterface $registry
+     */
+    public function registerWith(ServiceRegistryInterface $registry)
+    {
+        foreach (array_keys($this->factory) as $id) {
+            $registry->register($id, function () use ($id) {
+                return $this->get($id);
+            });
+        }
+
+        foreach ($this->values as $id => $value) {
+            $registry->set($id, $value);
         }
     }
 }
