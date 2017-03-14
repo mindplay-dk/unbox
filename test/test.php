@@ -651,11 +651,11 @@ test(
 
         $source_factory = new ContainerFactory();
 
-        $source_factory ->register("a", function () {
+        $source_factory->register("a", function () {
             return "A";
         });
 
-        $source_factory ->set("b", "B");
+        $source_factory->set("b", "B");
 
         $source_container = $source_factory->createContainer();
 

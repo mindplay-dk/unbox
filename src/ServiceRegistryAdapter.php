@@ -23,9 +23,4 @@ class ServiceRegistryAdapter implements ServiceRegistryInterface
     {
         $this->factory->register($id, $resolver);
     }
-
-    public function set($id, $value)
-    {
-        $this->factory->set($id, $value);
-    }
 }
