@@ -652,7 +652,7 @@ test(
         $source_factory = new ContainerFactory();
 
         $source_factory->register("a", function () {
-            return "A";
+            return new FileCache("/tmp");
         });
 
         $source_factory->set("b", "B");
@@ -675,8 +675,14 @@ test(
 
         $target_container = $target_factory->createContainer();
 
-        eq($target_container->get("a"), "A", "can register entry-resolver");
+        ok($target_container->get("a") instanceof FileCache, "can register entry-resolver");
+
         eq($target_container->get("b"), "B", "can register entry-value");
+
+        // this last test is to make sure the implementation delegates, as opposed to copying the
+        // factory-function itself, which would lead to the creation of two distinct instances!
+
+        eq($source_container->get("a"), $target_container->get("a"), "factory functions delegate (rather than copy)");
     }
 );
 
