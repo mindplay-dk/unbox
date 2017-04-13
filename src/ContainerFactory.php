@@ -3,13 +3,15 @@
 namespace mindplay\unbox;
 
 use Closure;
+use Interop\Provider\ServiceProviderInterface;
+use Interop\Provider\ServiceRegistryInterface;
 use InvalidArgumentException;
 use ReflectionParameter;
 
 /**
  * This class provides boostrapping/configuration facilities for creation of `Container` instances.
  */
-class ContainerFactory extends Configuration
+class ContainerFactory extends Configuration implements ServiceRegistryInterface
 {
     public function __construct()
     {}
@@ -262,5 +264,23 @@ class ContainerFactory extends Configuration
     public function createContainer()
     {
         return new Container($this);
+    }
+
+    /**
+     * Register a given provider with this service-registry.
+     *
+     * @param ServiceProviderInterface $provider
+     */
+    public function registerProvider(ServiceProviderInterface $provider)
+    {
+        foreach ($provider->listIdentifiers() as $id) {
+            $this->factory[$id] = function () use ($id, $provider) {
+                return $provider->getContainer()->get($id);
+            };
+
+            $this->factory_map[$id] = [];
+
+            unset($this->values[$id]);
+        }
     }
 }

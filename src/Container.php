@@ -258,7 +258,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     /**
      * @return string[] list of all registered entry identifiers
      */
-    private function listIdentifiers()
+    public function listIdentifiers()
     {
         return array_merge(
             array_keys($this->factory),
@@ -267,16 +267,10 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     }
 
     /**
-     * Registers all container entries published by this service-provider.
-     *
-     * @param ServiceRegistryInterface $registry
+     * @return \Psr\Container\ContainerInterface a container instance capable of providing the listed entries
      */
-    public function registerWith(ServiceRegistryInterface $registry)
+    public function getContainer()
     {
-        foreach ($this->listIdentifiers() as $id) {
-            $registry->register($id, function () use ($id) {
-                return $this->get($id);
-            });
-        }
+        return $this;
     }
 }

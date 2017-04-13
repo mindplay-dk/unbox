@@ -661,17 +661,15 @@ test(
 
         ok($source_container instanceof ServiceProviderInterface);
 
-        // create a target ContainerFactory and a Service Registry adapter:
+        // create a target ContainerFactory:
 
         $target_factory = new ContainerFactory();
 
-        $target_adapter = new ServiceRegistryAdapter($target_factory);
+        ok($target_factory instanceof ServiceRegistryInterface);
 
-        ok($target_adapter instanceof ServiceRegistryInterface);
+        // import source Container into target ContainerFactory:
 
-        // export from source Container to target ContainerFactory:
-
-        $source_container->registerWith($target_adapter);
+        $target_factory->registerProvider($source_container);
 
         $target_container = $target_factory->createContainer();
 

@@ -4,7 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "1f86570fd664e39616a3e3ce2761fd97",
+    "hash": "37a969cfa8180028b4d1f77cdb3673bc",
+    "content-hash": "071101ee69bae337cc437fe067e78a59",
     "packages": [
         {
             "name": "container-interop/container-interop",
@@ -35,24 +36,25 @@
             ],
             "description": "Promoting the interoperability of container objects (DIC, SL, etc.)",
             "homepage": "https://github.com/container-interop/container-interop",
-            "time": "2017-02-14T19:40:03+00:00"
+            "time": "2017-02-14 19:40:03"
         },
         {
             "name": "mindplay/provider-interop",
-            "version": "0.1",
+            "version": "0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mindplay-dk/provider-interop.git",
-                "reference": "1ac58efdb06f2baba159e99aee43095e2c27531a"
+                "reference": "e2875b9883a06bd4be0b53492d92969c22493917"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mindplay-dk/provider-interop/zipball/1ac58efdb06f2baba159e99aee43095e2c27531a",
-                "reference": "1ac58efdb06f2baba159e99aee43095e2c27531a",
+                "url": "https://api.github.com/repos/mindplay-dk/provider-interop/zipball/e2875b9883a06bd4be0b53492d92969c22493917",
+                "reference": "e2875b9883a06bd4be0b53492d92969c22493917",
                 "shasum": ""
             },
             "require": {
-                "php": ">= 5.4"
+                "php": ">= 5.4",
+                "psr/container": "^1"
             },
             "type": "library",
             "autoload": {
@@ -65,10 +67,10 @@
             ],
             "description": "Promoting container-interoperability through integration of service-providers",
             "support": {
-                "source": "https://github.com/mindplay-dk/provider-interop/tree/0.1",
+                "source": "https://github.com/mindplay-dk/provider-interop/tree/0.2.0",
                 "issues": "https://github.com/mindplay-dk/provider-interop/issues"
             },
-            "time": "2017-03-14T15:18:17+00:00"
+            "time": "2017-04-13 13:23:19"
         },
         {
             "name": "psr/container",
@@ -117,7 +119,7 @@
                 "container-interop",
                 "psr"
             ],
-            "time": "2017-02-14T16:28:37+00:00"
+            "time": "2017-02-14 16:28:37"
         }
     ],
     "packages-dev": [
@@ -241,30 +243,32 @@
                 "invoke",
                 "invoker"
             ],
-            "time": "2016-07-14T13:09:58+00:00"
+            "time": "2016-07-14 13:09:58"
         },
         {
             "name": "php-di/php-di",
-            "version": "5.4.0",
+            "version": "5.4.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-DI/PHP-DI.git",
-                "reference": "e348393488fa909e4bc0707ba5c9c44cd602a1cb"
+                "reference": "8ecded470bb0255c93f2996f78bb3b644c06599a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-DI/PHP-DI/zipball/e348393488fa909e4bc0707ba5c9c44cd602a1cb",
-                "reference": "e348393488fa909e4bc0707ba5c9c44cd602a1cb",
+                "url": "https://api.github.com/repos/PHP-DI/PHP-DI/zipball/8ecded470bb0255c93f2996f78bb3b644c06599a",
+                "reference": "8ecded470bb0255c93f2996f78bb3b644c06599a",
                 "shasum": ""
             },
             "require": {
-                "container-interop/container-interop": "~1.0",
+                "container-interop/container-interop": "~1.2",
                 "php": ">=5.5.0",
                 "php-di/invoker": "^1.3.2",
-                "php-di/phpdoc-reader": "^2.0.1"
+                "php-di/phpdoc-reader": "^2.0.1",
+                "psr/container": "~1.0"
             },
             "provide": {
-                "container-interop/container-interop-implementation": "^1.0"
+                "container-interop/container-interop-implementation": "^1.0",
+                "psr/container-implementation": "^1.0"
             },
             "replace": {
                 "mnapoli/php-di": "*"
@@ -301,7 +305,7 @@
                 "dependency injection",
                 "di"
             ],
-            "time": "2016-08-23T20:18:00+00:00"
+            "time": "2017-04-11 19:42:20"
         },
         {
             "name": "php-di/phpdoc-reader",
@@ -338,7 +342,7 @@
                 "phpdoc",
                 "reflection"
             ],
-            "time": "2015-11-29T10:34:25+00:00"
+            "time": "2015-11-29 10:34:25"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -400,7 +404,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-10-06T15:47:00+00:00"
+            "time": "2015-10-06 15:47:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -447,7 +451,7 @@
                 "filesystem",
                 "iterator"
             ],
-            "time": "2016-10-03T07:40:28+00:00"
+            "time": "2016-10-03 07:40:28"
         },
         {
             "name": "phpunit/php-text-template",
@@ -488,7 +492,7 @@
             "keywords": [
                 "template"
             ],
-            "time": "2015-06-21T13:50:34+00:00"
+            "time": "2015-06-21 13:50:34"
         },
         {
             "name": "phpunit/php-token-stream",
@@ -537,7 +541,7 @@
             "keywords": [
                 "tokenizer"
             ],
-            "time": "2017-02-27T10:12:30+00:00"
+            "time": "2017-02-27 10:12:30"
         },
         {
             "name": "pimple/pimple",
@@ -583,7 +587,7 @@
                 "container",
                 "dependency injection"
             ],
-            "time": "2015-07-30T09:57:46+00:00"
+            "time": "2015-07-30 09:57:46"
         },
         {
             "name": "sebastian/environment",
@@ -633,7 +637,7 @@
                 "environment",
                 "hhvm"
             ],
-            "time": "2016-08-18T05:49:44+00:00"
+            "time": "2016-08-18 05:49:44"
         },
         {
             "name": "sebastian/version",
@@ -668,7 +672,7 @@
             ],
             "description": "Library that helps with managing the version number of Git-hosted PHP projects",
             "homepage": "https://github.com/sebastianbergmann/version",
-            "time": "2015-06-21T13:59:46+00:00"
+            "time": "2015-06-21 13:59:46"
         }
     ],
     "aliases": [],
