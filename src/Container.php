@@ -2,7 +2,7 @@
 
 namespace mindplay\unbox;
 
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionFunction;
