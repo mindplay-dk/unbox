@@ -31,6 +31,8 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 __CLASS__                 => $this,
                 ContainerInterface::class => $this,
                 FactoryInterface::class   => $this,
+                // backwards compatibility for legacy PSR-11 package:
+                'Interop\\Container\\ContainerInterface' => $this,
             ];
     }
 
