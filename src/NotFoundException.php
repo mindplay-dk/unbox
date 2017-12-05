@@ -10,7 +10,7 @@ use Interop\Container\Exception\NotFoundException as InteropNotFoundException;
  */
 class NotFoundException
     extends Exception
-    implements InteropNotFoundException
+    implements InteropNotFoundException # which extends Psr\Container\NotFoundExceptionInterface
 {
     /**
      * @param string $name component name

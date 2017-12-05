@@ -2,7 +2,8 @@
 
 namespace mindplay\unbox;
 
-use Psr\Container\ContainerInterface;
+use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface as PsrContainerInterface;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionFunction;
@@ -27,12 +28,11 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
         $this->values = $this->values +
             [
-                get_class($this)          => $this,
-                __CLASS__                 => $this,
-                ContainerInterface::class => $this,
-                FactoryInterface::class   => $this,
-                // backwards compatibility for legacy PSR-11 package:
-                'Interop\\Container\\ContainerInterface' => $this,
+                get_class($this)             => $this,
+                __CLASS__                    => $this,
+                PsrContainerInterface::class => $this,
+                ContainerInterface::class    => $this,
+                FactoryInterface::class      => $this,
             ];
     }
 
@@ -57,7 +57,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
 
                 $this->values[$name] = call_user_func_array($factory, $params);
-            } elseif (!array_key_exists($name, $this->values)) {
+            } elseif (! array_key_exists($name, $this->values)) {
                 throw new NotFoundException($name);
             }
 
@@ -134,13 +134,13 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      */
     public function create($class_name, $map = [])
     {
-        if (!class_exists($class_name)) {
+        if (! class_exists($class_name)) {
             throw new InvalidArgumentException("unable to create component: {$class_name}");
         }
 
         $reflection = new ReflectionClass($class_name);
 
-        if (!$reflection->isInstantiable()) {
+        if (! $reflection->isInstantiable()) {
             throw new InvalidArgumentException("unable to create instance of abstract class: {$class_name}");
         }
 

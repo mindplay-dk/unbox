@@ -3,12 +3,12 @@ Upgrading
 
 #### 2.0.1
 
-This release changes the PSR-11 dependency from the deprecated `container-interop/container-interop`
-to `psr/container` - these interfaces are identical, so while this can cause a dependency issue (if
-you inherited the dependency rather than declaring it!) this is regarded as a non-breaking change.
+This release provides *forward* compatibility with `psr/container`, and backwards compatibility with
+the deprecated `container-interop/container-interop` package.
 
-If this release causes problems for you, please see [this issue](https://github.com/mindplay-dk/unbox/issues/11)
-- the upgrade from the deprecated to the final package is a simple search and replace in your project.
+Version 3.0 will most likely remove backwards compatibility with `container-interop/container-interop`,
+but as that is a breaking change, this update merely adds forward compatibility with the final PSR-11
+package.
 
 #### 2.0.0
 

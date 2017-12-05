@@ -1,11 +1,13 @@
 <?php
 
-use Psr\Container\ContainerInterface;
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerException;
 use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 require __DIR__ . '/header.php';
 
@@ -638,6 +640,27 @@ test(
                 "{$pattern_str} should match: " . format($expected)
             );
         }
+    }
+);
+
+test(
+    'has backwards compatibility with legacy PSR-11 interfaces',
+    function () {
+        $factory = new ContainerFactory();
+
+        $container = $factory->createContainer();
+
+        ok($container->get(ContainerInterface::class) instanceof ContainerInterface);
+        ok($container->get(ContainerInterface::class) instanceof \Interop\Container\ContainerInterface);
+
+        ok($container->get(\Interop\Container\ContainerInterface::class) instanceof ContainerInterface);
+        ok($container->get(\Interop\Container\ContainerInterface::class) instanceof \Interop\Container\ContainerInterface);
+
+        ok(new ContainerException() instanceof ContainerExceptionInterface);
+        ok(new ContainerException() instanceof \Interop\Container\Exception\ContainerException);
+
+        ok(new NotFoundException("foo") instanceof NotFoundExceptionInterface);
+        ok(new NotFoundException("foo") instanceof \Interop\Container\Exception\NotFoundException);
     }
 );
 
