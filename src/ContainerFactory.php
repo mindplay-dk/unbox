@@ -3,7 +3,6 @@
 namespace mindplay\unbox;
 
 use Closure;
-use InvalidArgumentException;
 use ReflectionParameter;
 
 /**
@@ -60,7 +59,7 @@ class ContainerFactory extends Configuration
      *
      * @return void
      *
-     * @throws ContainerException
+     * @throws InvalidArgumentException
      */
     public function register($name, $func_or_map_or_type = null, $map = [])
     {
@@ -102,8 +101,6 @@ class ContainerFactory extends Configuration
      * @param mixed  $value
      *
      * @return void
-     *
-     * @throws ContainerException
      */
     public function set($name, $value)
     {
@@ -177,7 +174,7 @@ class ContainerFactory extends Configuration
      *
      * @return void
      *
-     * @throws ContainerException
+     * @throws InvalidArgumentException
      */
     public function configure($name_or_func, $func_or_map = null, $map = [])
     {

@@ -3,7 +3,7 @@
 namespace mindplay\unbox;
 
 use Interop\Container\ContainerInterface;
-use InvalidArgumentException;
+use Psr\Container\ContainerInterface as PsrContainerInterface;
 use ReflectionClass;
 use ReflectionFunction;
 use ReflectionParameter;
@@ -27,10 +27,11 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
         $this->values = $this->values +
             [
-                get_class($this)          => $this,
-                __CLASS__                 => $this,
-                ContainerInterface::class => $this,
-                FactoryInterface::class   => $this,
+                get_class($this)             => $this,
+                __CLASS__                    => $this,
+                PsrContainerInterface::class => $this,
+                ContainerInterface::class    => $this,
+                FactoryInterface::class      => $this,
             ];
     }
 
@@ -41,7 +42,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return mixed
      *
-     * @throws ContainerException
      * @throws NotFoundException
      */
     public function get($name)
@@ -55,7 +55,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
 
                 $this->values[$name] = call_user_func_array($factory, $params);
-            } elseif (!array_key_exists($name, $this->values)) {
+            } elseif (! array_key_exists($name, $this->values)) {
                 throw new NotFoundException($name);
             }
 
@@ -129,16 +129,18 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed
+     *
+     * @throws InvalidArgumentException
      */
     public function create($class_name, $map = [])
     {
-        if (!class_exists($class_name)) {
+        if (! class_exists($class_name)) {
             throw new InvalidArgumentException("unable to create component: {$class_name}");
         }
 
         $reflection = new ReflectionClass($class_name);
 
-        if (!$reflection->isInstantiable()) {
+        if (! $reflection->isInstantiable()) {
             throw new InvalidArgumentException("unable to create instance of abstract class: {$class_name}");
         }
 
@@ -163,7 +165,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      * @return array parameters
      *
      * @throws ContainerException
-     * @throws NotFoundException
      */
     protected function resolve(array $params, $map, $safe = true)
     {

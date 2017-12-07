@@ -1,6 +1,15 @@
 Upgrading
 =========
 
+#### 2.0.1
+
+This release improves *forward* compatibility with `psr/container`, and backwards compatibility with
+the deprecated `container-interop/container-interop` package.
+
+Version 3.0 will most likely remove backwards compatibility with `container-interop/container-interop`,
+but as that is a breaking change, this update merely adds forward compatibility with the final PSR-11
+package.
+
 #### 2.0.0
 
 Version 2 introduces some BC breaks from version 1.x, as described below.
