@@ -4,7 +4,6 @@ namespace mindplay\unbox;
 
 use Interop\Container\ContainerInterface;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
-use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionFunction;
 use ReflectionParameter;
@@ -43,7 +42,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return mixed
      *
-     * @throws ContainerException
      * @throws NotFoundException
      */
     public function get($name)
@@ -131,6 +129,8 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed
+     *
+     * @throws InvalidArgumentException
      */
     public function create($class_name, $map = [])
     {
@@ -165,7 +165,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      * @return array parameters
      *
      * @throws ContainerException
-     * @throws NotFoundException
      */
     protected function resolve(array $params, $map, $safe = true)
     {

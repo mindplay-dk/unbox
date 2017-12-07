@@ -3,7 +3,6 @@
 namespace mindplay\unbox;
 
 use Closure;
-use InvalidArgumentException;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
@@ -27,6 +26,8 @@ abstract class Reflection
      * @param callable|object $callback
      *
      * @return ReflectionFunctionAbstract
+     *
+     * @throws InvalidArgumentException
      */
     public static function createFromCallable($callback)
     {
