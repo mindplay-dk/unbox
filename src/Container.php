@@ -135,7 +135,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     public function create($class_name, $map = [])
     {
         if (! class_exists($class_name)) {
-            throw new InvalidArgumentException("unable to create component: {$class_name}");
+            throw new InvalidArgumentException("unable to create component: {$class_name} (autoloading failed)");
         }
 
         $reflection = new ReflectionClass($class_name);
