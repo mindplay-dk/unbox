@@ -10,6 +10,16 @@ use ReflectionParameter;
  */
 class ContainerFactory extends Configuration
 {
+    /**
+     * @var string[] map where Requirement ID => description of requirements
+     */
+    protected $required = [];
+
+    /**
+     * @var string[] map where Requirement ID => description of satisfied requirements
+     */
+    protected $provided = [];
+
     public function __construct()
     {}
 
@@ -252,12 +262,61 @@ class ContainerFactory extends Configuration
     }
 
     /**
+     * TODO docs
+     *
+     * @param string $requirement
+     * @param string $description
+     */
+    public function requires($requirement, $description)
+    {
+        $this->required[$requirement] = $description;
+    }
+
+    /**
+     * TODO docs
+     *
+     * @param string $requirement
+     * @param string $description
+     *
+     * @throws ContainerException if the given Requirement has already been satisfied
+     */
+    public function provides($requirement, $description)
+    {
+        if (array_key_exists($requirement, $this->provided)) {
+            $message = "The following Requirement has already been satisfied: {$requirement}";
+
+            $description = $this->provided[$requirement];
+
+            if ($description) {
+                $message .= " ($description)";
+            }
+
+            throw new ContainerException($message);
+        }
+
+        $this->provided[$requirement] = $description;
+    }
+
+    /**
      * Create and bootstrap a new `Container` instance
      *
      * @return Container
      */
     public function createContainer()
     {
+        $messages = [];
+
+        foreach ($this->required as $requirement => $description) {
+            if (! array_key_exists($requirement, $this->provided)) {
+                $messages[] = "The following Requirement has not been satisfied: {$requirement}"
+                    . ($description ? " ({$description})" : "");
+            }
+        }
+
+        if ($messages) {
+            throw new ContainerException(implode("\n", $messages));
+        }
+
         return new Container($this);
     }
 }

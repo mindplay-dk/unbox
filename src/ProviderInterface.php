@@ -12,9 +12,9 @@ interface ProviderInterface
     /**
      * Registers services and components with a given `ContainerFactory`
      *
-     * @param ContainerFactory $container
+     * @param ContainerFactory $factory
      *
      * @return void
      */
-    public function register(ContainerFactory $container);
+    public function register(ContainerFactory $factory);
 }

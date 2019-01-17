@@ -583,6 +583,37 @@ test(
 );
 
 test(
+    'can check abstract requirements',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->requires("duck", "it really needs a duck");
+
+        expect(
+            ContainerException::class,
+            "should throw for missing requirement",
+            function () use ($factory) {
+                $factory->createContainer();
+            },
+            ["/requirement has not been satisfied/i", "/duck \(it really needs a duck\)/i"]
+        );
+
+        $factory->provides("duck", "add that missing duck");
+
+        ok($factory->createContainer() instanceof Container);
+
+        expect(
+            ContainerException::class,
+            "should throw on attempt to provide a requirement twice",
+            function () use ($factory) {
+                $factory->provides("duck", "add another duck");
+            },
+            ["/requirement has already been satisfied/i", "/duck \(add that missing duck\)/i"]
+        );
+    }
+);
+
+test(
     'internal reflection guard clauses',
     function () {
         expect(
