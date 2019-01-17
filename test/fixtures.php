@@ -66,15 +66,15 @@ class UserRepository
 
 class TestProvider implements ProviderInterface
 {
-    public function register(ContainerFactory $container)
+    public function register(ContainerFactory $factory)
     {
-        $container->set('cache_path', '/tmp/cache');
+        $factory->set('cache_path', '/tmp/cache');
 
-        $container->register(CacheProvider::class, function ($cache_path) {
+        $factory->register(CacheProvider::class, function ($cache_path) {
             return new FileCache($cache_path);
         });
 
-        $container->register(UserRepository::class, function (CacheProvider $cache) {
+        $factory->register(UserRepository::class, function (CacheProvider $cache) {
             return new UserRepository($cache);
         });
     }
