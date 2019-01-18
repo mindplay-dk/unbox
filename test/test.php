@@ -595,7 +595,7 @@ test(
             function () use ($factory) {
                 $factory->createContainer();
             },
-            ["/requirement has not been satisfied/i", "/duck \(it really needs a duck\)/i"]
+            ["/requirement has not been fulfilled/i", "/duck \(it really needs a duck\)/i"]
         );
 
         $factory->provides("duck", "add that missing duck");
@@ -608,8 +608,72 @@ test(
             function () use ($factory) {
                 $factory->provides("duck", "add another duck");
             },
-            ["/requirement has already been satisfied/i", "/duck \(add that missing duck\)/i"]
+            ["/requirement has already been fulfilled/i", "/duck \(add that missing duck\)/i"]
         );
+    }
+);
+
+test(
+    'can check component requirements',
+    function () {
+        $factory = new ContainerFactory();
+
+        // component defined using register() in TestProvider
+        $factory->requires(CacheProvider::class, "requires a cache");
+
+        // component defined using set() in TestProvider
+        $factory->requires("cache_path", "requires a cache path");
+
+        expect(
+            ContainerException::class,
+            "should throw for missing requirement",
+            function () use ($factory) {
+                $factory->createContainer();
+            },
+            [
+                "/requirement has not been fulfilled/i",
+                "/CacheProvider \(requires a cache\)/i",
+                "/cache_path \(requires a cache path\)/i"
+            ]
+        );
+
+        $factory->add(new TestProvider());
+
+        ok($factory->createContainer() instanceof Container);
+    }
+);
+
+test(
+    'abstract requirements cannot fulfill component dependencies',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->requires("cake", "I want cake!");
+
+        expect(
+            ContainerException::class,
+            "should throw for missing requirement",
+            function () use ($factory) {
+                $factory->createContainer();
+            },
+            "/requirement has not been fulfilled/i"
+        );
+
+        $factory->provides("cake", "I can haz cake.");
+
+        $container = $factory->createContainer();
+
+        expect(
+            NotFoundException::class,
+            "should throw for missing dependency",
+            function () use ($container) {
+                $container->get("cake");
+            }
+        );
+
+        $factory->set("cake", "yum");
+
+        eq($factory->createContainer()->get("cake"), "yum", "does not conflict with component dependencies");
     }
 );
 

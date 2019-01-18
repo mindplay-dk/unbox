@@ -68,18 +68,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     }
 
     /**
-     * Check for the existence of a component with a given name.
-     *
-     * @param string $name component name
-     *
-     * @return bool true, if a component with the given name has been defined
-     */
-    public function has($name)
-    {
-        return array_key_exists($name, $this->values) || isset($this->factory[$name]);
-    }
-
-    /**
      * Check if a component has been unboxed and is currently active.
      *
      * @param string $name component name

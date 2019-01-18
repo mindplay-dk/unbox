@@ -11,12 +11,12 @@ use ReflectionParameter;
 class ContainerFactory extends Configuration
 {
     /**
-     * @var string[] map where Requirement ID => description of requirements
+     * @var string[] map where Requirement ID => description of abstract requirements
      */
     protected $required = [];
 
     /**
-     * @var string[] map where Requirement ID => description of satisfied requirements
+     * @var string[] map where Requirement ID => description of provided abstract requirements
      */
     protected $provided = [];
 
@@ -248,42 +248,54 @@ class ContainerFactory extends Configuration
     }
 
     /**
-     * Add a packaged configuration (a "provider") to this container.
-     *
-     * @see ProviderInterface
+     * Add a Provider (a packaged unit of bootstrapping) to this Container.
      *
      * @param ProviderInterface $provider
      *
      * @return void
+     *
+     * @throws ContainerException if the given Requirement has already been fulfilled
+     *
+     * @see ProviderInterface
      */
     public function add(ProviderInterface $provider)
     {
         $provider->register($this);
+
+        $this->provides(get_class($provider));
     }
 
     /**
-     * TODO docs
+     * Defines a Requirement, which will be checked when you call {@see createContainer()}.
      *
-     * @param string $requirement
-     * @param string $description
+     * Requirements must be fulfilled by either {@see register()} or {@see provides()}.
+     *
+     * @param string $requirement Requirement name.
+     * @param string $description Optional description.
+     *                            Displayed in an Exception message on failure.
+     *
+     * @see provides()
      */
-    public function requires($requirement, $description)
+    public function requires($requirement, $description = "")
     {
         $this->required[$requirement] = $description;
     }
 
     /**
-     * TODO docs
+     * Fulfills an abstract Requirement defined by {@see requires()}.
      *
-     * @param string $requirement
-     * @param string $description
+     * @param string $requirement Requirement name.
+     * @param string $description Optional description.
+     *                            Displayed in an Exception message on failure.
      *
-     * @throws ContainerException if the given Requirement has already been satisfied
+     * @throws ContainerException if the given Requirement has already been fulfilled
+     *
+     * @see requires()
      */
-    public function provides($requirement, $description)
+    public function provides($requirement, $description = "")
     {
         if (array_key_exists($requirement, $this->provided)) {
-            $message = "The following Requirement has already been satisfied: {$requirement}";
+            $message = "The following Requirement has already been fulfilled: {$requirement}";
 
             $description = $this->provided[$requirement];
 
@@ -301,14 +313,16 @@ class ContainerFactory extends Configuration
      * Create and bootstrap a new `Container` instance
      *
      * @return Container
+     *
+     * @throws ContainerException if any Requirements have not been fulfilled
      */
     public function createContainer()
     {
         $messages = [];
 
         foreach ($this->required as $requirement => $description) {
-            if (! array_key_exists($requirement, $this->provided)) {
-                $messages[] = "The following Requirement has not been satisfied: {$requirement}"
+            if (! array_key_exists($requirement, $this->provided) && !$this->has($requirement)) {
+                $messages[] = "The following Requirement has not been fulfilled: {$requirement}"
                     . ($description ? " ({$description})" : "");
             }
         }

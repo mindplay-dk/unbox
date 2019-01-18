@@ -166,6 +166,9 @@ configure(string $name, callable $func, array $map)    # ... with custom argumen
 
 ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 
+requires(string $requirement, string $description)     # defines a Requirement
+provides(string $requirement, string $description)     # fulfills an abstract Requirement
+
 createContainer() : Container                          # create a bootstrapped Container instance
 ```
 
@@ -522,6 +525,120 @@ calling e.g. `$container->add(new DevelopmentProvider)` to provide complete boot
 for a quick development setup. Even if somebody wanted to override some of the registrations
 in e.g. your default development setup, they can of course still do that, e.g. by calling
 `register()` again to override components as needed.
+
+##### Provider Requirements
+
+In large, modular architectures, you may have many Providers with inter-dependencies, which
+can become difficult to manage at scale.
+
+Since Providers exist *outside* the realm of the a Container, the concept of Requirements can
+be used to define verifiable dependencies, which will be checked when `createContainer()` is called.
+
+Requirements may be defined by calling `requires()`, and more than one Provider may specify the
+same Requirement - possibly for different reasons, which may be described using the optional
+`$description` argument.
+
+Requirements may be fulfilled by calling either `register()` or `provides()`.
+
+###### Component Requirements
+
+Providers may depend on the consumer to manually register a component.
+ 
+For example, the following Provider requires you to register a `PDO` connection instance:
+
+```php
+class MyProvider implements ProviderInterface
+{
+    public function register(ContainerFactory $factory)
+    {
+        $factory->requires(PDO::class, "a PDO instance connected to a MySQL database");
+        
+        // ...
+    }
+}
+```
+
+Attempting to bootstrap this Provider, without manually registering the `PDO` instance, will
+generate an Exception, as soon as `createContainer()` is called - which is much easier to debug
+than, say, a `NotFoundException`, which might not occur before you hit a controller that
+actually depends on the database connection.
+
+###### Provider Requirements
+
+Providers may depend on other Providers being bootstrapped.
+
+For example, the following Provider requires you to also bootstrap a `CacheProvider`:
+
+```php
+class MyProvider implements ProviderInterface
+{
+    public function register(ContainerFactory $factory)
+    {
+        $factory->requires(CacheProvider::class, "the CacheProvider should be bootstrapped");
+        
+        // ...
+    }
+}
+```
+
+Provider Requirements are implicitly fulfilled by simply adding the Provider in question:
+
+```php
+$factory->add(new CacheProvider());
+```
+
+In rare cases, however, maybe the `CacheProvider` that shipped with the package doesn't work
+for your application, and you may choose to manually create bootstrapping that is *equivalent*
+to that of `CacheProvider`:
+
+```php
+$factory->provides(CacheProvider::class);
+
+// instead of CacheProvider:
+
+$factory->register(CacheInterface::class, FileCache::class, ["path" => "..."]);
+```
+
+Note that it's *usually* preferable to define the component Requirements - or in some cases
+even both. Use your best judgment as to what is helpful, safe, or simply annoying for a
+developer trying to bootstrap to fulfill your Provider's Requirements.
+
+###### Abstract Requirements
+
+Providers may have abstract Requirements - something that can't be expressed by a simple
+component or Provider dependency.
+
+For example, the following Provider requires you to simply indicate that you've bootstrapped
+a "payment gateway" - whatever that means to the Provider in question:
+
+```php
+class MyProvider implements ProviderInterface
+{
+    public function register(ContainerFactory $factory)
+    {
+        $factory->requires("acme.payment-gateway", "please refer to acme's documentation");
+        
+        // ...
+    }
+}
+```
+
+Another provider needs to explicitly indicate fulfillment of these abstract Requirements:
+
+```php
+class MyPaymentProvider implements ProviderInterface
+{
+    public function register(ContainerFactory $factory)
+    {
+        $factory->provides("acme.payment-gateway");
+        
+        // ...
+    }
+}
+```
+
+Note that abstract Requirements should be a last resort - a simple component or Provider
+dependency is *usually* better, safer, and may be easier to understand.
 
 ### Consumption
 
