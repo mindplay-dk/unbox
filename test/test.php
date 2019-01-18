@@ -589,13 +589,19 @@ test(
 
         $factory->requires("duck", "it really needs a duck");
 
+        // The same Requirement may be defined more than once:
+        $factory->requires("duck", "it really, really needs a duck");
+
         expect(
             ContainerException::class,
             "should throw for missing requirement",
             function () use ($factory) {
                 $factory->createContainer();
             },
-            ["/requirement has not been fulfilled/i", "/duck \(it really needs a duck\)/i"]
+            [
+                "/requirement has not been fulfilled/i",
+                "/duck \(it really needs a duck; it really, really needs a duck\)/i",
+            ]
         );
 
         $factory->provides("duck", "add that missing duck");

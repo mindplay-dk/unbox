@@ -11,7 +11,7 @@ use ReflectionParameter;
 class ContainerFactory extends Configuration
 {
     /**
-     * @var string[] map where Requirement ID => description of abstract requirements
+     * @var string[][] map where Requirement ID => list of requirement descriptions
      */
     protected $required = [];
 
@@ -278,7 +278,7 @@ class ContainerFactory extends Configuration
      */
     public function requires($requirement, $description = "")
     {
-        $this->required[$requirement] = $description;
+        $this->required[$requirement][] = $description;
     }
 
     /**
@@ -320,10 +320,10 @@ class ContainerFactory extends Configuration
     {
         $messages = [];
 
-        foreach ($this->required as $requirement => $description) {
+        foreach ($this->required as $requirement => $descriptions) {
             if (! array_key_exists($requirement, $this->provided) && !$this->has($requirement)) {
                 $messages[] = "The following Requirement has not been fulfilled: {$requirement}"
-                    . ($description ? " ({$description})" : "");
+                    . (array_filter($descriptions) ? " (" . implode("; ", $descriptions) . ")" : "");
             }
         }
 
