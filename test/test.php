@@ -583,6 +583,36 @@ test(
 );
 
 test(
+    'can register and configure sub-contexts',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", Foo::class);
+        $factory->register("b", Foo::class);
+
+        $factory->registerContext("web");
+
+        $factory->configureContext(function (ContainerFactory $web) {
+            $web->register("b", Foo::class);
+        });
+
+        $root_container = $factory->createContainer();
+
+        $web_container_a = $root_container->createContainer("web");
+
+        ok($root_container->get("a") === $web_container_a->get("a"), "can inherit component from parent context");
+
+        ok($root_container->get("b") !== $web_container_a->get("b"), "can override component in sub-context");
+
+        $web_container_b = $root_container->createContainer("web");
+
+        ok($web_container_a->get("a") === $web_container_b->get("a"), "sub-context inherits from same parent instance");
+
+        ok($web_container_a->get("b") !== $web_container_b->get("b"), "sub-context instance overrides parent instance");
+    }
+);
+
+test(
     'internal reflection guard clauses',
     function () {
         expect(

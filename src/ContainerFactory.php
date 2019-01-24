@@ -3,6 +3,7 @@
 namespace mindplay\unbox;
 
 use Closure;
+use Psr\Container\ContainerInterface;
 use ReflectionParameter;
 
 /**
@@ -165,6 +166,11 @@ class ContainerFactory extends Configuration
      *
      * In other words, if your closure returns something, the component will be replaced.
      *
+     * If you use multiple contexts, note that it *is* possible to configure a component from
+     * a parent context, but this *can* have unintended side-effects - if you're going to
+     * configure a component from a parent context, you shouldn't change it's state, but
+     * instead `return` a new component instance (e.g. `clone` or decorator) or a new value.
+     *
      * @param string|callable        $name_or_func component name
      *                                             (or callable, if name is left out)
      * @param callable|mixed|mixed[] $func_or_map  `function (Type $component, ...) : void`
@@ -184,11 +190,7 @@ class ContainerFactory extends Configuration
 
             // no component name supplied, infer it from the closure:
 
-            if ($func instanceof Closure) {
-                $param = new ReflectionParameter($func, 0); // shortcut reflection for closures (as an optimization)
-            } else {
-                list($param) = Reflection::createFromCallable($func)->getParameters();
-            }
+            $param = Reflection::getFirstParameter($func);
 
             $name = Reflection::getParameterType($param); // infer component name from type-hint
 
@@ -252,12 +254,54 @@ class ContainerFactory extends Configuration
     }
 
     /**
-     * Create and bootstrap a new `Container` instance
+     * Register a `ContainerFactory` sub-context, which may then be bootstrapped
+     * via the {@see configureContext()} method.
+     *
+     * @param string $name context-name
+     *
+     * @return void
+     *
+     * @see configureContext()
+     */
+    public function registerContext($name)
+    {
+        if (preg_match('/^[a-z][a-z0-9_]*$/i', $name) !== 1) {
+            throw new ContainerException("invalid context name: {$name}");
+        }
+
+        $this->register("unbox.context.{$name}", get_class($this));
+    }
+
+    /**
+     * Configure a `ContainerFactory` sub-context previously registered
+     * via the {@see registerContext()} method.
+     *
+     * @param callable $func `function (ContainerFactory $context_name, ...) : void`
+     *
+     * @return void
+     *
+     * @see registerContext()
+     */
+    public function configureContext($func)
+    {
+        $param = Reflection::getFirstParameter($func);
+
+        $name = $param->getName();
+
+        $this->configure("unbox.context.{$name}", $func);
+    }
+
+    /**
+     * Create and bootstrap the root `Container` instance
+     *
+     * @param ContainerInterface|null $parent optional parent Container (from a parent context, if any)
      *
      * @return Container
      */
-    public function createContainer()
+    public function createContainer(ContainerInterface $parent = null)
     {
-        return new Container($this);
+        // TODO drop support for legacy PSR-11 interface to avoid type-hinting problem here
+        // TODO can we internalize the `$parent` argument, or should we leave it public in case it's useful to someone?
+        return new Container($this, $parent);
     }
 }

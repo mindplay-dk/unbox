@@ -19,9 +19,15 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     protected $active = [];
 
     /**
-     * @param Configuration $config
+     * @var ContainerInterface|null parent Container (from a parent context, if any)
      */
-    public function __construct(Configuration $config)
+    protected $parent;
+
+    /**
+     * @param Configuration           $config
+     * @param ContainerInterface|null $parent optional parent Container (from a parent context, if any)
+     */
+    public function __construct(Configuration $config, ContainerInterface $parent = null)
     {
         $config->copyTo($this);
 
@@ -33,6 +39,8 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 ContainerInterface::class    => $this,
                 FactoryInterface::class      => $this,
             ];
+
+        $this->parent = $parent;
     }
 
     /**
@@ -56,7 +64,11 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
                 $this->values[$name] = call_user_func_array($factory, $params);
             } elseif (! array_key_exists($name, $this->values)) {
-                throw new NotFoundException($name);
+                if ($this->parent) {
+                    $this->values[$name] = $this->parent->get($name);
+                } else {
+                    throw new NotFoundException($name);
+                }
             }
 
             $this->active[$name] = true;
@@ -151,6 +163,28 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
             : [];
 
         return $reflection->newInstanceArgs($params);
+    }
+
+    /**
+     * Create and bootstrap a `Container` instance for the given sub-context.
+     *
+     * @param string $name
+     *
+     * @return Container
+     *
+     * @see ContainerFactory::registerContext()
+     *
+     * @throws NotFoundException if the specified context has not been defined
+     */
+    public function createContainer($name)
+    {
+        /**
+         * @var ContainerFactory $context
+         */
+
+        $context = $this->get("unbox.context.{$name}");
+
+        return $context->createContainer($this);
     }
 
     /**

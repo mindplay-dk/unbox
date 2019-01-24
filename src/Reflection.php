@@ -7,6 +7,7 @@ use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionParameter;
+use ReflectionException;
 
 /**
  * Pseudo-namespace for some common reflection helper-functions.
@@ -74,5 +75,30 @@ abstract class Reflection
         }
 
         return null; // no type-hint is available
+    }
+
+    /**
+     * Obtain the `ReflectionParameter` instance from the first parameter of
+     * any type of callable (or object implementing `__invoke()`)
+     *
+     * @param callable|object $callback
+     *
+     * @return ReflectionParameter
+     *
+     * @throws ReflectionException
+     */
+    public static function getFirstParameter($callback)
+    {
+        if ($callback instanceof Closure) {
+            return new ReflectionParameter($callback, 0); // shortcut reflection for closures (as an optimization)
+        }
+
+        $params = Reflection::createFromCallable($callback)->getParameters();
+
+        if (! isset($params[0])) {
+            throw new ReflectionException("Parameter 0 is not defined");
+        }
+
+        return $params[0];
     }
 }

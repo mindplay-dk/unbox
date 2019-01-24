@@ -3,6 +3,7 @@
 use mindplay\unbox\Container;
 use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\ProviderInterface;
+use Psr\Container\ContainerInterface;
 
 function test_func($foo) {
     return $foo;
@@ -80,9 +81,33 @@ class TestProvider implements ProviderInterface
     }
 }
 
+// TODO remove support for inject() ?
+//
+// NOTE: the addition of the `$parent` argument to `createContainer()` is a breaking
+//       change in older versions of PHP, so maybe it's time to think about getting
+//       rid of 5.x support and clean up any BC support code and tag a major release?
+//
+//       if so, we should consider getting rid of `inject()` and the test-dependencies
+//       below - adding this was a mistake; the Container should not be mutable, not
+//       even internally... the example below (and related docs) should be updated
+//       to demonstrate an alternative pattern, where, instance of "auto-wiring", we
+//       build a simple service locator (e.g. for controllers) which internally
+//       caches ever controller instance. (the net effect is a service locator anyway!)
+//
+//       if we're doing all that an tagging a major release anyhow, we might as well
+//       comb the codebase and add static type-hinting for 7.x where possible.
+//
+//       if we're going all the way, we might as well declare ContainerFactory and
+//       Container as `final` and prevent any similar design mistakes in the future.
+//
+//       I'd also like to change the terminology from `ContainerFactory` to `Context`,
+//       which would make sense with the proposed support for sub-contexts.
+//
+//       did this just turn into a roadmap for version 3.0 ?
+
 class CustomContainerFactory extends ContainerFactory
 {
-    public function createContainer()
+    public function createContainer(ContainerInterface $parent = null)
     {
         return new CustomContainer($this);
     }
