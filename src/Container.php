@@ -61,7 +61,21 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
             $this->active[$name] = true;
 
-            $this->initialize($name);
+            if (isset($this->config[$name])) {
+                foreach ($this->config[$name] as $index => $config) {
+                    $map = $this->config_map[$name][$index];
+
+                    $reflection = Reflection::createFromCallable($config);
+
+                    $params = $this->resolve($reflection->getParameters(), $map);
+
+                    $value = call_user_func_array($config, $params);
+
+                    if ($value !== null) {
+                        $this->values[$name] = $value;
+                    }
+                }
+            }
         }
 
         return $this->values[$name];
@@ -226,31 +240,5 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     {
         $this->values[$name] = $value;
         $this->active[$name] = true;
-    }
-
-    /**
-     * Internally initialize an active component.
-     *
-     * @param string $name component name
-     *
-     * @return void
-     */
-    private function initialize($name)
-    {
-        if (isset($this->config[$name])) {
-            foreach ($this->config[$name] as $index => $config) {
-                $map = $this->config_map[$name][$index];
-
-                $reflection = Reflection::createFromCallable($config);
-
-                $params = $this->resolve($reflection->getParameters(), $map);
-
-                $value = call_user_func_array($config, $params);
-
-                if ($value !== null) {
-                    $this->values[$name] = $value;
-                }
-            }
-        }
     }
 }
