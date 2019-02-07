@@ -55,9 +55,9 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     {
         if (! isset($this->active[$name])) {
             if (isset($this->activations[$name])) {
-                throw new ContainerException(
-                    "Dependency cycle detected: " . implode(" -> ", array_flip($this->activations)) . " -> {$name}"
-                );
+                $activation_path = implode(" -> ", array_flip($this->activations)) . " -> {$name}";
+
+                throw new ContainerException("Dependency cycle detected: " . $activation_path);
             }
 
             $this->activations[$name] = count($this->activations) + 1;
@@ -68,17 +68,17 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 throw new NotFoundException($name);
             }
 
-            $this->active[$name] = true;
-
             if (isset($this->config[$name])) {
                 foreach ($this->config[$name] as $index => $config) {
-                    $value = $this->call($config, $this->config_map[$name][$index]);
+                    $value = $this->call($config, [$this->values[$name]] + $this->config_map[$name][$index]);
 
                     if ($value !== null) {
                         $this->values[$name] = $value;
                     }
                 }
             }
+
+            $this->active[$name] = true;
 
             unset($this->activations[$name]);
         }

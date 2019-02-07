@@ -743,6 +743,43 @@ test(
     }
 );
 
+test(
+    'can trap indirect dependency cycle via configuration',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function () {
+            return "B";
+        });
+
+        $factory->configure("b", function ($b, $a) {
+            return "{$b}{$a}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: a -> b -> a}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("b");
+            },
+            "{Dependency cycle detected: b -> a -> b}i"
+        );
+    }
+);
+
 if (version_compare(PHP_VERSION, "7", ">=")) {
     require __DIR__ . "/test-php70.php";
 } else {
