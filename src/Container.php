@@ -19,6 +19,18 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     protected $active = [];
 
     /**
+     * @var string[] list of activations (component names) in the order they occurred
+     *
+     * @see get()
+     */
+    private $activations = [];
+
+    /**
+     * @var true[] map of component names currently being activated
+     */
+    private $activation_map = [];
+
+    /**
      * @param Configuration $config
      */
     public function __construct(Configuration $config)
@@ -47,6 +59,14 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     public function get($name)
     {
         if (! isset($this->active[$name])) {
+            $this->activations[] = $name;
+
+            if (isset($this->activation_map[$name])) {
+                throw new ContainerException("Dependency cycle detected: " . implode(" -> ", $this->activations));
+            }
+
+            $this->activation_map[$name] = true;
+
             if (isset($this->factory[$name])) {
                 $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
             } elseif (! array_key_exists($name, $this->values)) {
@@ -64,6 +84,10 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                     }
                 }
             }
+
+            unset($this->activations[$name]);
+
+            array_pop($this->activations);
         }
 
         return $this->values[$name];
