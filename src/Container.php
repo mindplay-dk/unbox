@@ -48,13 +48,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     {
         if (! isset($this->active[$name])) {
             if (isset($this->factory[$name])) {
-                $factory = $this->factory[$name];
-
-                $reflection = new ReflectionFunction($factory);
-
-                $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
-
-                $this->values[$name] = call_user_func_array($factory, $params);
+                $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
             } elseif (! array_key_exists($name, $this->values)) {
                 throw new NotFoundException($name);
             }
@@ -63,13 +57,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
             if (isset($this->config[$name])) {
                 foreach ($this->config[$name] as $index => $config) {
-                    $map = $this->config_map[$name][$index];
-
-                    $reflection = Reflection::createFromCallable($config);
-
-                    $params = $this->resolve($reflection->getParameters(), $map);
-
-                    $value = call_user_func_array($config, $params);
+                    $value = $this->call($config, $this->config_map[$name][$index]);
 
                     if ($value !== null) {
                         $this->values[$name] = $value;
