@@ -58,22 +58,18 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 if (isset($this->activations[$name])) {
                     $activations = array_flip($this->activations);
 
-                    ksort($activations, SORT_NUMERIC);
+                    ksort($activations, SORT_NUMERIC); // order by activation depth
 
-                    for ($i=1; $i<count($activations); $i++) {
-                        if ($activations[$i] === $name) {
-                            break;
-                        } else {
-                            unset($activations[$i]);
-                        }
-                    }
+                    $activations = array_slice($activations, array_search($name, $activations, true));
 
-                    $activation_path = implode(" -> ", $activations) . " -> {$name}";
+                    $activations[] = $name;
+
+                    $activation_path = implode(" -> ", $activations);
 
                     throw new ContainerException("Dependency cycle detected: " . $activation_path);
                 }
 
-                $this->activations[$name] = count($this->activations) + 1;
+                $this->activations[$name] = count($this->activations);
 
                 if (isset($this->factory[$name])) {
                     $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
