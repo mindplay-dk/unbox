@@ -740,6 +740,21 @@ test(
             },
             "{Dependency cycle detected: c -> a -> b -> c}i"
         );
+
+        expect(
+            ContainerException::class,
+            "should throw for repeated dependency cycle",
+            function () use ($factory) {
+                $container = $factory->createContainer();
+
+                try {
+                    $container->get("c");
+                } catch (ContainerException $error) {
+                    $container->get("c");
+                }
+            },
+            "{Dependency cycle detected: c -> a -> b -> c}i"
+        );
     }
 );
 
@@ -776,6 +791,34 @@ test(
                 $factory->createContainer()->get("b");
             },
             "{Dependency cycle detected: b -> a -> b}i"
+        );
+    }
+);
+
+test(
+    'can trap deep dependency cycle',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function ($c) {
+            return "B{$c}";
+        });
+
+        $factory->register("c", function ($b) {
+            return "C{$b}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: b -> c -> b}i"
         );
     }
 );

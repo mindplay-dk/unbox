@@ -54,33 +54,47 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     public function get($name)
     {
         if (! isset($this->active[$name])) {
-            if (isset($this->activations[$name])) {
-                $activation_path = implode(" -> ", array_flip($this->activations)) . " -> {$name}";
+            try {
+                if (isset($this->activations[$name])) {
+                    $activations = array_flip($this->activations);
 
-                throw new ContainerException("Dependency cycle detected: " . $activation_path);
-            }
+                    ksort($activations, SORT_NUMERIC);
 
-            $this->activations[$name] = count($this->activations) + 1;
+                    for ($i=1; $i<count($activations); $i++) {
+                        if ($activations[$i] === $name) {
+                            break;
+                        } else {
+                            unset($activations[$i]);
+                        }
+                    }
 
-            if (isset($this->factory[$name])) {
-                $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
-            } elseif (! array_key_exists($name, $this->values)) {
-                throw new NotFoundException($name);
-            }
+                    $activation_path = implode(" -> ", $activations) . " -> {$name}";
 
-            if (isset($this->config[$name])) {
-                foreach ($this->config[$name] as $index => $config) {
-                    $value = $this->call($config, [$this->values[$name]] + $this->config_map[$name][$index]);
+                    throw new ContainerException("Dependency cycle detected: " . $activation_path);
+                }
 
-                    if ($value !== null) {
-                        $this->values[$name] = $value;
+                $this->activations[$name] = count($this->activations) + 1;
+
+                if (isset($this->factory[$name])) {
+                    $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
+                } elseif (! array_key_exists($name, $this->values)) {
+                    throw new NotFoundException($name);
+                }
+
+                if (isset($this->config[$name])) {
+                    foreach ($this->config[$name] as $index => $config) {
+                        $value = $this->call($config, [$this->values[$name]] + $this->config_map[$name][$index]);
+
+                        if ($value !== null) {
+                            $this->values[$name] = $value;
+                        }
                     }
                 }
+
+                $this->active[$name] = true;
+            } finally {
+                unset($this->activations[$name]);
             }
-
-            $this->active[$name] = true;
-
-            unset($this->activations[$name]);
         }
 
         return $this->values[$name];
