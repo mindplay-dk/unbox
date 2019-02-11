@@ -664,6 +664,165 @@ test(
     }
 );
 
+test(
+    'can trap direct dependency cycle',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function ($a) {
+            return "B{$a}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: a -> b -> a}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("b");
+            },
+            "{Dependency cycle detected: b -> a -> b}i"
+        );
+    }
+);
+
+test(
+    'can trap indirect dependency cycle',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function ($c) {
+            return "B{$c}";
+        });
+
+        $factory->register("c", function ($a) {
+            return "C{$a}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle (a)",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: a -> b -> c -> a}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle (b)",
+            function () use ($factory) {
+                $factory->createContainer()->get("b");
+            },
+            "{Dependency cycle detected: b -> c -> a -> b}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle (c)",
+            function () use ($factory) {
+                $factory->createContainer()->get("c");
+            },
+            "{Dependency cycle detected: c -> a -> b -> c}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for repeated dependency cycle",
+            function () use ($factory) {
+                $container = $factory->createContainer();
+
+                try {
+                    $container->get("c");
+                } catch (ContainerException $error) {
+                    $container->get("c");
+                }
+            },
+            "{Dependency cycle detected: c -> a -> b -> c}i"
+        );
+    }
+);
+
+test(
+    'can trap indirect dependency cycle via configuration',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function () {
+            return "B";
+        });
+
+        $factory->configure("b", function ($b, $a) {
+            return "{$b}{$a}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: a -> b -> a}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("b");
+            },
+            "{Dependency cycle detected: b -> a -> b}i"
+        );
+    }
+);
+
+test(
+    'can trap deep dependency cycle',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function ($c) {
+            return "B{$c}";
+        });
+
+        $factory->register("c", function ($b) {
+            return "C{$b}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: b -> c -> b}i"
+        );
+    }
+);
+
 if (version_compare(PHP_VERSION, "7", ">=")) {
     require __DIR__ . "/test-php70.php";
 } else {

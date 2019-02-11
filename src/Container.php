@@ -19,6 +19,13 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     protected $active = [];
 
     /**
+     * @var int[] map where component name => activation depth
+     *
+     * @see get()
+     */
+    private $activations = [];
+
+    /**
      * @param Configuration $config
      */
     public function __construct(Configuration $config)
@@ -47,21 +54,43 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     public function get($name)
     {
         if (! isset($this->active[$name])) {
-            if (isset($this->factory[$name])) {
-                $factory = $this->factory[$name];
+            try {
+                if (isset($this->activations[$name])) {
+                    $activations = array_flip($this->activations);
 
-                $reflection = new ReflectionFunction($factory);
+                    ksort($activations, SORT_NUMERIC); // order by activation depth
 
-                $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
+                    $activations = array_slice($activations, array_search($name, $activations, true));
 
-                $this->values[$name] = call_user_func_array($factory, $params);
-            } elseif (! array_key_exists($name, $this->values)) {
-                throw new NotFoundException($name);
+                    $activations[] = $name;
+
+                    $activation_path = implode(" -> ", $activations);
+
+                    throw new ContainerException("Dependency cycle detected: " . $activation_path);
+                }
+
+                $this->activations[$name] = count($this->activations);
+
+                if (isset($this->factory[$name])) {
+                    $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
+                } elseif (! array_key_exists($name, $this->values)) {
+                    throw new NotFoundException($name);
+                }
+
+                if (isset($this->config[$name])) {
+                    foreach ($this->config[$name] as $index => $config) {
+                        $value = $this->call($config, [$this->values[$name]] + $this->config_map[$name][$index]);
+
+                        if ($value !== null) {
+                            $this->values[$name] = $value;
+                        }
+                    }
+                }
+
+                $this->active[$name] = true;
+            } finally {
+                unset($this->activations[$name]);
             }
-
-            $this->active[$name] = true;
-
-            $this->initialize($name);
         }
 
         return $this->values[$name];
@@ -226,31 +255,5 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     {
         $this->values[$name] = $value;
         $this->active[$name] = true;
-    }
-
-    /**
-     * Internally initialize an active component.
-     *
-     * @param string $name component name
-     *
-     * @return void
-     */
-    private function initialize($name)
-    {
-        if (isset($this->config[$name])) {
-            foreach ($this->config[$name] as $index => $config) {
-                $map = $this->config_map[$name][$index];
-
-                $reflection = Reflection::createFromCallable($config);
-
-                $params = $this->resolve($reflection->getParameters(), $map);
-
-                $value = call_user_func_array($config, $params);
-
-                if ($value !== null) {
-                    $this->values[$name] = $value;
-                }
-            }
-        }
     }
 }
