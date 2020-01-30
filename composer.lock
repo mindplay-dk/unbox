@@ -35,6 +35,7 @@
             ],
             "description": "Promoting the interoperability of container objects (DIC, SL, etc.)",
             "homepage": "https://github.com/container-interop/container-interop",
+            "abandoned": "psr/container",
             "time": "2017-02-14T19:40:03+00:00"
         },
         {
@@ -122,7 +123,7 @@
                 }
             ],
             "description": "A simple benchmark suite for PHP 5.3 and up",
-            "time": "2016-08-07 13:44:25"
+            "time": "2016-08-07T13:44:25+00:00"
         },
         {
             "name": "mindplay/testies",
@@ -130,12 +131,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/mindplay-dk/testies.git",
-                "reference": "583c2078e24cb506a698f0d78bbbd5fba6323125"
+                "reference": "e82361f346cf533be12324b990f265ba4e5f29fa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mindplay-dk/testies/zipball/583c2078e24cb506a698f0d78bbbd5fba6323125",
-                "reference": "583c2078e24cb506a698f0d78bbbd5fba6323125",
+                "url": "https://api.github.com/repos/mindplay-dk/testies/zipball/e82361f346cf533be12324b990f265ba4e5f29fa",
+                "reference": "e82361f346cf533be12324b990f265ba4e5f29fa",
                 "shasum": ""
             },
             "require-dev": {
@@ -156,7 +157,7 @@
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "LGPL3.0+"
+                "MIT"
             ],
             "authors": [
                 {
@@ -165,7 +166,7 @@
                 }
             ],
             "description": "Yeah, testies: a lightweight library for quick, simple unit-testing",
-            "time": "2017-06-02 13:06:21"
+            "time": "2018-10-23T07:30:41+00:00"
         },
         {
             "name": "php-di/invoker",
@@ -275,20 +276,20 @@
         },
         {
             "name": "php-di/phpdoc-reader",
-            "version": "2.0.1",
+            "version": "2.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-DI/PhpDocReader.git",
-                "reference": "83f5ead159defccfa8e7092e5b6c1c533b326d68"
+                "reference": "15678f7451c020226807f520efb867ad26fbbfcf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-DI/PhpDocReader/zipball/83f5ead159defccfa8e7092e5b6c1c533b326d68",
-                "reference": "83f5ead159defccfa8e7092e5b6c1c533b326d68",
+                "url": "https://api.github.com/repos/PHP-DI/PhpDocReader/zipball/15678f7451c020226807f520efb867ad26fbbfcf",
+                "reference": "15678f7451c020226807f520efb867ad26fbbfcf",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.3.0"
+                "php": ">=5.4.0"
             },
             "require-dev": {
                 "phpunit/phpunit": "~4.6"
@@ -308,7 +309,7 @@
                 "phpdoc",
                 "reflection"
             ],
-            "time": "2015-11-29T10:34:25+00:00"
+            "time": "2019-09-26T11:24:58+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
