@@ -64,9 +64,13 @@ abstract class Reflection
         if (method_exists($param, "getType")) {
             $type = $param->getType();
 
-            return $type === null || $type->isBuiltin()
-                ? null // ignore scalar type-hints
-                : $type->__toString();
+            if ($type === null || $type->isBuiltin()) {
+                return null; // ignore scalar type-hints
+            }
+
+            return method_exists($type, "getName")
+                ? $type->getName() // PHP >= 7.1
+                : $type->__toString(); // PHP < 7.1
         }
 
         if (preg_match(self::ARG_PATTERN, $param->__toString(), $matches) === 1) {
