@@ -66,7 +66,7 @@ abstract class Reflection
 
             return $type === null || $type->isBuiltin()
                 ? null // ignore scalar type-hints
-                : $type->__toString();
+                : $type->getName();
         }
 
         if (preg_match(self::ARG_PATTERN, $param->__toString(), $matches) === 1) {
