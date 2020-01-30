@@ -12,7 +12,6 @@ jobs:
     - php: 7.2
     - php: 7.3
     - php: 7.4
-    - php: hhvm
 
 before_script:
   - 'composer install --dev --prefer-source'
