@@ -166,6 +166,8 @@ configure(string $name, callable $func, array $map)    # ... with custom argumen
 
 ref(string $name) : BoxedValueInterface                # create a boxed reference to a component
 
+registerFallback(ContainerInterface $container)        # register a fallack container
+
 createContainer() : Container                          # create a bootstrapped Container instance
 ```
 
@@ -523,9 +525,83 @@ for a quick development setup. Even if somebody wanted to override some of the r
 in e.g. your default development setup, they can of course still do that, e.g. by calling
 `register()` again to override components as needed.
 
-### Consumption
+### Fallback Containers
 
-Consuming the contents of a container by simply pulling components out of it can *seem* very convenient, and is therefore
+You can use this feature to build layered architecture with different component life-cycles.
+
+Note that this type of architecture is less about reuse (which in most cases could be
+achieved more simply by just reusing providers) and more about separating dependencies
+into architectural layers.
+
+The most common use-case for this feature is in long-running "deamons", such as web-hosts,
+where this feature can be used to achieve separation of short-lived, request-specific
+components from long-lived services. For example, controllers or session-models might be
+registered in containers that get created and disposed with each request - while a database
+connection or an SMTP client might be registered in a single fallback container that exists
+for as long as the application is running, eliminating redundant start-up overhead.
+
+This kind of separation is also useful in terms of architecture, where it forces you to be
+deliberate and aware of dependencies on request-specific components, since these will not
+be available in the long-lived container. Similarly, maybe your project has a console-based
+front-end as well, where this type of architecture can be used to ensure your command-line
+dependencies are not available to the components of your web-host - and so on.
+
+In practical terms, to register a fallback container, use the `registerFallback` method on
+a `ContainerFactory` instance. Containers created by a factory with one or more registered
+fallbacks, will internally query fallbacks (in the order they were added) for any components
+that haven't been registered in the container itself - effectively, this means that calls
+to `has` and `get` will propagate to any registered fallback containers.
+
+A typical approach is to register the container factory for short-lived services as a component
+in the long-lived main service container - for example:
+
+```php
+$app_factory = new ContainerFactory();
+
+// components we can reuse across many requests:
+
+$app_factory->register(DatabaseConnection::class);
+
+// factory for containers for individual requests:
+
+$app_factory->register("request-context", function (ContainerInterface $app_container) {
+    $request_container_factory = new ContainerFactory();
+
+    // enable request-specific containers to look up long-lived services in the main container:
+
+    $request_container_factory->registerFallback($app_container);
+
+    return $request_container_factory;
+});
+
+// we can now register short-lived components against the `request-context` container factory:
+
+$app_factory->configure("request-context", function (ContainerFactory $request_container_factory) {
+    $request_container_factory->register(LoginController::class); // depends on DatabaseConnection
+});
+
+// now create the long-lived app container, e.g. in your "index.php" or CLI daemon script:
+
+$app_container = $app_factory->createContainer();
+```
+
+With this bootstrapping in place, you can now create instances of the `request-context` container
+as needed, e.g. in a long-lived component that handles incoming web-requests:
+
+```php
+$request_container = $app_container->get("request-context")->createContainer();
+
+$controller = $request_container->get(LoginController::class);
+```
+
+When the `$request_container` falls out of scope, any short-lived components such as the `LoginController`
+will be released along with the container - while any long-lived components such as `DatabaseConnection`
+will remain in the `$app_container`, with the same instance being passed to every new instance of the
+controller.
+
+### Using Containers
+
+Obtaining the contents of a container by simply pulling components out of it can *seem* very convenient, and is therefore
 tempting - but usually wrong! You should [inform yourself](http://stackoverflow.com/questions/11316688/inversion-of-control-vs-dependency-injection-with-selected-quotes-is-my-unders/11319026#11319026)
 about the difference and **avoid** using the container as a [service locator](https://en.wikipedia.org/wiki/Service_locator_pattern).
 

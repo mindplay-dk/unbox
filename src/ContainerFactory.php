@@ -3,6 +3,7 @@
 namespace mindplay\unbox;
 
 use Closure;
+use Psr\Container\ContainerInterface;
 use ReflectionParameter;
 
 /**
@@ -249,6 +250,29 @@ class ContainerFactory extends Configuration
     public function add(ProviderInterface $provider)
     {
         $provider->register($this);
+    }
+
+    /**
+     * Add a fallback container to this container.
+     * 
+     * Fallback containers will be queried (in the order they were added) for any components
+     * that haven't been registered in the container itself - effectively, this means that
+     * calls to `has` and `get` will propagate to any registered fallbacks.
+     * 
+     * Note that the relationship with fallback containers is one-directional: the container
+     * can resolve dependencies via fallbacks, but the fallbacks cannot resolve dependencies
+     * from the container itself.
+     * 
+     * (You can use this feature to build layered architecture with different component
+     * life-cycles - refer to the README for more details.)
+     * 
+     * @param ContainerInterface $container
+     * 
+     * @return void
+     */
+    public function registerFallback(ContainerInterface $container)
+    {
+        $this->fallbacks[] = $container;
     }
 
     /**

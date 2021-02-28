@@ -64,6 +64,19 @@ class UserRepository
     }
 }
 
+class UserController
+{
+    /**
+     * @var UserRepository
+     */
+    public $users;
+
+    public function __construct(UserRepository $users)
+    {
+        $this->users = $users;
+    }
+}
+
 class TestProvider implements ProviderInterface
 {
     public function register(ContainerFactory $container)
@@ -82,6 +95,9 @@ class TestProvider implements ProviderInterface
 
 class CustomContainerFactory extends ContainerFactory
 {
+    /**
+     * @return CustomContainer
+     */
     public function createContainer()
     {
         return new CustomContainer($this);

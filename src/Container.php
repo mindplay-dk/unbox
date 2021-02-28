@@ -74,7 +74,17 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 if (isset($this->factory[$name])) {
                     $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
                 } elseif (! array_key_exists($name, $this->values)) {
-                    throw new NotFoundException($name);
+                    foreach ($this->fallbacks as $fallback) {
+                        if ($fallback->has($name)) {
+                            $this->values[$name] = $fallback->get($name);
+
+                            break;
+                        }
+                    }
+
+                    if (! array_key_exists($name, $this->values)) {
+                        throw new NotFoundException($name);
+                    }
                 }
 
                 if (isset($this->config[$name])) {
@@ -105,7 +115,17 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      */
     public function has($name)
     {
-        return array_key_exists($name, $this->values) || isset($this->factory[$name]);
+        if (array_key_exists($name, $this->values) || isset($this->factory[$name])) {
+            return true;
+        }
+
+        foreach ($this->fallbacks as $fallback) {
+            if ($fallback->has($name)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -823,6 +823,42 @@ test(
     }
 );
 
+test(
+    'can perform component lookups via fallback containers',
+    function () {
+        $app_factory = new ContainerFactory();
+
+        $app_factory->register(FileCache::class, ["path" => "/tmp/foo"]);
+        $app_factory->alias(CacheProvider::class, FileCache::class);
+        
+        $app_factory->register(UserRepository::class);
+
+        $app_factory->register("request-context", function (ContainerInterface $app_container) {
+            $request_container_factory = new ContainerFactory();
+
+            $request_container_factory->registerFallback($app_container);
+
+            return $request_container_factory;
+        });
+        
+        $app_factory->configure("request-context", function (ContainerFactory $request_container_factory) {
+            $request_container_factory->register(UserController::class);
+        });
+
+        $app_container = $app_factory->createContainer();
+
+        /**
+         * @var ContainerFactory
+         */
+        $request_container_factory = $app_container->get("request-context");
+
+        $request_container = $request_container_factory->createContainer();
+
+        ok($request_container->has(UserRepository::class), "the container effectively 'has' components from fallbacks");
+        ok($request_container->get(UserController::class) instanceof UserController, "can resolve dependencies via fallbacks");
+    }
+);
+
 if (version_compare(PHP_VERSION, "7", ">=")) {
     require __DIR__ . "/test-php70.php";
 } else {
