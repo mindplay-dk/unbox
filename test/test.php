@@ -7,6 +7,8 @@ use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
 use Psr\Container\ContainerInterface;
 
+use function mindplay\testies\{ test, ok, eq, expect, configure, run, format };
+
 require __DIR__ . '/header.php';
 
 // TESTS:
@@ -53,6 +55,8 @@ test(
         $f->register(FileCache::class, ['/tmp/foo']);
 
         $c = $f->createContainer();
+
+        //var_dump($f,$c);
 
         ok($c->get('x') instanceof Foo, 'registers a default factory function when $func is a name');
 
@@ -288,6 +292,44 @@ test(
             },
             "/no component-name or type-hint specified/"
         );
+    }
+);
+
+test(
+    'can obtain reflection from nullable type-hinted callable',
+    function () {
+        $reflection = new ReflectionFunction(function (?Foo $foo) {});
+
+        $params = $reflection->getParameters();
+
+        eq(Reflection::getParameterType($params[0]), Foo::class);
+    }
+);
+
+test(
+    'can inject dependency against nullable type-hint',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(ClassWithOptionalDependency::class);
+        $factory->register(OptionalDependency::class);
+
+        $container = $factory->createContainer();
+
+        ok($container->get(ClassWithOptionalDependency::class)->dep instanceof OptionalDependency);
+    }
+);
+
+test(
+    'can inject null against nullable type-hint when dependency is unavailable',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(ClassWithOptionalDependency::class);
+
+        $container = $factory->createContainer();
+
+        eq($container->get(ClassWithOptionalDependency::class)->dep, null);
     }
 );
 
@@ -642,6 +684,17 @@ test(
 );
 
 test(
+    'ignore scalar type-hints',
+    function () {
+        $reflection = new ReflectionFunction(function (string $foo) {});
+
+        $params = $reflection->getParameters();
+
+        eq(Reflection::getParameterType($params[0]), null);
+    }
+);
+
+test(
     'can trap direct dependency cycle',
     function () {
         $factory = new ContainerFactory();
@@ -835,18 +888,6 @@ test(
         ok($request_container->get(UserController::class) instanceof UserController, "can resolve dependencies via fallbacks");
     }
 );
-
-if (version_compare(PHP_VERSION, "7", ">=")) {
-    require __DIR__ . "/test-php70.php";
-} else {
-    ok(true, "skipping PHP 7.0 tests");
-}
-
-if (version_compare(PHP_VERSION, "7.1.0rc3", ">=")) {
-    require __DIR__ . "/test-php71.php";
-} else {
-    ok(true, "skipping PHP 7.1 tests");
-}
 
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 

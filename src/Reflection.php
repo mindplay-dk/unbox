@@ -6,6 +6,7 @@ use Closure;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
+use ReflectionNamedType;
 use ReflectionParameter;
 
 /**
@@ -53,7 +54,7 @@ abstract class Reflection
     }
 
     /**
-     * Obtain the type-hint of a `ReflectionParameter`, but avoid triggering autoload (as a performance optimization)
+     * Obtain the type-hint of a `ReflectionParameter`, ignoring scalar types and PHP 8 union types.
      *
      * @param ReflectionParameter $param
      *
@@ -61,22 +62,16 @@ abstract class Reflection
      */
     public static function getParameterType(ReflectionParameter $param)
     {
-        if (method_exists($param, "getType")) {
-            $type = $param->getType();
+        $type = $param->getType();
 
-            if ($type === null || $type->isBuiltin()) {
+        if ($type instanceof ReflectionNamedType) {
+            if ($type->isBuiltin()) {
                 return null; // ignore scalar type-hints
             }
 
-            return method_exists($type, "getName")
-                ? $type->getName() // PHP >= 7.1
-                : $type->__toString(); // PHP < 7.1
+            return $type->getName();
         }
 
-        if (preg_match(self::ARG_PATTERN, $param->__toString(), $matches) === 1) {
-            return $matches[1];
-        }
-
-        return null; // no type-hint is available
+        return null; // no acceptable type-hint available
     }
 }

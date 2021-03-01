@@ -10,15 +10,15 @@
         }
     ],
     "require": {
-        "php": ">=5.5",
+        "php": "^7.3 || ^8.0",
         "psr/container": "^1.0"
     },
     "require-dev": {
-        "mindplay/benchpress": "dev-master",
-        "mindplay/testies": "dev-master",
-        "phpunit/php-code-coverage": "~2.1",
+        "mindplay/benchpress": "^0.1",
+        "mindplay/testies": "^1.0",
         "php-di/php-di": "^5.0.3",
-        "pimple/pimple": "3.0.1"
+        "pimple/pimple": "3.0.1",
+        "phpunit/php-code-coverage": "^9.2.5"
     },
     "autoload": {
         "psr-4": {

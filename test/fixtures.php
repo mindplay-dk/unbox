@@ -36,6 +36,23 @@ abstract class AbstractClass
     }
 }
 
+
+class ClassWithOptionalDependency
+{
+    /**
+     * @var OptionalDependency|null
+     */
+    public $dep;
+
+    public function __construct(?OptionalDependency $dep)
+    {
+        $this->dep = $dep;
+    }
+}
+
+class OptionalDependency
+{}
+
 interface CacheProvider {}
 
 class FileCache implements CacheProvider
