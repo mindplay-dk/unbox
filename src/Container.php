@@ -2,8 +2,7 @@
 
 namespace mindplay\unbox;
 
-use Interop\Container\ContainerInterface;
-use Psr\Container\ContainerInterface as PsrContainerInterface;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionFunction;
 use ReflectionParameter;
@@ -36,7 +35,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
             [
                 get_class($this)             => $this,
                 __CLASS__                    => $this,
-                PsrContainerInterface::class => $this,
                 ContainerInterface::class    => $this,
                 FactoryInterface::class      => $this,
             ];

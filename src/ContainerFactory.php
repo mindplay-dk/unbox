@@ -3,8 +3,8 @@
 namespace mindplay\unbox;
 
 use Closure;
-use Psr\Container\ContainerInterface;
 use ReflectionParameter;
+use Psr\Container\ContainerInterface;
 
 /**
  * This class provides boostrapping/configuration facilities for creation of `Container` instances.
