@@ -56,8 +56,6 @@ test(
 
         $c = $f->createContainer();
 
-        //var_dump($f,$c);
-
         ok($c->get('x') instanceof Foo, 'registers a default factory function when $func is a name');
 
         ok($c->get(Foo::class) instanceof Foo, 'registers a default factory function when $func is NULL');

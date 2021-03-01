@@ -133,7 +133,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return bool
      */
-    public function isActive($name)
+    public function isActive(string $name): bool
     {
         return isset($this->active[$name]);
     }
@@ -159,7 +159,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return mixed return value from the given callable
      */
-    public function call($callback, $map = [])
+    public function call(callable $callback, array $map = [])
     {
         $params = Reflection::createFromCallable($callback)->getParameters();
 
@@ -179,7 +179,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @throws InvalidArgumentException
      */
-    public function create($class_name, $map = [])
+    public function create(string $class_name, array $map = [])
     {
         if (! class_exists($class_name)) {
             throw new InvalidArgumentException("unable to create component: {$class_name} (autoloading failed)");
@@ -213,7 +213,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @throws ContainerException
      */
-    protected function resolve(array $params, $map, $safe = true)
+    protected function resolve($params, $map, $safe = true)
     {
         $args = [];
 

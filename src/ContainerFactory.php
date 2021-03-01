@@ -62,7 +62,7 @@ class ContainerFactory extends Configuration
      *
      * @throws InvalidArgumentException
      */
-    public function register($name, $func_or_map_or_type = null, $map = [])
+    public function register($name, $func_or_map_or_type = null, $map = []): void
     {
         if (is_callable($func_or_map_or_type)) {
             // second argument is a creation function
@@ -103,7 +103,7 @@ class ContainerFactory extends Configuration
      *
      * @return void
      */
-    public function set($name, $value)
+    public function set(string $name, $value): void
     {
         $this->values[$name] = $value;
 
@@ -116,7 +116,7 @@ class ContainerFactory extends Configuration
      * @param string $new_name new component name
      * @param string $ref_name referenced existing component name
      */
-    public function alias($new_name, $ref_name)
+    public function alias(string $new_name, string $ref_name)
     {
         $this->register($new_name, function (Container $container) use ($ref_name) {
             return $container->get($ref_name);
@@ -177,7 +177,7 @@ class ContainerFactory extends Configuration
      *
      * @throws InvalidArgumentException
      */
-    public function configure($name_or_func, $func_or_map = null, $map = [])
+    public function configure($name_or_func, $func_or_map = null, $map = []): void
     {
         if (is_callable($name_or_func)) {
             $func = $name_or_func;
@@ -233,7 +233,7 @@ class ContainerFactory extends Configuration
      *
      * @return BoxedReference component reference
      */
-    public function ref($name)
+    public function ref(string $name): BoxedReference
     {
         return new BoxedReference($name);
     }
@@ -247,7 +247,7 @@ class ContainerFactory extends Configuration
      *
      * @return void
      */
-    public function add(ProviderInterface $provider)
+    public function add(ProviderInterface $provider): void
     {
         $provider->register($this);
     }
@@ -270,7 +270,7 @@ class ContainerFactory extends Configuration
      * 
      * @return void
      */
-    public function registerFallback(ContainerInterface $container)
+    public function registerFallback(ContainerInterface $container): void
     {
         $this->fallbacks[] = $container;
     }

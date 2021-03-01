@@ -22,7 +22,7 @@ abstract class Reflection
     const ARG_PATTERN = '/(?:\<required\>|\<optional\>)\\s+([\\w\\\\]+)/';
 
     /**
-     * Create a Reflection of the function references by any type of callable (or object implementing `__invoke()`)
+     * Create a Reflection of the function referenced by any type of callable (or object implementing `__invoke()`)
      *
      * @param callable|object $callback
      *
@@ -30,7 +30,7 @@ abstract class Reflection
      *
      * @throws InvalidArgumentException
      */
-    public static function createFromCallable($callback)
+    public static function createFromCallable($callback): ReflectionFunctionAbstract
     {
         if (is_object($callback)) {
             if ($callback instanceof Closure) {
@@ -60,7 +60,7 @@ abstract class Reflection
      *
      * @return string|null fully-qualified type-name (or NULL, if no type-hint was available)
      */
-    public static function getParameterType(ReflectionParameter $param)
+    public static function getParameterType(ReflectionParameter $param): ?string
     {
         $type = $param->getType();
 
