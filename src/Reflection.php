@@ -15,13 +15,6 @@ use ReflectionParameter;
 abstract class Reflection
 {
     /**
-     * @type string pattern for parsing an argument type from a ReflectionParameter string
-     *
-     * @see Reflection::getParameterType()
-     */
-    const ARG_PATTERN = '/(?:\<required\>|\<optional\>)\\s+([\\w\\\\]+)/';
-
-    /**
      * Create a Reflection of the function referenced by any type of callable (or object implementing `__invoke()`)
      *
      * @param callable|object $callback
