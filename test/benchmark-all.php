@@ -13,6 +13,10 @@ $unbox_configuration = function () {
     $container = require __DIR__ . '/bootstrap-unbox.php';
 };
 
+$funbox_configuration = function () {
+    $container = require __DIR__ . '/bootstrap-funbox.php';
+};
+
 $phpdi_configuration = function () {
     $container = require __DIR__ . '/bootstrap-php-di.php';
 };
@@ -24,6 +28,11 @@ $pimple_configuration = function () {
 $bench->add(
     'unbox: configuration',
     $unbox_configuration
+);
+
+$bench->add(
+    'funbox: configuration',
+    $funbox_configuration
 );
 
 $bench->add(
@@ -51,6 +60,18 @@ foreach ([1,3,5,10] as $num) {
             }
         },
         $unbox_configuration
+    );
+
+    $bench->add(
+        "funbox: {$num} repeated resolutions",
+        function () use ($num) {
+            $container = require __DIR__ . '/bootstrap-funbox.php';
+
+            for ($i = 0; $i < $num; $i++) {
+                $cache = $container->get(UserRepository::class);
+            }
+        },
+        $funbox_configuration
     );
 
     $bench->add(

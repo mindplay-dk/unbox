@@ -449,6 +449,15 @@ test(
     }
 );
 
+test(
+    'funbox test-case is identical to unbox test-case',
+    function () {
+        $container = require __DIR__ . '/bootstrap-funbox.php';
+
+        test_case($container);
+    }
+);
+
 class PimpleTestAdapter implements ContainerInterface {
     public function __construct(\Pimple\Container $container)
     {

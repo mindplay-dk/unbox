@@ -9,6 +9,12 @@
             "email": "rasmus@mindplay.dk"
         }
     ],
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://mindplaydk@bitbucket.org/mindplaydk/mindplay-funbox.git"
+        }
+    ],
     "require": {
         "php": "^7.3 || ^8.0",
         "psr/container": "^1.0"
@@ -16,6 +22,7 @@
     "require-dev": {
         "mindplay/benchpress": "^0.1",
         "mindplay/testies": "^1.0",
+        "mindplay/funbox": "dev-master",
         "php-di/php-di": "^6.3",
         "pimple/pimple": "^3.4",
         "phpunit/php-code-coverage": "^9.2.5"

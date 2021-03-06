@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8b796886a9538567e745ce829612206a",
+    "content-hash": "fcfa8daaa74f7a29120a0b217f471e44",
     "packages": [
         {
             "name": "psr/container",
@@ -95,6 +95,43 @@
                 "source": "https://github.com/mindplay-dk/benchpress/tree/master"
             },
             "time": "2016-08-07T13:44:25+00:00"
+        },
+        {
+            "name": "mindplay/funbox",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://mindplaydk@bitbucket.org/mindplaydk/mindplay-funbox.git",
+                "reference": "fe51c0d8d0a237f80066eb748174bf783d29c64e"
+            },
+            "require": {
+                "psr/container": "^1.0"
+            },
+            "require-dev": {
+                "mindplay/testies": "^1.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "mindplay\\funbox\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "files": [
+                    "test/fixtures.php"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Rasmus Schultz",
+                    "email": "rasmus@mindplay.dk"
+                }
+            ],
+            "time": "2021-03-06T11:36:24+00:00"
         },
         {
             "name": "mindplay/testies",
@@ -1027,7 +1064,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "mindplay/funbox": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
