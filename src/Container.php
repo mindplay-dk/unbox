@@ -49,7 +49,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @throws NotFoundException
      */
-    public function get($name)
+    public function get(string $name)
     {
         if (! isset($this->active[$name])) {
             try {
@@ -111,7 +111,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return bool true, if a component with the given name has been defined
      */
-    public function has($name)
+    public function has(string $name): bool
     {
         if (array_key_exists($name, $this->values) || isset($this->factory[$name])) {
             return true;
