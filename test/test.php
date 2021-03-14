@@ -887,6 +887,12 @@ test(
     }
 );
 
+if (PHP_VERSION_ID >= 80000) {
+    require __DIR__ . "/test-php8.php";
+} else {
+    test('PHP 8 Tests', function () { ok(true, "Skipped"); });
+}
+
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 
 exit(run()); // exits with errorlevel (for CI tools etc.)
