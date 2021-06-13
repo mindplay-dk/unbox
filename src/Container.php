@@ -2,8 +2,7 @@
 
 namespace mindplay\unbox;
 
-use Interop\Container\ContainerInterface;
-use Psr\Container\ContainerInterface as PsrContainerInterface;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionFunction;
 use ReflectionParameter;
@@ -36,7 +35,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
             [
                 get_class($this)             => $this,
                 __CLASS__                    => $this,
-                PsrContainerInterface::class => $this,
                 ContainerInterface::class    => $this,
                 FactoryInterface::class      => $this,
             ];
@@ -51,7 +49,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @throws NotFoundException
      */
-    public function get($name)
+    public function get(string $name)
     {
         if (! isset($this->active[$name])) {
             try {
@@ -74,7 +72,17 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
                 if (isset($this->factory[$name])) {
                     $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
                 } elseif (! array_key_exists($name, $this->values)) {
-                    throw new NotFoundException($name);
+                    foreach ($this->fallbacks as $fallback) {
+                        if ($fallback->has($name)) {
+                            $this->values[$name] = $fallback->get($name);
+
+                            break;
+                        }
+                    }
+
+                    if (! array_key_exists($name, $this->values)) {
+                        throw new NotFoundException($name);
+                    }
                 }
 
                 if (isset($this->config[$name])) {
@@ -103,9 +111,19 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return bool true, if a component with the given name has been defined
      */
-    public function has($name)
+    public function has(string $name): bool
     {
-        return array_key_exists($name, $this->values) || isset($this->factory[$name]);
+        if (array_key_exists($name, $this->values) || isset($this->factory[$name])) {
+            return true;
+        }
+
+        foreach ($this->fallbacks as $fallback) {
+            if ($fallback->has($name)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -115,7 +133,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return bool
      */
-    public function isActive($name)
+    public function isActive(string $name): bool
     {
         return isset($this->active[$name]);
     }
@@ -141,7 +159,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return mixed return value from the given callable
      */
-    public function call($callback, $map = [])
+    public function call(callable $callback, array $map = [])
     {
         $params = Reflection::createFromCallable($callback)->getParameters();
 
@@ -161,7 +179,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @throws InvalidArgumentException
      */
-    public function create($class_name, $map = [])
+    public function create(string $class_name, array $map = [])
     {
         if (! class_exists($class_name)) {
             throw new InvalidArgumentException("unable to create component: {$class_name} (autoloading failed)");
@@ -195,7 +213,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @throws ContainerException
      */
-    protected function resolve(array $params, $map, $safe = true)
+    protected function resolve($params, $map, $safe = true)
     {
         $args = [];
 

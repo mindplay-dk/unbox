@@ -5,9 +5,9 @@ use mindplay\unbox\ContainerException;
 use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
+
+use function mindplay\testies\{ test, ok, eq, expect, configure, run, format };
 
 require __DIR__ . '/header.php';
 
@@ -290,6 +290,44 @@ test(
             },
             "/no component-name or type-hint specified/"
         );
+    }
+);
+
+test(
+    'can obtain reflection from nullable type-hinted callable',
+    function () {
+        $reflection = new ReflectionFunction(function (?Foo $foo) {});
+
+        $params = $reflection->getParameters();
+
+        eq(Reflection::getParameterType($params[0]), Foo::class);
+    }
+);
+
+test(
+    'can inject dependency against nullable type-hint',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(ClassWithOptionalDependency::class);
+        $factory->register(OptionalDependency::class);
+
+        $container = $factory->createContainer();
+
+        ok($container->get(ClassWithOptionalDependency::class)->dep instanceof OptionalDependency);
+    }
+);
+
+test(
+    'can inject null against nullable type-hint when dependency is unavailable',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(ClassWithOptionalDependency::class);
+
+        $container = $factory->createContainer();
+
+        eq($container->get(ClassWithOptionalDependency::class)->dep, null);
     }
 );
 
@@ -644,23 +682,13 @@ test(
 );
 
 test(
-    'has backwards compatibility with legacy PSR-11 interfaces',
+    'ignore scalar type-hints',
     function () {
-        $factory = new ContainerFactory();
+        $reflection = new ReflectionFunction(function (string $foo) {});
 
-        $container = $factory->createContainer();
+        $params = $reflection->getParameters();
 
-        ok($container->get(ContainerInterface::class) instanceof ContainerInterface);
-        ok($container->get(ContainerInterface::class) instanceof \Interop\Container\ContainerInterface);
-
-        ok($container->get(\Interop\Container\ContainerInterface::class) instanceof ContainerInterface);
-        ok($container->get(\Interop\Container\ContainerInterface::class) instanceof \Interop\Container\ContainerInterface);
-
-        ok(new ContainerException() instanceof ContainerExceptionInterface);
-        ok(new ContainerException() instanceof \Interop\Container\Exception\ContainerException);
-
-        ok(new NotFoundException("foo") instanceof NotFoundExceptionInterface);
-        ok(new NotFoundException("foo") instanceof \Interop\Container\Exception\NotFoundException);
+        eq(Reflection::getParameterType($params[0]), null);
     }
 );
 
@@ -823,16 +851,46 @@ test(
     }
 );
 
-if (version_compare(PHP_VERSION, "7", ">=")) {
-    require __DIR__ . "/test-php70.php";
-} else {
-    ok(true, "skipping PHP 7.0 tests");
-}
+test(
+    'can perform component lookups via fallback containers',
+    function () {
+        $app_factory = new ContainerFactory();
 
-if (version_compare(PHP_VERSION, "7.1.0rc3", ">=")) {
-    require __DIR__ . "/test-php71.php";
+        $app_factory->register(FileCache::class, ["path" => "/tmp/foo"]);
+        $app_factory->alias(CacheProvider::class, FileCache::class);
+        
+        $app_factory->register(UserRepository::class);
+
+        $app_factory->register("request-context", function (ContainerInterface $app_container) {
+            $request_container_factory = new ContainerFactory();
+
+            $request_container_factory->registerFallback($app_container);
+
+            return $request_container_factory;
+        });
+        
+        $app_factory->configure("request-context", function (ContainerFactory $request_container_factory) {
+            $request_container_factory->register(UserController::class);
+        });
+
+        $app_container = $app_factory->createContainer();
+
+        /**
+         * @var ContainerFactory
+         */
+        $request_container_factory = $app_container->get("request-context");
+
+        $request_container = $request_container_factory->createContainer();
+
+        ok($request_container->has(UserRepository::class), "the container effectively 'has' components from fallbacks");
+        ok($request_container->get(UserController::class) instanceof UserController, "can resolve dependencies via fallbacks");
+    }
+);
+
+if (PHP_VERSION_ID >= 80000) {
+    require __DIR__ . "/test-php8.php";
 } else {
-    ok(true, "skipping PHP 7.1 tests");
+    test('PHP 8 Tests', function () { ok(true, "Skipped"); });
 }
 
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');

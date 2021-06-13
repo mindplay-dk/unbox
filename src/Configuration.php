@@ -33,6 +33,11 @@ abstract class Configuration
     protected $config_map = [];
 
     /**
+     * @var ContainerInterface[] list of fallback containers for unregistered components
+     */
+    protected $fallbacks = [];
+
+    /**
      * Internally copy configuration state, e.g. from `ContainerFactory` to `Container`
      *
      * @param Configuration $target
@@ -44,5 +49,6 @@ abstract class Configuration
         $target->factory_map = $this->factory_map;
         $target->config = $this->config;
         $target->config_map = $this->config_map;
+        $target->fallbacks = $this->fallbacks;
     }
 }
