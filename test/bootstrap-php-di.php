@@ -13,10 +13,10 @@ return call_user_func(function () {
         'cache_path' => '/tmp/cache',
 
         CacheProvider::class =>
-            \DI\object(FileCache::class)->constructorParameter('path', \DI\get('cache_path')),
+            \DI\create(FileCache::class)->constructor(\DI\get('cache_path')),
 
         UserRepository::class =>
-            \DI\object()->constructorParameter('cache', \DI\get(CacheProvider::class))
+            \DI\create()->constructor(\DI\get(CacheProvider::class))
     ]);
 
     return $builder->build();

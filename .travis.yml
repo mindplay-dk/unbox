@@ -4,20 +4,17 @@ dist: xenial
 
 jobs:
   include:
-    - php: 5.5
-      dist: trusty
-    - php: 5.6
-    - php: 7.0
-    - php: 7.1
-    - php: 7.2
     - php: 7.3
     - php: 7.4
+      env:
+      - XDEBUG_MODE=coverage
+      after_script:
+      - wget https://scrutinizer-ci.com/ocular.phar
+      - php ocular.phar code-coverage:upload --format=php-clover test/build/clover.xml
+    - php: 8.0
 
 before_script:
-  - 'composer install --dev --prefer-source'
+  - composer install --dev --prefer-source
 
-script: php test/test.php
-
-after_script:
-  - if [ $(phpenv version-name) = "5.6" ]; then wget https://scrutinizer-ci.com/ocular.phar; fi
-  - if [ $(phpenv version-name) = "5.6" ]; then php ocular.phar code-coverage:upload --format=php-clover test/build/clover.xml; fi
+script:
+  - php test/test.php

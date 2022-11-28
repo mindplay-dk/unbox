@@ -19,5 +19,5 @@ interface FactoryInterface
      *
      * @return mixed
      */
-    public function create($class_name, $map = []);
+    public function create(string $class_name, array $map = []);
 }

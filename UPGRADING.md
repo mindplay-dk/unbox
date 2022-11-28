@@ -1,14 +1,16 @@
 Upgrading
 =========
 
+#### 3.0.0
+
+This release removes backwards compatibility with the legacy package `container-interop/container-interop`
+and legacy interfaces from the `Interop\Container` namespace - the container is now compatible only with
+the official, final PSR-11 standard `psr/container` package and interfaces.
+
 #### 2.0.1
 
 This release improves *forward* compatibility with `psr/container`, and backwards compatibility with
 the deprecated `container-interop/container-interop` package.
-
-Version 3.0 will most likely remove backwards compatibility with `container-interop/container-interop`,
-but as that is a breaking change, this update merely adds forward compatibility with the final PSR-11
-package.
 
 #### 2.0.0
 
