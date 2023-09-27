@@ -1,9 +1,8 @@
 ![Unbox](unbox-logo.png)
 
-[![PHP Version](https://img.shields.io/badge/php-7.3%2B%20%7C%208.0%2B-blue.svg)](https://packagist.org/packages/mindplay/unbox)
+[![PHP Version](https://img.shields.io/badge/php-8.0%2B-blue.svg)](https://packagist.org/packages/mindplay/unbox)
 [![Build Status](https://travis-ci.com/mindplay-dk/unbox.svg?branch=master)](https://travis-ci.org/mindplay-dk/unbox)
 [![Code Coverage](https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master)
 
 Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
 with a gentle learning curve.
