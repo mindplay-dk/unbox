@@ -1,0 +1,31 @@
+name: CI
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  CI:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php:
+          - '8.0'
+          - '8.1'
+          - '8.2'
+        coverage:
+          - none
+        include:
+          - php: '8.0'
+          - php: '8.1'
+          - php: '8.2'
+            coverage: xdebug
+    steps:
+      - uses: shivammathur/setup-php@2.26.0
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: ${{ matrix.coverage }}
+      - uses: actions/checkout@v3
+      - run: composer install --no-progress --no-ansi --no-interaction --dev --prefer-dist
+      - run: php test/test.php
