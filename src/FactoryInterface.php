@@ -17,7 +17,7 @@ interface FactoryInterface
      * @param string        $class_name fully-qualified class-name
      * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
      *
-     * @return mixed
+     * @return mixed new instance of the specified class
      */
-    public function create($class_name, $map = []);
+    public function create(string $class_name, array $map = []);
 }

@@ -33,13 +33,18 @@ abstract class Configuration
     protected $config_map = [];
 
     /**
+     * @var ContainerInterface[] list of fallback containers for unregistered components
+     */
+    protected $fallbacks = [];
+
+    /**
      * Check for the existence of a component with a given name.
      *
      * @param string $name component name
      *
      * @return bool true, if a component with the given name has been defined
      */
-    public function has($name)
+    public function has(string $name): bool
     {
         return array_key_exists($name, $this->values) || isset($this->factory[$name]);
     }
@@ -56,5 +61,6 @@ abstract class Configuration
         $target->factory_map = $this->factory_map;
         $target->config = $this->config;
         $target->config_map = $this->config_map;
+        $target->fallbacks = $this->fallbacks;
     }
 }

@@ -6,6 +6,7 @@ use Closure;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
+use ReflectionNamedType;
 use ReflectionParameter;
 
 /**
@@ -14,14 +15,7 @@ use ReflectionParameter;
 abstract class Reflection
 {
     /**
-     * @type string pattern for parsing an argument type from a ReflectionParameter string
-     *
-     * @see Reflection::getParameterType()
-     */
-    const ARG_PATTERN = '/(?:\<required\>|\<optional\>)\\s+([\\w\\\\]+)/';
-
-    /**
-     * Create a Reflection of the function references by any type of callable (or object implementing `__invoke()`)
+     * Create a Reflection of the function referenced by any type of callable (or object implementing `__invoke()`)
      *
      * @param callable|object $callback
      *
@@ -29,7 +23,7 @@ abstract class Reflection
      *
      * @throws InvalidArgumentException
      */
-    public static function createFromCallable($callback)
+    public static function createFromCallable($callback): ReflectionFunctionAbstract
     {
         if (is_object($callback)) {
             if ($callback instanceof Closure) {
@@ -53,26 +47,24 @@ abstract class Reflection
     }
 
     /**
-     * Obtain the type-hint of a `ReflectionParameter`, but avoid triggering autoload (as a performance optimization)
+     * Obtain the type-hint of a `ReflectionParameter`, ignoring scalar types and PHP 8 union types.
      *
      * @param ReflectionParameter $param
      *
      * @return string|null fully-qualified type-name (or NULL, if no type-hint was available)
      */
-    public static function getParameterType(ReflectionParameter $param)
+    public static function getParameterType(ReflectionParameter $param): ?string
     {
-        if (method_exists($param, "getType")) {
-            $type = $param->getType();
+        $type = $param->getType();
 
-            return $type === null || $type->isBuiltin()
-                ? null // ignore scalar type-hints
-                : $type->__toString();
+        if ($type instanceof ReflectionNamedType) {
+            if ($type->isBuiltin()) {
+                return null; // ignore scalar type-hints
+            }
+
+            return $type->getName();
         }
 
-        if (preg_match(self::ARG_PATTERN, $param->__toString(), $matches) === 1) {
-            return $matches[1];
-        }
-
-        return null; // no type-hint is available
+        return null; // no acceptable type-hint available
     }
 }

@@ -2,10 +2,8 @@
 
 namespace mindplay\unbox;
 
-use Interop\Container\ContainerInterface;
-use Psr\Container\ContainerInterface as PsrContainerInterface;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
-use ReflectionFunction;
 use ReflectionParameter;
 
 /**
@@ -19,6 +17,13 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     protected $active = [];
 
     /**
+     * @var int[] map where component name => activation depth
+     *
+     * @see get()
+     */
+    private $activations = [];
+
+    /**
      * @param Configuration $config
      */
     public function __construct(Configuration $config)
@@ -29,7 +34,6 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
             [
                 get_class($this)             => $this,
                 __CLASS__                    => $this,
-                PsrContainerInterface::class => $this,
                 ContainerInterface::class    => $this,
                 FactoryInterface::class      => $this,
             ];
@@ -40,31 +44,85 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @param string $name component name
      *
-     * @return mixed
+     * @return mixed component instance/value
      *
      * @throws NotFoundException
      */
-    public function get($name)
+    public function get(string $name)
     {
         if (! isset($this->active[$name])) {
-            if (isset($this->factory[$name])) {
-                $factory = $this->factory[$name];
+            try {
+                if (isset($this->activations[$name])) {
+                    $activations = array_flip($this->activations);
 
-                $reflection = new ReflectionFunction($factory);
+                    ksort($activations, SORT_NUMERIC); // order by activation depth
 
-                $params = $this->resolve($reflection->getParameters(), $this->factory_map[$name]);
+                    $activations = array_slice($activations, array_search($name, $activations, true));
 
-                $this->values[$name] = call_user_func_array($factory, $params);
-            } elseif (! array_key_exists($name, $this->values)) {
-                throw new NotFoundException($name);
+                    $activations[] = $name;
+
+                    $activation_path = implode(" -> ", $activations);
+
+                    throw new ContainerException("Dependency cycle detected: " . $activation_path);
+                }
+
+                $this->activations[$name] = count($this->activations);
+
+                if (isset($this->factory[$name])) {
+                    $this->values[$name] = $this->call($this->factory[$name], $this->factory_map[$name]);
+                } elseif (! array_key_exists($name, $this->values)) {
+                    foreach ($this->fallbacks as $fallback) {
+                        if ($fallback->has($name)) {
+                            $this->values[$name] = $fallback->get($name);
+
+                            break;
+                        }
+                    }
+
+                    if (! array_key_exists($name, $this->values)) {
+                        throw new NotFoundException($name);
+                    }
+                }
+
+                if (isset($this->config[$name])) {
+                    foreach ($this->config[$name] as $index => $config) {
+                        $value = $this->call($config, [$this->values[$name]] + $this->config_map[$name][$index]);
+
+                        if ($value !== null) {
+                            $this->values[$name] = $value;
+                        }
+                    }
+                }
+
+                $this->active[$name] = true;
+            } finally {
+                unset($this->activations[$name]);
             }
-
-            $this->active[$name] = true;
-
-            $this->initialize($name);
         }
 
         return $this->values[$name];
+    }
+
+    /**
+     * Check for the existence of a component with a given name.
+     *
+     * @param string $name component name
+     *
+     * @return bool true, if a component with the given name has been defined
+     */
+    public function has(string $name): bool
+    {
+        if (array_key_exists($name, $this->values) || isset($this->factory[$name])) {
+            return true;
+        }
+
+        foreach ($this->fallbacks as $fallback) {
+            if ($fallback->has($name)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -74,7 +132,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return bool
      */
-    public function isActive($name)
+    public function isActive(string $name): bool
     {
         return isset($this->active[$name]);
     }
@@ -100,7 +158,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @return mixed return value from the given callable
      */
-    public function call($callback, $map = [])
+    public function call(callable $callback, array $map = [])
     {
         $params = Reflection::createFromCallable($callback)->getParameters();
 
@@ -116,11 +174,11 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      * @param string        $class_name fully-qualified class-name
      * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
      *
-     * @return mixed
+     * @return mixed new instance of the specified class
      *
      * @throws InvalidArgumentException
      */
-    public function create($class_name, $map = [])
+    public function create(string $class_name, array $map = [])
     {
         if (! class_exists($class_name)) {
             throw new InvalidArgumentException("unable to create component: {$class_name} (autoloading failed)");
@@ -154,7 +212,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @throws ContainerException
      */
-    protected function resolve(array $params, $map, $safe = true)
+    protected function resolve($params, $map, $safe = true)
     {
         $args = [];
 
@@ -209,36 +267,12 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @param string $name
      * @param mixed  $value
+     * 
+     * @return void
      */
-    protected function inject($name, $value)
+    protected function inject($name, $value): void
     {
         $this->values[$name] = $value;
         $this->active[$name] = true;
-    }
-
-    /**
-     * Internally initialize an active component.
-     *
-     * @param string $name component name
-     *
-     * @return void
-     */
-    private function initialize($name)
-    {
-        if (isset($this->config[$name])) {
-            foreach ($this->config[$name] as $index => $config) {
-                $map = $this->config_map[$name][$index];
-
-                $reflection = Reflection::createFromCallable($config);
-
-                $params = $this->resolve($reflection->getParameters(), $map);
-
-                $value = call_user_func_array($config, $params);
-
-                if ($value !== null) {
-                    $this->values[$name] = $value;
-                }
-            }
-        }
     }
 }

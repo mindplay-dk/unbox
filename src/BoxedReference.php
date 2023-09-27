@@ -8,14 +8,9 @@ namespace mindplay\unbox;
 class BoxedReference implements BoxedValueInterface
 {
     /**
-     * @var string
-     */
-    private $name;
-
-    /**
      * @param string $name component name
      */
-    public function __construct($name)
+    public function __construct(private string $name)
     {
         $this->name = $name;
     }
@@ -23,7 +18,7 @@ class BoxedReference implements BoxedValueInterface
     /**
      * @return mixed the boxed value
      */
-    public function unbox(Container $container)
+    public function unbox(Container $container): mixed
     {
         return $container->get($this->name);
     }

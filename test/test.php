@@ -5,9 +5,10 @@ use mindplay\unbox\ContainerException;
 use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
-use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Pimple\Container as PimpleContainer;
+
+use function mindplay\testies\{ test, ok, eq, expect, configure, run, format };
 
 require __DIR__ . '/header.php';
 
@@ -294,6 +295,44 @@ test(
 );
 
 test(
+    'can obtain reflection from nullable type-hinted callable',
+    function () {
+        $reflection = new ReflectionFunction(function (?Foo $foo) {});
+
+        $params = $reflection->getParameters();
+
+        eq(Reflection::getParameterType($params[0]), Foo::class);
+    }
+);
+
+test(
+    'can inject dependency against nullable type-hint',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(ClassWithOptionalDependency::class);
+        $factory->register(OptionalDependency::class);
+
+        $container = $factory->createContainer();
+
+        ok($container->get(ClassWithOptionalDependency::class)->dep instanceof OptionalDependency);
+    }
+);
+
+test(
+    'can inject null against nullable type-hint when dependency is unavailable',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(ClassWithOptionalDependency::class);
+
+        $container = $factory->createContainer();
+
+        eq($container->get(ClassWithOptionalDependency::class)->dep, null);
+    }
+);
+
+test(
     'can call all the things',
     function () {
         $factory = new ContainerFactory();
@@ -411,8 +450,14 @@ test(
     }
 );
 
-class PimpleTestAdapter implements ContainerInterface {
-    public function __construct(\Pimple\Container $container)
+class PimpleTestAdapter implements ContainerInterface
+{
+    /**
+     * @var PimpleContainer
+     */
+    private $container;
+
+    public function __construct(PimpleContainer $container)
     {
         $this->container = $container;
     }
@@ -719,6 +764,7 @@ test(
     function () {
         $cases = [
             [function (Foo $foo) {}, 'Foo'],
+            [fn (Foo $foo) => null, 'Foo'],
             [function (Foo $foo = null) {}, 'Foo'],
             [function (Foo\Bar $foo) {}, 'Foo\\Bar'],
             [function ($foo) {}, null],
@@ -745,37 +791,263 @@ test(
 );
 
 test(
-    'has backwards compatibility with legacy PSR-11 interfaces',
+    'ignore scalar type-hints',
     function () {
-        $factory = new ContainerFactory();
+        $reflection = new ReflectionFunction(function (string $foo) {});
 
-        $container = $factory->createContainer();
+        $params = $reflection->getParameters();
 
-        ok($container->get(ContainerInterface::class) instanceof ContainerInterface);
-        ok($container->get(ContainerInterface::class) instanceof \Interop\Container\ContainerInterface);
-
-        ok($container->get(\Interop\Container\ContainerInterface::class) instanceof ContainerInterface);
-        ok($container->get(\Interop\Container\ContainerInterface::class) instanceof \Interop\Container\ContainerInterface);
-
-        ok(new ContainerException() instanceof ContainerExceptionInterface);
-        ok(new ContainerException() instanceof \Interop\Container\Exception\ContainerException);
-
-        ok(new NotFoundException("foo") instanceof NotFoundExceptionInterface);
-        ok(new NotFoundException("foo") instanceof \Interop\Container\Exception\NotFoundException);
+        eq(Reflection::getParameterType($params[0]), null);
     }
 );
 
-if (version_compare(PHP_VERSION, "7", ">=")) {
-    require __DIR__ . "/test-php70.php";
-} else {
-    ok(true, "skipping PHP 7.0 tests");
+test(
+    'can trap direct dependency cycle',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function ($a) {
+            return "B{$a}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: a -> b -> a}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("b");
+            },
+            "{Dependency cycle detected: b -> a -> b}i"
+        );
+    }
+);
+
+test(
+    'can trap indirect dependency cycle',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function ($c) {
+            return "B{$c}";
+        });
+
+        $factory->register("c", function ($a) {
+            return "C{$a}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle (a)",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: a -> b -> c -> a}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle (b)",
+            function () use ($factory) {
+                $factory->createContainer()->get("b");
+            },
+            "{Dependency cycle detected: b -> c -> a -> b}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle (c)",
+            function () use ($factory) {
+                $factory->createContainer()->get("c");
+            },
+            "{Dependency cycle detected: c -> a -> b -> c}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for repeated dependency cycle",
+            function () use ($factory) {
+                $container = $factory->createContainer();
+
+                try {
+                    $container->get("c");
+                } catch (ContainerException $error) {
+                    $container->get("c");
+                }
+            },
+            "{Dependency cycle detected: c -> a -> b -> c}i"
+        );
+    }
+);
+
+test(
+    'can trap indirect dependency cycle via configuration',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function () {
+            return "B";
+        });
+
+        $factory->configure("b", function ($b, $a) {
+            return "{$b}{$a}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: a -> b -> a}i"
+        );
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("b");
+            },
+            "{Dependency cycle detected: b -> a -> b}i"
+        );
+    }
+);
+
+test(
+    'can trap deep dependency cycle',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register("a", function ($b) {
+            return "A{$b}";
+        });
+
+        $factory->register("b", function ($c) {
+            return "B{$c}";
+        });
+
+        $factory->register("c", function ($b) {
+            return "C{$b}";
+        });
+
+        expect(
+            ContainerException::class,
+            "should throw for dependency cycle",
+            function () use ($factory) {
+                $factory->createContainer()->get("a");
+            },
+            "{Dependency cycle detected: b -> c -> b}i"
+        );
+    }
+);
+
+test(
+    'can perform component lookups via fallback containers',
+    function () {
+        $app_factory = new ContainerFactory();
+
+        $app_factory->register(FileCache::class, ["path" => "/tmp/foo"]);
+        $app_factory->alias(CacheProvider::class, FileCache::class);
+        
+        $app_factory->register(UserRepository::class);
+
+        $app_factory->register("request-context", function (ContainerInterface $app_container) {
+            $request_container_factory = new ContainerFactory();
+
+            $request_container_factory->registerFallback($app_container);
+
+            return $request_container_factory;
+        });
+        
+        $app_factory->configure("request-context", function (ContainerFactory $request_container_factory) {
+            $request_container_factory->register(UserController::class);
+        });
+
+        $app_container = $app_factory->createContainer();
+
+        /**
+         * @var ContainerFactory
+         */
+        $request_container_factory = $app_container->get("request-context");
+
+        $request_container = $request_container_factory->createContainer();
+
+        ok($request_container->has(UserRepository::class), "the container effectively 'has' components from fallbacks");
+        ok($request_container->get(UserController::class) instanceof UserController, "can resolve dependencies via fallbacks");
+    }
+);
+
+class UnionTypeDependencyA {}
+class UnionTypeDependencyB {}
+
+class ClassWithUnionTypeDependency
+{
+    public function __construct(public UnionTypeDependencyA|UnionTypeDependencyB $dep)
+    {}
 }
 
-if (version_compare(PHP_VERSION, "7.1.0rc3", ">=")) {
-    require __DIR__ . "/test-php71.php";
-} else {
-    ok(true, "skipping PHP 7.1 tests");
-}
+test(
+    'PHP 8: ambiguous union-types CAN NOT automatically be resolved',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(UnionTypeDependencyA::class);
+        $factory->register(UnionTypeDependencyB::class);
+
+        $factory->register(ClassWithUnionTypeDependency::class);
+
+        $container = $factory->createContainer();
+
+        expect(
+            ContainerException::class,
+            "should throw if attempting to resolve a union type",
+            function () use ($container) {
+                $container->get(ClassWithUnionTypeDependency::class);
+            },
+            "/unable to resolve parameter: \\\$dep/"
+        );
+    }
+);
+
+test(
+    'PHP 8: can inject against ambiguous union-type by manually referencing the dependency',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(UnionTypeDependencyA::class);
+        $factory->register(UnionTypeDependencyB::class);
+
+        $factory->register(
+            ClassWithUnionTypeDependency::class,
+            [
+                "dep" => $factory->ref(UnionTypeDependencyA::class)
+            ]
+        );
+
+        $container = $factory->createContainer();
+
+        ok($container->get(ClassWithUnionTypeDependency::class)->dep instanceof UnionTypeDependencyA);
+    }
+);
 
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 

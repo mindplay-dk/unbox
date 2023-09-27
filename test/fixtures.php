@@ -36,6 +36,23 @@ abstract class AbstractClass
     }
 }
 
+
+class ClassWithOptionalDependency
+{
+    /**
+     * @var OptionalDependency|null
+     */
+    public $dep;
+
+    public function __construct(?OptionalDependency $dep)
+    {
+        $this->dep = $dep;
+    }
+}
+
+class OptionalDependency
+{}
+
 interface CacheProvider {}
 
 class FileCache implements CacheProvider
@@ -64,6 +81,19 @@ class UserRepository
     }
 }
 
+class UserController
+{
+    /**
+     * @var UserRepository
+     */
+    public $users;
+
+    public function __construct(UserRepository $users)
+    {
+        $this->users = $users;
+    }
+}
+
 class TestProvider implements ProviderInterface
 {
     public function register(ContainerFactory $factory)
@@ -82,6 +112,9 @@ class TestProvider implements ProviderInterface
 
 class CustomContainerFactory extends ContainerFactory
 {
+    /**
+     * @return CustomContainer
+     */
     public function createContainer()
     {
         return new CustomContainer($this);
