@@ -2,11 +2,14 @@
 
 use DI\ContainerBuilder;
 
-return call_user_func(function () {
+return function ($compiled = false) {
 
     $builder = new ContainerBuilder();
 
-    $builder->useAnnotations(false);
+    if ($compiled) {
+        $builder->enableCompilation(__DIR__ . "/.php-di");
+    }
+
     $builder->useAutowiring(false);
 
     $builder->addDefinitions([
@@ -21,4 +24,4 @@ return call_user_func(function () {
 
     return $builder->build();
 
-});
+};
