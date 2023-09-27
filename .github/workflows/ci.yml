@@ -25,7 +25,7 @@ jobs:
           coverage: ${{ matrix.coverage }}
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 2 # min. depth of 2 required by Scrutinizer
+          fetch-depth: 2 # required by Scrutinizer
       - run: composer install --no-progress --no-ansi --no-interaction --dev --prefer-dist
       - run: php test/test.php
       - if: github.repository == 'mindplay-dk/unbox' && matrix.coverage == 'xdebug'
