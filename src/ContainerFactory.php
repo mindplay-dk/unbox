@@ -56,7 +56,7 @@ class ContainerFactory extends Configuration
      * @param string                      $name                component name
      * @param callable|mixed|mixed[]|null $func_or_map_or_type creation function or class-name, or, if the first
      *                                                         argument is a class-name, a map of constructor arguments
-     * @param mixed|mixed[]               $map                 mixed list/map of parameter values (and/or boxed values)
+     * @param mixed[]                     $map                 mixed list/map of parameter values (and/or boxed values)
      *
      * @return void
      *
@@ -115,8 +115,10 @@ class ContainerFactory extends Configuration
      *
      * @param string $new_name new component name
      * @param string $ref_name referenced existing component name
+     * 
+     * @return void
      */
-    public function alias(string $new_name, string $ref_name)
+    public function alias(string $new_name, string $ref_name): void
     {
         $this->register($new_name, function (Container $container) use ($ref_name) {
             return $container->get($ref_name);

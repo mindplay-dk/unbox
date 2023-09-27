@@ -13,5 +13,5 @@ interface BoxedValueInterface
      *
      * @return mixed the unboxed value
      */
-    public function unbox(Container $container);
+    public function unbox(Container $container): mixed;
 }

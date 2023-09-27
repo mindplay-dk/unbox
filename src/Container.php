@@ -4,7 +4,6 @@ namespace mindplay\unbox;
 
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
-use ReflectionFunction;
 use ReflectionParameter;
 
 /**
@@ -45,7 +44,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @param string $name component name
      *
-     * @return mixed
+     * @return mixed component instance/value
      *
      * @throws NotFoundException
      */
@@ -175,7 +174,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      * @param string        $class_name fully-qualified class-name
      * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
      *
-     * @return mixed
+     * @return mixed new instance of the specified class
      *
      * @throws InvalidArgumentException
      */
@@ -268,8 +267,10 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * @param string $name
      * @param mixed  $value
+     * 
+     * @return void
      */
-    protected function inject($name, $value)
+    protected function inject($name, $value): void
     {
         $this->values[$name] = $value;
         $this->active[$name] = true;
