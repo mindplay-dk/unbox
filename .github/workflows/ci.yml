@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: composer install --no-progress --no-ansi --no-interaction --dev --prefer-dist
       - run: php test/test.php
-      - if: matrix.coverage == 'xdebug'
-        run: |
-          wget https://scrutinizer-ci.com/ocular.phar
-          php ocular.phar code-coverage:upload --format=php-clover test/build/clover.xml
+      - if: github.repository == 'mindplay-dk/unbox' && matrix.coverage == 'xdebug'
+        uses: sudo-bot/action-scrutinizer@latest
+        with:
+          cli-args: '--format=php-clover test/build/clover.xml'
