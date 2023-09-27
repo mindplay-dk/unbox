@@ -21,6 +21,7 @@ jobs:
     steps:
       - uses: shivammathur/setup-php@2.26.0
         with:
+          fetch-depth: 2 # min. depth of 2 required by Scrutinizer
           php-version: ${{ matrix.php }}
           coverage: ${{ matrix.coverage }}
       - uses: actions/checkout@v3
