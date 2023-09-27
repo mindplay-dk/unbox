@@ -532,8 +532,9 @@ in e.g. your default development setup, they can of course still do that, e.g. b
 In large, modular architectures, you may have many Providers with inter-dependencies, which
 can become difficult to manage at scale.
 
-Since Providers exist *outside* the realm of the a Container, the concept of Requirements can
-be used to define verifiable dependencies, which will be checked when `createContainer()` is called.
+Since Providers exist *outside* the realm of the Container, the concept of Requirements can
+be used to define verifiable provider interdependencies, which will be checked at the time
+when `createContainer()` is called.
 
 Requirements may be defined by calling `requires()`, and more than one Provider may specify the
 same Requirement - possibly for different reasons, which may be described using the optional
@@ -561,53 +562,13 @@ class MyProvider implements ProviderInterface
 
 Attempting to bootstrap this Provider, without manually registering the `PDO` instance, will
 generate an Exception, as soon as `createContainer()` is called - which is much easier to debug
-than, say, a `NotFoundException`, which might not occur before you hit a controller that
-actually depends on the database connection.
-
-###### Provider Requirements
-
-Providers may depend on other Providers being bootstrapped.
-
-For example, the following Provider requires you to also bootstrap a `CacheProvider`:
-
-```php
-class MyProvider implements ProviderInterface
-{
-    public function register(ContainerFactory $factory)
-    {
-        $factory->requires(CacheProvider::class, "the CacheProvider should be bootstrapped");
-        
-        // ...
-    }
-}
-```
-
-Provider Requirements are implicitly fulfilled by simply adding the Provider in question:
-
-```php
-$factory->add(new CacheProvider());
-```
-
-In rare cases, however, maybe the `CacheProvider` that shipped with the package doesn't work
-for your application, and you may choose to manually create bootstrapping that is *equivalent*
-to that of `CacheProvider`:
-
-```php
-$factory->provides(CacheProvider::class);
-
-// instead of CacheProvider:
-
-$factory->register(CacheInterface::class, FileCache::class, ["path" => "..."]);
-```
-
-Note that it's *usually* preferable to define the component Requirements - or in some cases
-even both. Use your best judgment as to what is helpful, safe, or simply annoying for a
-developer trying to bootstrap to fulfill your Provider's Requirements.
+than the `NotFoundException` you would otherwise get, and which might not occur until you try
+to resolve a component that actually depends on the database connection.
 
 ###### Abstract Requirements
 
 Providers may have abstract Requirements - something that can't be expressed by a simple
-component or Provider dependency.
+component dependency.
 
 For example, the following Provider requires you to simply indicate that you've bootstrapped
 a "payment gateway" - whatever that means to the Provider in question:
@@ -624,7 +585,7 @@ class MyProvider implements ProviderInterface
 }
 ```
 
-Another provider needs to explicitly indicate fulfillment of these abstract Requirements:
+Another provider needs to explicitly indicate fulfillment of this abstract Requirement:
 
 ```php
 class MyPaymentProvider implements ProviderInterface
@@ -638,8 +599,9 @@ class MyPaymentProvider implements ProviderInterface
 }
 ```
 
-Note that abstract Requirements should be a last resort - a simple component or Provider
-dependency is *usually* better, safer, and may be easier to understand.
+Note that abstract Requirements should be a last resort - component dependencies are
+*generally* simpler and easier to understand. This feature exists primarily to support
+complex, large-scale modular frameworks.
 
 ### Fallback Containers
 

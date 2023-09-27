@@ -1,6 +1,10 @@
 Upgrading
 =========
 
+#### 3.1.0
+
+This feature-release introduces requirements (via `requires` and `provides`) and requires PHP 8.0 or later.
+
 #### 3.0.0
 
 This release removes backwards compatibility with the legacy package `container-interop/container-interop`

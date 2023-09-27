@@ -264,8 +264,6 @@ class ContainerFactory extends Configuration
     public function add(ProviderInterface $provider): void
     {
         $provider->register($this);
-
-        $this->provides(get_class($provider));
     }
 
     /**
