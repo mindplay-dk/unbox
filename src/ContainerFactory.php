@@ -72,7 +72,7 @@ class ContainerFactory extends Configuration
      *
      * @throws InvalidArgumentException
      */
-    public function register($name, $func_or_map_or_type = null, $map = []): void
+    public function register(string $name, $func_or_map_or_type = null, $map = []): void
     {
         if (is_callable($func_or_map_or_type)) {
             // second argument is a creation function
@@ -257,8 +257,6 @@ class ContainerFactory extends Configuration
      *
      * @return void
      *
-     * @throws ContainerException if the given Requirement has already been fulfilled
-     *
      * @see ProviderInterface
      */
     public function add(ProviderInterface $provider): void
@@ -277,7 +275,7 @@ class ContainerFactory extends Configuration
      *
      * @see provides()
      */
-    public function requires($requirement, $description = "")
+    public function requires(string $requirement, string $description = "")
     {
         $this->required[$requirement][] = $description;
     }
@@ -293,7 +291,7 @@ class ContainerFactory extends Configuration
      *
      * @see requires()
      */
-    public function provides($requirement, $description = "")
+    public function provides(string $requirement, string $description = "")
     {
         if (array_key_exists($requirement, $this->provided)) {
             $message = "The following Requirement has already been fulfilled: {$requirement}";
