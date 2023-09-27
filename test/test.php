@@ -894,11 +894,58 @@ test(
     }
 );
 
-if (PHP_VERSION_ID >= 80000) {
-    require __DIR__ . "/test-php8.php";
-} else {
-    test('PHP 8 Tests', function () { ok(true, "Skipped"); });
+class UnionTypeDependencyA {}
+class UnionTypeDependencyB {}
+
+class ClassWithUnionTypeDependency
+{
+    public function __construct(public UnionTypeDependencyA|UnionTypeDependencyB $dep)
+    {}
 }
+
+test(
+    'PHP 8: ambiguous union-types CAN NOT automatically be resolved',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(UnionTypeDependencyA::class);
+        $factory->register(UnionTypeDependencyB::class);
+
+        $factory->register(ClassWithUnionTypeDependency::class);
+
+        $container = $factory->createContainer();
+
+        expect(
+            ContainerException::class,
+            "should throw if attempting to resolve a union type",
+            function () use ($container) {
+                $container->get(ClassWithUnionTypeDependency::class);
+            },
+            "/unable to resolve parameter: \\\$dep/"
+        );
+    }
+);
+
+test(
+    'PHP 8: can inject against ambiguous union-type by manually referencing the dependency',
+    function () {
+        $factory = new ContainerFactory();
+
+        $factory->register(UnionTypeDependencyA::class);
+        $factory->register(UnionTypeDependencyB::class);
+
+        $factory->register(
+            ClassWithUnionTypeDependency::class,
+            [
+                "dep" => $factory->ref(UnionTypeDependencyA::class)
+            ]
+        );
+
+        $container = $factory->createContainer();
+
+        ok($container->get(ClassWithUnionTypeDependency::class)->dep instanceof UnionTypeDependencyA);
+    }
+);
 
 configure()->enableCodeCoverage(__DIR__ . '/build/clover.xml', dirname(__DIR__) . '/src');
 
