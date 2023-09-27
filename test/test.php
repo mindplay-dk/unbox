@@ -663,6 +663,7 @@ test(
     function () {
         $cases = [
             [function (Foo $foo) {}, 'Foo'],
+            [fn (Foo $foo) => null, 'Foo'],
             [function (Foo $foo = null) {}, 'Foo'],
             [function (Foo\Bar $foo) {}, 'Foo\\Bar'],
             [function ($foo) {}, null],
