@@ -6,6 +6,7 @@ use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
 use Psr\Container\ContainerInterface;
+use Pimple\Container as PimpleContainer;
 
 use function mindplay\testies\{ test, ok, eq, expect, configure, run, format };
 
@@ -449,8 +450,14 @@ test(
     }
 );
 
-class PimpleTestAdapter implements ContainerInterface {
-    public function __construct(\Pimple\Container $container)
+class PimpleTestAdapter implements ContainerInterface
+{
+    /**
+     * @var PimpleContainer
+     */
+    private $container;
+
+    public function __construct(PimpleContainer $container)
     {
         $this->container = $container;
     }
