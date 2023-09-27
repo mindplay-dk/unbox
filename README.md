@@ -786,14 +786,14 @@ implications of choosing from three very different DI containers with very diffe
 different qualities - from the smallest and simplest to the largest and most ambitious:
 
   * [pimple](http://pimple.sensiolabs.org/) is as simple as a DI container can get, with absolutely
-    no bell and whistles, and barely any learning curve.
+    no bell and whistles, and barely any learning curve, totalling around **250 LOC**.
 
-  * **unbox** with just a few classes (just over 300 source lines) and a few interfaces - more concepts
-    than pimple (and therefore a bit more learning curve) and convenient closure injections, which
-    are somewhat more costly in terms of performance.
+  * **unbox** with just a few classes and interfaces - more concepts and a bit more learning
+    curve than pimple, totalling around **350 LOC**.
 
   * [php-di](http://php-di.org/) is a pristine dependency injection framework with all the bells and
-    whistles - rich with features, but also has more concepts and learning curve, and more overhead.
+    whistles - rich with features, but also has more concepts and learning curve, more overhead, and
+    totalling around **3000 LOC**.
 
 The included [simple benchmark](test/benchmark-all.php) generates the following benchmark results on
 a WSL2 under Windows 11 with PHP 8.2.10.
