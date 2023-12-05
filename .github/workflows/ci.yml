@@ -13,10 +13,11 @@ jobs:
         php:
           - '8.0'
           - '8.1'
+          - '8.2'
         coverage:
           - none
         include:
-          - php: '8.2'
+          - php: '8.3'
             coverage: xdebug
     steps:
       - uses: shivammathur/setup-php@2.26.0
@@ -28,7 +29,7 @@ jobs:
           fetch-depth: 2 # required by Scrutinizer
       - run: composer install --no-progress --no-ansi --no-interaction --dev --prefer-dist
       - run: php test/test.php
-      - if: github.repository == 'mindplay-dk/unbox' && matrix.coverage == 'xdebug'
+      - if: matrix.coverage == 'xdebug'
         uses: sudo-bot/action-scrutinizer@latest
         with:
           cli-args: '--format=php-clover test/build/clover.xml'
