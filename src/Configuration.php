@@ -38,6 +38,18 @@ abstract class Configuration
     protected $fallbacks = [];
 
     /**
+     * Check for the existence of a component with a given name.
+     *
+     * @param string $name component name
+     *
+     * @return bool true, if a component with the given name has been defined
+     */
+    public function has(string $name): bool
+    {
+        return array_key_exists($name, $this->values) || isset($this->factory[$name]);
+    }
+
+    /**
      * Internally copy configuration state, e.g. from `ContainerFactory` to `Container`
      *
      * @param Configuration $target

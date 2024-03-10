@@ -15,10 +15,13 @@
     },
     "require-dev": {
         "mindplay/benchpress": "^0.1",
-        "mindplay/testies": "^1.0",
+        "mindplay/testies": "^1.1.2",
         "php-di/php-di": "^7.0.5",
         "pimple/pimple": "^3.5",
-        "phpunit/php-code-coverage": "^9.2.5"
+        "phpunit/php-code-coverage": "^9 || ^10 || ^11"
+    },
+    "scripts": {
+        "test": "XDEBUG_MODE=coverage php test/test.php"
     },
     "autoload": {
         "psr-4": {
