@@ -6,7 +6,7 @@ use mindplay\unbox\ContainerFactory;
 use mindplay\unbox\NotFoundException;
 use mindplay\unbox\Reflection;
 use Psr\Container\ContainerInterface;
-use Pimple\Container as PimpleContainer;
+use Pimple\Psr11\Container as PimpleContainer;
 
 use function mindplay\testies\{ test, ok, eq, expect, configure, run, format };
 
@@ -435,7 +435,8 @@ function test_case(ContainerInterface $container)
 test(
     'can resolve dependencies using parameter names',
     function () {
-        $container = require __DIR__ . '/bootstrap-unbox.php';
+        $setup = require __DIR__ . '/bootstrap-unbox.php';
+        $container = $setup();
 
         test_case($container);
     }
@@ -444,39 +445,20 @@ test(
 test(
     'php-di test-case is identical to unbox test-case',
     function () {
-        $container = require __DIR__ . '/bootstrap-php-di.php';
+        $setup = require __DIR__ . '/bootstrap-php-di.php';
+        $container = $setup();
 
         test_case($container);
     }
 );
 
-class PimpleTestAdapter implements ContainerInterface
-{
-    /**
-     * @var PimpleContainer
-     */
-    private $container;
-
-    public function __construct(PimpleContainer $container)
-    {
-        $this->container = $container;
-    }
-
-    public function get($id)
-    {
-        return $this->container->offsetGet($id);
-    }
-
-    public function has($id)
-    {}
-}
-
 test(
     'pimple test-case is identical to unbox test-case',
     function () {
-        $container = require __DIR__ . '/bootstrap-pimple.php';
+        $setup = require __DIR__ . '/bootstrap-pimple.php';
+        $container = $setup();
 
-        test_case(new PimpleTestAdapter($container));
+        test_case($container);
     }
 );
 

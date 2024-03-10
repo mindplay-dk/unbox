@@ -865,40 +865,45 @@ implications of choosing from three very different DI containers with very diffe
 different qualities - from the smallest and simplest to the largest and most ambitious:
 
   * [pimple](http://pimple.sensiolabs.org/) is as simple as a DI container can get, with absolutely
-    no bell and whistles, and barely any learning curve.
+    no bell and whistles, and barely any learning curve, totalling around **250 LOC**.
 
-  * **unbox** with just a few classes (just over 300 source lines) and a few interfaces - more concepts
-    than pimple (and therefore a bit more learning curve) and convenient closure injections, which
-    are somewhat more costly in terms of performance.
+  * **unbox** with just a few classes and interfaces - more concepts and a bit more learning
+    curve than pimple, totalling around **350 LOC**.
 
   * [php-di](http://php-di.org/) is a pristine dependency injection framework with all the bells and
-    whistles - rich with features, but also has more concepts and learning curve, and more overhead.
+    whistles - rich with features, but also has more concepts and learning curve, more overhead, and
+    totalling around **3000 LOC**.
 
 The included [simple benchmark](test/benchmark-all.php) generates the following benchmark results on
-a WSL2 under Windows 10 with PHP 8.0.0.
+a WSL2 under Windows 11 with PHP 8.2.10.
 
 Time to configure the container:
 
-    unbox ......... 0.133 msec ....... 82.21% ......... 1.00x
-    pimple ........ 0.137 msec ....... 84.55% ......... 1.03x
-    php-di ........ 0.162 msec ...... 100.00% ......... 1.22x
+    unbox: configuration ............................. 0.006 msec ....... 41.78% ......... 1.00x
+    pimple: configuration ............................ 0.008 msec ....... 51.25% ......... 1.23x
+    php-di: configuration ............................ 0.013 msec ....... 89.02% ......... 2.13x
+    php-di: configuration [compiled] ................. 0.015 msec ...... 100.00% ......... 2.39x
 
 Time to resolve the dependencies in the container, on first access:
 
-    pimple ........ 0.013 msec ....... 15.01% ......... 1.00x
-    unbox ......... 0.027 msec ....... 30.76% ......... 2.05x
-    php-di ........ 0.089 msec ...... 100.00% ......... 6.66x
+    pimple: 1 repeated resolutions ................... 0.002 msec ........ 9.14% ......... 1.00x
+    php-di: 1 repeated resolutions [compiled] ........ 0.004 msec ....... 18.88% ......... 2.06x
+    unbox: 1 repeated resolutions .................... 0.006 msec ....... 26.47% ......... 2.90x
+    php-di: 1 repeated resolutions ................... 0.022 msec ...... 100.00% ........ 10.94x
 
 Time for multiple subsequent lookups:
 
-    pimple: 3 repeated resolutions ........ 0.016 msec ....... 18.43% ......... 1.00x
-    unbox: 3 repeated resolutions ......... 0.030 msec ....... 33.44% ......... 1.81x
-    php-di: 3 repeated resolutions ........ 0.089 msec ...... 100.00% ......... 5.43x
+    pimple: 3 repeated resolutions ................... 0.003 msec ....... 11.44% ......... 1.00x
+    php-di: 3 repeated resolutions [compiled] ........ 0.004 msec ....... 18.55% ......... 1.62x
+    unbox: 3 repeated resolutions .................... 0.006 msec ....... 27.24% ......... 2.38x
+    php-di: 3 repeated resolutions ................... 0.023 msec ...... 100.00% ......... 8.74x
 
-    pimple: 5 repeated resolutions ........ 0.018 msec ....... 19.71% ......... 1.00x
-    unbox: 5 repeated resolutions ......... 0.035 msec ....... 38.29% ......... 1.94x
-    php-di: 5 repeated resolutions ........ 0.091 msec ...... 100.00% ......... 5.07x
+    pimple: 5 repeated resolutions ................... 0.003 msec ....... 13.36% ......... 1.00x
+    php-di: 5 repeated resolutions [compiled] ........ 0.005 msec ....... 19.68% ......... 1.47x
+    unbox: 5 repeated resolutions .................... 0.007 msec ....... 28.02% ......... 2.10x
+    php-di: 5 repeated resolutions ................... 0.023 msec ...... 100.00% ......... 7.48x
 
-    pimple: 10 repeated resolutions ........ 0.023 msec ....... 24.38% ......... 1.00x
-    unbox: 10 repeated resolutions ......... 0.033 msec ....... 34.69% ......... 1.42x
-    php-di: 10 repeated resolutions ........ 0.094 msec ...... 100.00% ......... 4.10x
+    pimple: 10 repeated resolutions .................. 0.004 msec ....... 17.48% ......... 1.00x
+    php-di: 10 repeated resolutions [compiled] ....... 0.005 msec ....... 22.15% ......... 1.27x
+    unbox: 10 repeated resolutions ................... 0.007 msec ....... 29.83% ......... 1.71x
+    php-di: 10 repeated resolutions .................. 0.024 msec ...... 100.00% ......... 5.72x

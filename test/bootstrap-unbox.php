@@ -2,7 +2,7 @@
 
 use mindplay\unbox\ContainerFactory;
 
-return call_user_func(function () {
+return function () {
 
     $factory = new ContainerFactory();
 
@@ -10,4 +10,4 @@ return call_user_func(function () {
 
     return $factory->createContainer();
 
-});
+};
