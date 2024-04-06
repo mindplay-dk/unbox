@@ -338,7 +338,7 @@ class ContainerFactory extends Configuration
      *
      * @throws ContainerException if any Requirements have not been fulfilled
      */
-    public function createContainer(): Container
+    public function createContainer()
     {
         $messages = [];
 
