@@ -275,7 +275,7 @@ class ContainerFactory extends Configuration
      *
      * @see provides()
      */
-    public function requires(string $requirement, string $description = "")
+    public function requires(string $requirement, string $description = ""): void
     {
         $this->required[$requirement][] = $description;
     }
@@ -291,7 +291,7 @@ class ContainerFactory extends Configuration
      *
      * @see requires()
      */
-    public function provides(string $requirement, string $description = "")
+    public function provides(string $requirement, string $description = ""): void
     {
         if (array_key_exists($requirement, $this->provided)) {
             $message = "The following Requirement has already been fulfilled: {$requirement}";
@@ -338,7 +338,7 @@ class ContainerFactory extends Configuration
      *
      * @throws ContainerException if any Requirements have not been fulfilled
      */
-    public function createContainer()
+    public function createContainer(): Container
     {
         $messages = [];
 

@@ -15,9 +15,9 @@ use TypeError;
 abstract class Reflection
 {
     /**
-     * Create a Reflection of the function referenced by any type of callable (or object implementing `__invoke()`)
+     * Create a Reflection of the function referenced by any type of callable
      *
-     * @param callable|object $callback
+     * @param callable $callback
      *
      * @return ReflectionFunctionAbstract
      *
