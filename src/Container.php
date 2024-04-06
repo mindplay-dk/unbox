@@ -162,7 +162,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     {
         $params = Reflection::createFromCallable($callback)->getParameters();
 
-        return call_user_func_array($callback, $this->resolve($params, $map));
+        return $callback(...$this->resolve($params, $map));
     }
 
     /**
