@@ -56,7 +56,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
                     ksort($activations, SORT_NUMERIC); // order by activation depth
 
-                    $activations = array_slice($activations, array_search($name, $activations, true));
+                    $activations = array_slice($activations, array_search($name, $activations, true) ?: 0);
 
                     $activations[] = $name;
 
