@@ -73,7 +73,7 @@ rather than to `Container`.
 Assuming your providers weren't reading from the container, which they shouldn't be, porting should
 be as simple as updating the method-signatures of your providers to match this change, and renaming
 the argument from `$container` to `$factory` to accurately reflect the role of this argument in the
-context of your provider, which is now boostrapping the container *factory* rather than the container
+context of your provider, which is now bootstrapping the container *factory* rather than the container
 itself.
 
 The registration/configuration methods of the API use the same signatures as in version 1.x, so this

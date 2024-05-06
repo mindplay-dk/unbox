@@ -1,4 +1,4 @@
-![Unbox](unbox-logo.png)
+![Unbox](.github/assets/unbox-logo.png)
 
 [![PHP Version](https://img.shields.io/badge/php-8.0%2B-blue.svg)](https://packagist.org/packages/mindplay/unbox)
 [![PHPStan](https://img.shields.io/badge/PHPStan-Level_8-blue)](https://phpstan.org/user-guide/rule-levels)
@@ -222,7 +222,7 @@ set of rules - in order of priority:
      instance (or one "preferred" instance) in the same container. Singletons are usually registered
      under their class-name, or interface-name, or sometimes both.
 
-  3. Parameter names, e.g. components maching the precise argument name (without `$`) - this works
+  3. Parameter names, e.g. components matching the precise argument name (without `$`) - this works
      only when it's safe, which it is in most cases, the only exception being constructors invoked
      via `create()` where component names in the Container happen to match parameter names in the
      constructor. (constructor arguments given via the `$map` arguments are of course safe, too.)
@@ -611,7 +611,7 @@ Note that this type of architecture is less about reuse (which in most cases cou
 achieved more simply by just reusing providers) and more about separating dependencies
 into architectural layers.
 
-The most common use-case for this feature is in long-running "deamons", such as web-hosts,
+The most common use-case for this feature is in long-running "daemons", such as web-hosts,
 where this feature can be used to achieve separation of short-lived, request-specific
 components from long-lived services. For example, controllers or session-models might be
 registered in containers that get created and disposed with each request - while a database

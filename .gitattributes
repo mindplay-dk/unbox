@@ -1,0 +1,7 @@
+.github/ export-ignore
+.gitignore export-ignore
+.scrutinizer.yml export-ignore
+README.md export-ignore
+UPGRADING.md export-ignore
+phpstan.neon export-ignore
+test/ export-ignore
