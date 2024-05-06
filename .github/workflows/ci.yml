@@ -20,11 +20,11 @@ jobs:
           - php: '8.3'
             coverage: xdebug
     steps:
-      - uses: shivammathur/setup-php@2.26.0
+      - uses: shivammathur/setup-php@2.30.4
         with:
           php-version: ${{ matrix.php }}
           coverage: ${{ matrix.coverage }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 2 # required by Scrutinizer
       - run: composer install --no-progress --no-ansi --no-interaction --dev --prefer-dist
