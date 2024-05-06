@@ -5,9 +5,9 @@ namespace mindplay\unbox;
 use Closure;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
-use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
+use TypeError;
 
 /**
  * Pseudo-namespace for some common reflection helper-functions.
@@ -15,9 +15,9 @@ use ReflectionParameter;
 abstract class Reflection
 {
     /**
-     * Create a Reflection of the function referenced by any type of callable (or object implementing `__invoke()`)
+     * Create a Reflection of the function referenced by any type of callable
      *
-     * @param callable|object $callback
+     * @param callable $callback
      *
      * @return ReflectionFunctionAbstract
      *
@@ -25,25 +25,11 @@ abstract class Reflection
      */
     public static function createFromCallable($callback): ReflectionFunctionAbstract
     {
-        if (is_object($callback)) {
-            if ($callback instanceof Closure) {
-                return new ReflectionFunction($callback);
-            } elseif (method_exists($callback, '__invoke')) {
-                return new ReflectionMethod($callback, '__invoke');
-            }
-
-            throw new InvalidArgumentException("class " . get_class($callback) . " does not implement __invoke()");
-        } elseif (is_array($callback)) {
-            if (is_callable($callback)) {
-                return new ReflectionMethod($callback[0], $callback[1]);
-            }
-
-            throw new InvalidArgumentException("expected callable");
-        } elseif (is_callable($callback)) {
-            return new ReflectionFunction($callback);
+        try {
+            return new ReflectionFunction(Closure::fromCallable($callback));
+        } catch (TypeError $error) {
+            throw new InvalidArgumentException("unexpected value: " . var_export($callback, true) . " - expected callable");
         }
-
-        throw new InvalidArgumentException("unexpected value: " . var_export($callback, true) . " - expected callable");
     }
 
     /**

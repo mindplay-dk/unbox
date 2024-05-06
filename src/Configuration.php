@@ -2,33 +2,35 @@
 
 namespace mindplay\unbox;
 
+use Psr\Container\ContainerInterface;
+
 /**
  * This abstract base-class defines the internal state of `Container` and `ContainerFactory`
  */
 abstract class Configuration
 {
     /**
-     * @var mixed[] map where component name => value
+     * @var array<string,mixed> map where component name => value
      */
     protected $values = [];
 
     /**
-     * @var callable[] map where component name => factory function
+     * @var array<string,callable> map where component name => factory function
      */
     protected $factory = [];
 
     /**
-     * @var array map where component name => mixed list/map of parameter names
+     * @var array<string,array<int|string,string>> map where component name => mixed list/map of parameter names
      */
     protected $factory_map = [];
 
     /**
-     * @var callable[][] map where component name => list of configuration functions
+     * @var array<string,callable[]> map where component name => list of configuration functions
      */
     protected $config = [];
 
     /**
-     * @var callable[][] map where component name => mixed list/map of parameter names
+     * @var array<string,array<int|string,array<int|string,string>>> map where component name => mixed list/map of parameter names
      */
     protected $config_map = [];
 
@@ -51,10 +53,8 @@ abstract class Configuration
 
     /**
      * Internally copy configuration state, e.g. from `ContainerFactory` to `Container`
-     *
-     * @param Configuration $target
      */
-    protected function copyTo(Configuration $target)
+    protected function copyTo(Configuration $target): void
     {
         $target->values = $this->values;
         $target->factory = $this->factory;

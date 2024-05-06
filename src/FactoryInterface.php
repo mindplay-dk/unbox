@@ -14,8 +14,8 @@ interface FactoryInterface
      * The factory will internally resolve and inject any constructor arguments
      * not explicitly provided in the (optional) second parameter.
      *
-     * @param string        $class_name fully-qualified class-name
-     * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
+     * @param string       $class_name fully-qualified class-name
+     * @param array<mixed> $map        mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed new instance of the specified class
      */

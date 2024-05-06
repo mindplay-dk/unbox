@@ -1,13 +1,16 @@
 ![Unbox](unbox-logo.png)
 
 [![PHP Version](https://img.shields.io/badge/php-8.0%2B-blue.svg)](https://packagist.org/packages/mindplay/unbox)
+[![PHPStan](https://img.shields.io/badge/PHPStan-Level_8-blue)](https://phpstan.org/user-guide/rule-levels)
 [![Build Status](https://github.com/mindplay-dk/unbox/actions/workflows/ci.yml/badge.svg)](https://github.com/mindplay-dk/unbox/actions/workflows/ci.yml)
 [![Code Coverage](https://scrutinizer-ci.com/g/mindplay-dk/unbox/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/mindplay-dk/unbox/?branch=master)
 
 Unbox is a [fast](#benchmark), simple, [opinionated](#opinionated) dependency injection container,
 with a gentle learning curve.
 
-To upgrade from an older (1.x) version, please see the [upgrade guide](UPGRADING.md).
+Compatible with [PSR-11](https://www.php-fig.org/psr/psr-11/).
+
+To upgrade from an older (pre-3.x) version, please see the [upgrade guide](UPGRADING.md).
 
 ## Installation
 
@@ -24,9 +27,6 @@ configuration as just the class-name. It will also resolve arguments to any call
 objects that implement `__invoke()`. It can also be used as a generic factory class, capable of
 creating any object for which the constructor arguments can be resolved - the common use-case
 for this is in your own factory classes, e.g. a controller factory or action dispatcher.
-
-The container implementation is compatible
-with [container-interop](https://github.com/container-interop/container-interop).
 
 ### Quick Overview
 

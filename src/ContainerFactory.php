@@ -200,7 +200,7 @@ class ContainerFactory extends Configuration
             if ($func instanceof Closure) {
                 $param = new ReflectionParameter($func, 0); // shortcut reflection for closures (as an optimization)
             } else {
-                list($param) = Reflection::createFromCallable($func)->getParameters();
+                $param = Reflection::createFromCallable($func)->getParameters()[0];
             }
 
             $name = Reflection::getParameterType($param); // infer component name from type-hint
@@ -275,7 +275,7 @@ class ContainerFactory extends Configuration
      *
      * @see provides()
      */
-    public function requires(string $requirement, string $description = "")
+    public function requires(string $requirement, string $description = ""): void
     {
         $this->required[$requirement][] = $description;
     }
@@ -291,7 +291,7 @@ class ContainerFactory extends Configuration
      *
      * @see requires()
      */
-    public function provides(string $requirement, string $description = "")
+    public function provides(string $requirement, string $description = ""): void
     {
         if (array_key_exists($requirement, $this->provided)) {
             $message = "The following Requirement has already been fulfilled: {$requirement}";

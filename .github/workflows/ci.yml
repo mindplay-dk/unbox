@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 2 # required by Scrutinizer
       - run: composer install --no-progress --no-ansi --no-interaction --dev --prefer-dist
-      - run: php test/test.php
+      - run: composer test && composer inspect
       - if: matrix.coverage == 'xdebug'
         uses: sudo-bot/action-scrutinizer@latest
         with:

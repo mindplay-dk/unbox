@@ -12,20 +12,17 @@ use ReflectionParameter;
 class Container extends Configuration implements ContainerInterface, FactoryInterface
 {
     /**
-     * @var bool[] map where component name => TRUE, if the component has been initialized
+     * @var array<string,bool> map where component name => TRUE, if the component has been initialized
      */
     protected $active = [];
 
     /**
-     * @var int[] map where component name => activation depth
+     * @var array<string,int> map where component name => activation depth
      *
      * @see get()
      */
     private $activations = [];
 
-    /**
-     * @param Configuration $config
-     */
     public function __construct(Configuration $config)
     {
         $config->copyTo($this);
@@ -42,9 +39,11 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     /**
      * Resolve the registered component with the given name.
      *
+	 * @template T of object
+     * 
      * @param string $name component name
-     *
-     * @return mixed component instance/value
+     * 
+	 * @return ($name is class-string<T> ? T : mixed) component instance/value
      *
      * @throws NotFoundException
      */
@@ -57,7 +56,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
 
                     ksort($activations, SORT_NUMERIC); // order by activation depth
 
-                    $activations = array_slice($activations, array_search($name, $activations, true));
+                    $activations = array_slice($activations, array_search($name, $activations, true) ?: 0);
 
                     $activations[] = $name;
 
@@ -153,8 +152,8 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * See also {@see create()} which lets you invoke any constructor.
      *
-     * @param callable|object $callback any arbitrary closure or callable, or object implementing __invoke()
-     * @param mixed|mixed[]   $map      mixed list/map of parameter values (and/or boxed values)
+     * @param callable                $callback any arbitrary closure or callable
+     * @param array<int|string,mixed> $map      mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed return value from the given callable
      */
@@ -162,7 +161,7 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
     {
         $params = Reflection::createFromCallable($callback)->getParameters();
 
-        return call_user_func_array($callback, $this->resolve($params, $map));
+        return $callback(...$this->resolve($params, $map));
     }
 
     /**
@@ -171,14 +170,14 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      * The container will internally resolve and inject any constructor arguments
      * not explicitly provided in the (optional) second parameter.
      *
-     * @param string        $class_name fully-qualified class-name
-     * @param mixed|mixed[] $map        mixed list/map of parameter values (and/or boxed values)
+     * @param string                  $class_name fully-qualified class-name
+     * @param array<int|string,mixed> $map        mixed list/map of parameter values (and/or boxed values)
      *
      * @return mixed new instance of the specified class
      *
      * @throws InvalidArgumentException
      */
-    public function create(string $class_name, array $map = [])
+    public function create(string $class_name, array $map = []): mixed
     {
         if (! class_exists($class_name)) {
             throw new InvalidArgumentException("unable to create component: {$class_name} (autoloading failed)");
@@ -204,15 +203,15 @@ class Container extends Configuration implements ContainerInterface, FactoryInte
      *
      * This is the heart of the beast.
      *
-     * @param ReflectionParameter[] $params parameter reflections
-     * @param array                 $map    mixed list/map of parameter values (and/or boxed values)
-     * @param bool                  $safe   if TRUE, it's considered safe to resolve against parameter names
+     * @param ReflectionParameter[]   $params parameter reflections
+     * @param array<int|string,mixed> $map    mixed list/map of parameter values (and/or boxed values)
+     * @param bool                    $safe   if TRUE, it's considered safe to resolve against parameter names
      *
-     * @return array parameters
+     * @return array<mixed> parameters
      *
      * @throws ContainerException
      */
-    protected function resolve($params, $map, $safe = true)
+    protected function resolve($params, $map, $safe = true): array
     {
         $args = [];
 
