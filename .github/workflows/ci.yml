@@ -27,8 +27,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2 # required by Scrutinizer
-      - run: composer install --no-progress --no-ansi --no-interaction --dev --prefer-dist
-      - run: composer test && composer inspect
+      - run: composer update --no-interaction --prefer-dist
+      - run: composer run test
+      - run: composer run inspect
       - if: matrix.coverage == 'xdebug'
         uses: sudo-bot/action-scrutinizer@latest
         with:
